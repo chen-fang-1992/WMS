@@ -80,15 +80,12 @@ WSGI_APPLICATION = 'tms.wsgi.application'
 
 DATABASES = {
 	'default': {
-			'ENGINE': 'django.db.backends.mysql',  # 使用 MySQL 适配器
-			'NAME': 'tms',  # 数据库名称
-			'USER': 'tms',  # 用户名
-			'PASSWORD': 'tms',  # 密码
-			'HOST': 'localhost',  # 数据库地址
-			'PORT': '3306',  # 端口（MariaDB 默认 3306）
-			'OPTIONS': {
-				'charset': 'utf8mb4',  # 解决 emoji 和特殊字符问题
-			},
+		'ENGINE': 'django.db.backends.mysql',
+		'NAME': os.getenv("DB_NAME"),
+		'USER': os.getenv("DB_USER"),
+		'PASSWORD': os.getenv("DB_PASSWORD"),
+		'HOST': os.getenv("DB_HOST"),
+		'PORT': '3306',
 	}
 }
 
