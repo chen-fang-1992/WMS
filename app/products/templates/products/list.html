@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+th {
+	vertical-align: middle;
+	line-height: 1;
+	font-weight: 600;
+	font-size: 0.75rem;
+	text-align: center;
+	white-space: normal;
+	word-break: keep-all;
+}
+td {
+	font-size: 0.75rem;
+	text-align: center;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+</style>
+
+<div class="container mx-auto p-1">
+	<h1 class="font-semibold text-teal-700 text-lg pb-2">All Products</h1>
+
+	<!-- 顶部操作栏 -->
+	<div class="flex items-center justify-between mt-4">
+		<div class="flex items-center space-x-2">
+			<input
+				type="text"
+				placeholder="Search"
+				class="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+				aria-label="Search products"
+			/>
+			<button type="button" class="bg-teal-600 px-4 py-2 rounded-md hover:bg-teal-700">Filter</button>
+			<!-- <button type="button" class="px-4 py-2 rounded-md hover:bg-gray-200">Import</button>
+			<button type="button" class="px-4 py-2 rounded-md hover:bg-gray-200">Export</button> -->
+			<button type="button" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700">+ Add Product</button>
+		</div>
+	</div>
+
+	<!-- 表格区域 -->
+	<div class="mt-4 bg-white shadow-md rounded-lg">
+		<table class="min-w-max w-full border-collapse text-sm">
+			<thead class="bg-gray-100">
+				<tr>
+					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
+					<th class="p-1 border border-gray-300">品种</th>
+					<th class="p-1 border border-gray-300">厂家</th>
+					<th class="p-1 border border-gray-300">产品英文名称</th>
+					<th class="p-1 border border-gray-300">产品名称</th>
+					<th class="p-1 border border-gray-300">SKU</th>
+					<th class="p-1 border border-gray-300">条码</th>
+					<th class="p-1 border border-gray-300">图片</th>
+					<th class="p-1 border border-gray-300">包装尺寸<br>(长×宽×高 cm)</th>
+					<th class="p-1 border border-gray-300">运费体积<br>(m³)</th>
+					<th class="p-1 border border-gray-300">重量<br>(kg)</th>
+					<th class="p-1 border border-gray-300">进价人民币<br>(¥)</th>
+					<th class="p-1 border border-gray-300">进价澳币<br>(A$)</th>
+					<th class="p-1 border border-gray-300">海运成本<br>(A$)</th>
+					<th class="p-1 border border-gray-300">实际成本<br>(A$)</th>
+					<th class="p-1 border border-gray-300">2倍售价<br>(A$)</th>
+					<th class="p-1 border border-gray-300">2.5倍售价<br>(A$)</th>
+					<th class="p-1 border border-gray-300">3倍售价<br>(A$)</th>
+					<th class="p-1 border border-gray-300">实际售价<br>(A$)</th>
+					<th class="p-1 border border-gray-300">售价*0.75<br>(折后)</th>
+					<th class="p-1 border border-gray-300">实际利润<br>(A$)</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for product in products %}
+				<tr class="hover:bg-gray-50">
+					<!-- <td class="p-1 border border-gray-300"><input type="checkbox" name="select_product" value="{{ product.id }}" /></td> -->
+					<td class="p-1 border border-gray-300">{{ product.category | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.manufacturer | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.name_en | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.name_cn | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.sku | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.barcode | default:"" }}</td>
+					<td class="p-1 border border-gray-300">
+						{% if product.image_url %}
+							<img src="{{ product.image_url }}" alt="Image" class="w-16 h-16 object-cover rounded mx-auto" />
+						{% else %}
+							—
+						{% endif %}
+					</td>
+					<td class="p-1 border border-gray-300">{{ product.package_length | default:"" }}×{{ product.package_width | default:"" }}×{{ product.package_height | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.shipping_volume | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.weight | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.cost_rmb | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.cost_aud | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.sea_shipping_cost | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.total_cost | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.price_2x | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.price_2_5x | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.price_3x | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.actual_price | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.discounted_price | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.profit | default:"" }}</td>
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="21" class="p-1 text-center text-gray-500">没有产品数据。</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<script>
+	// 全选功能
+	// document.addEventListener('DOMContentLoaded', function () {
+	// 	const selectAll = document.getElementById('select-all');
+	// 	const checkboxes = document.querySelectorAll('input[name="select_product"]');
+	// 	if (selectAll) {
+	// 		selectAll.addEventListener('change', () => {
+	// 			checkboxes.forEach(cb => cb.checked = selectAll.checked);
+	// 		});
+	// 	}
+	// });
+</script>
+{% endblock %}
