@@ -23,21 +23,21 @@ select option {
 </style>
 
 <div class="container mx-auto p-1">
-	<h1 class="font-semibold text-teal-700 text-lg pb-2">All Products</h1>
+	<h1 class="font-semibold text-teal-700 text-lg pb-2">产品列表</h1>
 
 	<!-- 顶部操作栏 -->
 	<div class="flex items-center justify-between mt-4">
 		<div class="flex items-center space-x-2">
-			<input
+			<!-- <input
 				type="text"
 				placeholder="Search"
 				class="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
 				aria-label="Search products"
 			/>
-			<button type="button" class="bg-teal-600 px-4 py-2 rounded-md hover:bg-teal-700">Filter</button>
+			<button type="button" class="bg-teal-600 px-4 py-2 rounded-md hover:bg-teal-700">Filter</button> -->
 			<!-- <button type="button" class="px-4 py-2 rounded-md hover:bg-gray-200">Import</button>
 			<button type="button" class="px-4 py-2 rounded-md hover:bg-gray-200">Export</button> -->
-			<button type="button" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700">+ Add Product</button>
+			<button type="button" id="add-product-btn" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700" data-bs-toggle="modal" data-bs-target="#productModal">+ 添加产品</button>
 		</div>
 	</div>
 
@@ -147,6 +147,107 @@ select option {
 	</div>
 </div>
 
+<!-- 弹窗 -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<form id="product-form">
+				<div class="modal-header">
+					<h5 class="modal-title" id="productModalLabel">添加产品</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="row mb-3">
+						<div class="col-md-12">
+							<label for="name_en" class="form-label">产品英文名称</label>
+							<input type="text" class="form-control" id="name_en" required>
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-md-3">
+							<label for="category" class="form-label">品种</label>
+							<input type="text" class="form-control" id="category" required>
+						</div>
+						<div class="col-md-3">
+							<label for="manufacturer" class="form-label">厂家</label>
+							<input type="text" class="form-control" id="manufacturer" required>
+						</div>
+						<div class="col-md-6">
+							<label for="name_cn" class="form-label">产品名称</label>
+							<input type="text" class="form-control" id="name_cn" required>
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-md-3">
+							<label for="sku" class="form-label">SKU</label>
+							<input type="text" class="form-control" id="sku" required>
+						</div>
+						<div class="col-md-3">
+							<label for="barcode" class="form-label">条码</label>
+							<input type="text" class="form-control" id="barcode" required>
+						</div>
+						<div class="col-md-6">
+							<label for="image_url" class="form-label">图片 URL</label>
+							<input type="text" class="form-control" id="image_url">
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-md-2">
+							<label for="package_length" class="form-label">包装长度 (cm)</label>
+							<input type="text" class="form-control" id="package_length">
+						</div>
+						<div class="col-md-2">
+							<label for="package_length" class="form-label">包装宽度 (cm)</label>
+							<input type="text" class="form-control" id="package_width">
+						</div>
+						<div class="col-md-2">
+							<label for="package_length" class="form-label">包装高度 (cm)</label>
+							<input type="text" class="form-control" id="package_height">
+						</div>
+						<div class="col-md-2">
+							<label for="shipping_volume" class="form-label">运费体积 (m³)</label>
+							<input type="text" class="form-control" id="shipping_volume">
+						</div>
+						<div class="col-md-2">
+							<label for="weight" class="form-label">重量 (kg)</label>
+							<input type="text" class="form-control" id="weight">
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-md-2">
+							<label for="cost_rmb" class="form-label">进价人民币 (¥)</label>
+							<input type="text" class="form-control" id="cost_rmb">
+						</div>
+						<div class="col-md-2">
+							<label for="cost_aud" class="form-label">进价澳币 (A$)</label>
+							<input type="text" class="form-control" id="cost_aud">
+						</div>
+						<div class="col-md-2">
+							<label for="sea_shipping_cost" class="form-label">海运成本 (A$)</label>
+							<input type="text" class="form-control" id="sea_shipping_cost">
+						</div>
+						<div class="col-md-2">
+							<label for="total_cost" class="form-label">实际成本 (A$)</label>
+							<input type="text" class="form-control" id="total_cost">
+						</div>
+						<div class="col-md-2">
+							<label for="actual_price" class="form-label">实际售价 (A$)</label>
+							<input type="text" class="form-control" id="actual_price">
+						</div>
+						<div class="col-md-2">
+							<label for="profit" class="form-label">实际利润 (A$)</label>
+							<input type="text" class="form-control" id="profit">
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="submit" class="btn btn-primary" id="create-product-btn">保存</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script>
 	// 全选功能
 	// document.addEventListener('DOMContentLoaded', function () {
@@ -181,7 +282,87 @@ select option {
 					}
 				});
 			});
-		})
+		});
+
+		const productForm = document.getElementById('product-form');
+
+		// 提交表单
+		productForm.addEventListener('submit', function (event) {
+			event.preventDefault();
+
+			const category = document.getElementById('category').value;
+			const manufacturer = document.getElementById('manufacturer').value;
+			const name_en = document.getElementById('name_en').value;
+			const name_cn = document.getElementById('name_cn').value;
+			const sku = document.getElementById('sku').value;
+			const barcode = document.getElementById('barcode').value;
+			const image_url = document.getElementById('image_url').value;
+			const package_length = document.getElementById('package_length').value;
+			const package_width = document.getElementById('package_width').value;
+			const package_height = document.getElementById('package_height').value;
+			const shipping_volume = document.getElementById('shipping_volume').value;
+			const weight = document.getElementById('weight').value;
+			const cost_rmb = document.getElementById('cost_rmb').value;
+			const cost_aud = document.getElementById('cost_aud').value;
+			const sea_shipping_cost = document.getElementById('sea_shipping_cost').value;
+			const total_cost = document.getElementById('total_cost').value;
+			const actual_price = document.getElementById('actual_price').value;
+			const profit = document.getElementById('profit').value;
+
+			// 验证必填字段
+			if (!name_en || !category || !manufacturer || !name_cn || !sku || !barcode) {
+				alert('请填写所有必填字段。');
+				return;
+			}
+
+			// 提交数据到服务器
+			fetch('/products/create/', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					name_en: name_en,
+					category: category,
+					manufacturer: manufacturer,
+					name_cn: name_cn,
+					sku: sku,
+					barcode: barcode,
+					image_url: image_url,
+					package_length: package_length,
+					package_width: package_width,
+					package_height: package_height,
+					shipping_volume: shipping_volume,
+					weight: weight,
+					cost_rmb: cost_rmb,
+					cost_aud: cost_aud,
+					sea_shipping_cost: sea_shipping_cost,
+					total_cost: total_cost,
+					actual_price: actual_price,
+					profit: profit
+				})
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('产品已成功添加');
+					location.reload();  // 刷新页面显示新数据
+				} else {
+					alert('添加失败: ' + (data.error || '未知错误'));
+				}
+			})
+			.catch(error => {
+				console.error('提交出错:', error);
+				alert('提交失败，请检查控制台');
+			});
+
+			// 清空表单
+			productForm.reset();
+
+			// 隐藏弹窗
+			const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+			modal.hide();
+		});
 	});
 </script>
 {% endblock %}

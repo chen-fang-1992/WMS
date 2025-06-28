@@ -8,10 +8,10 @@ class Product(models.Model):
 	manufacturer = models.CharField(max_length=50, null=True, blank=True)
 
 	# 产品英文名称
-	name_en = models.CharField(max_length=100, null=True, blank=True)
+	name_en = models.CharField(max_length=200, null=True, blank=True)
 
 	# 产品中文名称
-	name_cn = models.CharField(max_length=100, null=True, blank=True)
+	name_cn = models.CharField(max_length=200, null=True, blank=True)
 
 	# 产品SKU
 	sku = models.CharField(max_length=50, unique=True, null=True, blank=True)
@@ -23,12 +23,12 @@ class Product(models.Model):
 	image_url = models.URLField(max_length=255, null=True, blank=True)
 
 	# 产品包装尺寸（长、宽、高）单位：厘米
-	package_length = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-	package_width = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-	package_height = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+	package_length = models.CharField(max_length=100, null=True, blank=True)
+	package_width = models.CharField(max_length=100, null=True, blank=True)
+	package_height = models.CharField(max_length=100, null=True, blank=True)
 
 	# 运费体积（立方米）
-	shipping_volume = models.DecimalField(max_digits=10, decimal_places=6, null=True, blank=True)
+	shipping_volume = models.CharField(max_length=100, null=True, blank=True)
 
 	# 重量（千克）
 	weight = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
