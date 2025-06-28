@@ -68,5 +68,15 @@ class Product(models.Model):
 		verbose_name = 'Product'
 		verbose_name_plural = 'Products'
 
+	@classmethod
+	def get_all_categories(cls):
+		categories = cls.objects.values_list('category', flat=True).distinct().order_by('category')
+		return [category if category is not None else "空" for category in categories]
+
+	@classmethod
+	def get_all_manufacturers(cls):
+		manufacturers = cls.objects.values_list('manufacturer', flat=True).distinct().order_by('manufacturer')
+		return [manufacturer if manufacturer is not None else "空" for manufacturer in manufacturers]
+
 	def __str__(self):
 		return f"{self.name_cn or self.name_en or self.sku}"

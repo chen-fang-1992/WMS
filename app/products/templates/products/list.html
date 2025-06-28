@@ -17,6 +17,9 @@ td {
 	vertical-align: middle;
 	white-space: nowrap;
 }
+select option {
+	text-align-last: center;
+}
 </style>
 
 <div class="container mx-auto p-1">
@@ -64,6 +67,43 @@ td {
 					<th class="p-1 border border-gray-300">实际售价<br>(A$)</th>
 					<th class="p-1 border border-gray-300">售价*0.75<br>(折后)</th>
 					<th class="p-1 border border-gray-300">实际利润<br>(A$)</th>
+				</tr>
+				<tr>
+					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
+					<th class="p-1 border border-gray-300">
+						<select data-col="1" class="filter-variety border border-gray-300 p-1 rounded">
+							<option value="所有">所有</option>
+							{% for category in categories %}
+								<option value="{{ category }}">{{ category }}</option>
+							{% endfor %}
+						</select>
+					</th>
+					<th class="p-1 border border-gray-300">
+						<select data-col="2" class="filter-variety border border-gray-300 p-1 rounded">
+							<option value="所有">所有</option>
+							{% for manufacturer in manufacturers %}
+								<option value="{{ manufacturer }}">{{ manufacturer }}</option>
+							{% endfor %}
+						</select>
+					</th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -118,5 +158,30 @@ td {
 	// 		});
 	// 	}
 	// });
+	document.addEventListener('DOMContentLoaded', function () {
+		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
+		const productTable = document.querySelector('tbody');
+
+		filterVarietys.forEach(filterVariety => {
+			filterVariety.addEventListener('change', function () {
+				const selectedVarieties = Array.from(filterVariety.selectedOptions).map(option => option.value);
+				const rows = productTable.querySelectorAll('tr');
+
+				rows.forEach(row => {
+					const varietyCell = row.querySelector('td:nth-child(' + filterVariety.dataset.col + ')');
+					if (varietyCell) {
+						const variety = varietyCell.textContent.trim();
+						if (selectedVarieties.length === 0 || selectedVarieties.includes(variety) || selectedVarieties.includes('所有')) {
+							row.style.display = '';
+						} else if (variety === '' && selectedVarieties.includes('空')) {
+							row.style.display = '';
+						} else {
+							row.style.display = 'none';
+						}
+					}
+				});
+			});
+		})
+	});
 </script>
 {% endblock %}
