@@ -47,3 +47,72 @@ def create_product(request):
 		return JsonResponse({'success': True})
 
 	return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+@csrf_exempt
+def delete_product(request, id):
+	if request.method == 'POST':
+		try:
+			product = Product.objects.filter(id=id).first()
+			if not product:
+				return JsonResponse({'success': False, 'error': '未找到产品'})
+
+			product.delete()
+			return JsonResponse({'success': True})
+		
+		except json.JSONDecodeError:
+			return JsonResponse({'success': False, 'error': '无效的 JSON 格式'})
+		except Exception as e:
+			return JsonResponse({'success': False, 'error': str(e)})
+	
+	return JsonResponse({'success': False, 'error': '仅支持 POST 请求'})
+
+@csrf_exempt
+def product_detail(request, id):
+	if request.method == 'GET':
+		try:
+			product = Product.objects.filter(id=id).values().first()
+			if not product:
+				return JsonResponse({'success': False, 'error': '未找到产品'})
+
+			return JsonResponse({'success': True, 'product': product})
+		except Exception as e:
+			return JsonResponse({'success': False, 'error': str(e)})
+	
+	return JsonResponse({'success': False, 'error': '仅支持 GET 请求'})
+
+@csrf_exempt
+def update_product(request, id):
+	if request.method == 'POST':
+		data = json.loads(request.body)
+
+		try:
+			product = Product.objects.get(id=id)
+			product.name_en = data['name_en']
+			product.category = data['category']
+			product.manufacturer = data['manufacturer']
+			product.name_cn = data['name_cn']
+			product.sku = data['sku']
+			product.barcode = data['barcode']
+			product.image_url = data['image_url']
+			product.package_length = data['package_length']
+			product.package_width = data['package_width']
+			product.package_height = data['package_height']
+			product.shipping_volume = data['shipping_volume']
+			product.weight = parse_decimal(data['weight'])
+			product.cost_rmb = parse_decimal(data['cost_rmb'])
+			product.cost_aud = parse_decimal(data['cost_aud'])
+			product.sea_shipping_cost = parse_decimal(data['sea_shipping_cost'])
+			product.total_cost = parse_decimal(data['total_cost'])
+			product.actual_price = parse_decimal(data['actual_price'])
+			product.profit = parse_decimal(data['profit'])
+			product.save()
+
+			return JsonResponse({'success': True})
+		except Product.DoesNotExist:
+			return JsonResponse({'success': False, 'error': '未找到产品'})
+		except json.JSONDecodeError:
+			return JsonResponse({'success': False, 'error': '无效的 JSON 格式'})
+		except Exception as e:
+			return JsonResponse({'success': False, 'error': str(e)})
+
+	return JsonResponse({'success': False, 'error': '仅支持 POST 请求'})

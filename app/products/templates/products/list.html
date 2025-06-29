@@ -37,7 +37,7 @@ select option {
 			<button type="button" class="bg-teal-600 px-4 py-2 rounded-md hover:bg-teal-700">Filter</button> -->
 			<!-- <button type="button" class="px-4 py-2 rounded-md hover:bg-gray-200">Import</button>
 			<button type="button" class="px-4 py-2 rounded-md hover:bg-gray-200">Export</button> -->
-			<button type="button" id="add-product-btn" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700" data-bs-toggle="modal" data-bs-target="#productModal">+ 添加产品</button>
+			<button type="button" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700" onclick="addProduct()">+ 添加产品</button>
 		</div>
 	</div>
 
@@ -47,6 +47,7 @@ select option {
 			<thead class="bg-gray-100">
 				<tr>
 					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
+					<th class="p-1 border border-gray-300">操作</th>
 					<th class="p-1 border border-gray-300">品种</th>
 					<th class="p-1 border border-gray-300">厂家</th>
 					<th class="p-1 border border-gray-300">产品英文名称</th>
@@ -70,6 +71,7 @@ select option {
 				</tr>
 				<tr>
 					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
+					<th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300">
 						<select data-col="1" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
@@ -110,6 +112,10 @@ select option {
 				{% for product in products %}
 				<tr class="hover:bg-gray-50">
 					<!-- <td class="p-1 border border-gray-300"><input type="checkbox" name="select_product" value="{{ product.id }}" /></td> -->
+					<td class="p-1 border border-gray-300">
+						<button class="text-blue-600 hover:underline" onclick="editProduct(`{{ product.id }}`)">编辑</button>
+						<button class="text-red-600 hover:underline ml-2" onclick="deleteProduct(`{{ product.id }}`)">删除</button>
+					</td>
 					<td class="p-1 border border-gray-300">{{ product.category | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.manufacturer | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.name_en | default:"" }}</td>
@@ -344,7 +350,17 @@ select option {
 			}
 
 			// 提交数据到服务器
-			fetch('/products/create/', {
+			let url;
+			if (productForm.dataset.editingId) {
+				// 编辑模式
+				const id = productForm.dataset.editingId;
+				url = '/products/update/' + id + '/';
+				delete productForm.dataset.editingId;  // 清除编辑状态
+			} else {
+				// 创建新产品
+				url = '/products/create/';
+			}
+			fetch(url, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -373,7 +389,7 @@ select option {
 			.then(response => response.json())
 			.then(data => {
 				if (data.success) {
-					alert('产品已成功添加');
+					alert('产品已保存成功');
 					location.reload();  // 刷新页面显示新数据
 				} else {
 					alert('添加失败: ' + (data.error || '未知错误'));
@@ -392,5 +408,73 @@ select option {
 			modal.hide();
 		});
 	});
+
+	function addProduct() {
+		// 清空表单
+		document.getElementById('product-form').reset();
+		document.getElementById('product-form').dataset.editingId = '';  // 清除编辑状态
+
+		// 打开 modal
+		document.getElementById('productModalLabel').textContent = '添加产品';
+		const modal = new bootstrap.Modal(document.getElementById('productModal'));
+		modal.show();
+	}
+
+	function deleteProduct(id) {
+		if (confirm(`确认删除产品`)) {
+			// 调用后端删除接口
+			fetch(`/products/delete/${id}/`, {
+				method: 'POST',
+			}).then(res => {
+				if (res.ok) location.reload();
+				else alert('删除失败');
+			});
+		}
+	}
+
+	function editProduct(id) {
+		fetch(`/products/detail/${id}/`)
+		.then(res => res.json())
+		.then(data => {
+			if (!data.success) {
+				alert('获取产品信息失败: ' + data.error);
+				return;
+			}
+
+			const product = data.product;
+
+			// 填充表单
+			document.getElementById('name_en').value = product.name_en || '';
+			document.getElementById('category').value = product.category || '';
+			document.getElementById('manufacturer').value = product.manufacturer || '';
+			document.getElementById('name_cn').value = product.name_cn || '';
+			document.getElementById('sku').value = product.sku || '';
+			document.getElementById('barcode').value = product.barcode || '';
+			document.getElementById('image_url').value = product.image_url || '';
+			document.getElementById('package_length').value = product.package_length || '';
+			document.getElementById('package_width').value = product.package_width || '';
+			document.getElementById('package_height').value = product.package_height || '';
+			document.getElementById('shipping_volume').value = product.shipping_volume || '';
+			document.getElementById('weight').value = product.weight || '';
+			document.getElementById('cost_rmb').value = product.cost_rmb || '';
+			document.getElementById('cost_aud').value = product.cost_aud || '';
+			document.getElementById('sea_shipping_cost').value = product.sea_shipping_cost || '';
+			document.getElementById('total_cost').value = product.total_cost || '';
+			document.getElementById('actual_price').value = product.actual_price || '';
+			document.getElementById('profit').value = product.profit || '';
+
+			// 标记当前是编辑状态
+			document.getElementById('product-form').dataset.editingId = id;
+
+			// 打开 modal
+			document.getElementById('productModalLabel').textContent = '编辑产品';
+			const modal = new bootstrap.Modal(document.getElementById('productModal'));
+			modal.show();
+		})
+		.catch(error => {
+			console.error('获取产品出错:', error);
+			alert('无法获取产品数据');
+		});
+	}
 </script>
 {% endblock %}
