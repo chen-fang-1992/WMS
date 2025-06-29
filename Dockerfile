@@ -1,5 +1,7 @@
 FROM python:3.11-slim
 
+ENV PYTHONUNBUFFERED=1
+
 # 安装系统构建依赖
 RUN apt-get update && apt-get install -y \
     gcc \
