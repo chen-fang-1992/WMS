@@ -1,5 +1,7 @@
 from django.shortcuts import render
-from ..inbounds.models import Inbound, InboundLine, Product
+from ..inbounds.models import Inbound, InboundLine
+from ..products.models import Product
+from ..stocks.models import Stock
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -28,6 +30,7 @@ def create_inbound(request):
 				quantity=item.get('quantity', 0)
 			)
 
+		Stock.recalculate_all()
 		return JsonResponse({'success': True})
 
 	return JsonResponse({'success': False, 'error': 'Invalid method'})
@@ -41,6 +44,7 @@ def delete_inbound(request, id):
 				return JsonResponse({'success': False, 'error': '未找到入库'})
 
 			inbound.delete()
+			Stock.recalculate_all()
 			return JsonResponse({'success': True})
 		
 		except json.JSONDecodeError:
@@ -109,6 +113,7 @@ def update_inbound(request, id):
 					except Product.DoesNotExist:
 						continue  # 如果产品ID无效，就跳过这条
 
+			Stock.recalculate_all()
 			return JsonResponse({'success': True})
 
 		except Inbound.DoesNotExist:

@@ -1,5 +1,7 @@
 from django.shortcuts import render
-from ..orders.models import Order, OrderLine, Product
+from ..orders.models import Order, OrderLine
+from ..products.models import Product
+from ..stocks.models import Stock
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -28,6 +30,7 @@ def create_order(request):
 				quantity=item.get('quantity', 0)
 			)
 
+		Stock.recalculate_all()
 		return JsonResponse({'success': True})
 
 	return JsonResponse({'success': False, 'error': 'Invalid method'})
@@ -41,6 +44,7 @@ def delete_order(request, id):
 				return JsonResponse({'success': False, 'error': '未找到订单'})
 
 			order.delete()
+			Stock.recalculate_all()
 			return JsonResponse({'success': True})
 		
 		except json.JSONDecodeError:
@@ -109,6 +113,7 @@ def update_order(request, id):
 					except Product.DoesNotExist:
 						continue  # 如果产品ID无效，就跳过这条
 
+			Stock.recalculate_all()
 			return JsonResponse({'success': True})
 
 		except Order.DoesNotExist:

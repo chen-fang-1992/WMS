@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+th {
+	vertical-align: middle;
+	line-height: 1;
+	font-weight: 600;
+	font-size: 0.75rem;
+	text-align: center;
+	white-space: normal;
+	word-break: keep-all;
+}
+td {
+	font-size: 0.75rem;
+	text-align: center;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+select option {
+	text-align-last: center;
+}
+.text-green-600 {
+	color: #16a34a !important;
+}
+.text-red-600 {
+	color: #dc2626 !important;
+}
+</style>
+
+<div class="container mx-auto p-1">
+	<h1 class="font-semibold text-teal-700 text-lg pb-2">库存列表</h1>
+
+	<!-- 顶部操作栏 -->
+	<div class="flex items-center justify-between mt-4">
+		<div class="flex items-center space-x-2">
+			<!-- <button type="button" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700" onclick="addStock()">+ 添加库存</button> -->
+		</div>
+	</div>
+
+	<!-- 表格区域 -->
+	<div class="mt-4 bg-white shadow-md rounded-lg w-full overflow-x-auto">
+		<table class="w-full border-collapse text-sm w-100">
+			<colgroup>
+				<col style="width: 15%;">
+				<col style="width: 45%;">
+				<col style="width: 40%;">
+			</colgroup>
+			<thead class="bg-gray-100">
+				<tr>
+					<th class="p-1 border border-gray-300">操作</th>
+					<th class="p-1 border border-gray-300">产品</th>
+					<th class="p-1 border border-gray-300">数量</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for stock in stocks %}
+				<tr class="hover:bg-gray-50">
+					<td class="p-1 border border-gray-300">
+						<button class="text-blue-600 hover:underline" onclick="viewStock(`{{ stock.id }}`)">查看</button>
+					</td>
+					<td class="p-1 border border-gray-300">{{ stock.product | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ stock.quantity | default:"" }}</td>
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="21" class="p-1 text-center text-gray-500">没有库存数据。</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal fade" id="stockModal" tabindex="-1" aria-labelledby="stockModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="stockModalLabel">查看库存</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<h6 class="mt-3">变动记录</h6>
+				<table class="table table-bordered text-sm" id="product-table">
+					<colgroup>
+						<col style="width: 20%;">
+						<col style="width: 20%;">
+						<col style="width: 20%;">
+						<col style="width: 20%;">
+						<col style="width: 20%;">
+					</colgroup>
+					<thead>
+						<tr>
+							<th>日期</th>
+							<th>参考号</th>
+							<th>入库</th>
+							<th>出库</th>
+							<th>总计</th>
+						</tr>
+					</thead>
+					<tbody id="product-table-body">
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	function viewStock(id) {
+		fetch(`/stocks/detail/${id}/`)
+		.then(res => res.json())
+		.then(data => {
+			if (!data.success) {
+				alert('获取库存信息失败: ' + data.error);
+				return;
+			}
+
+			const stock = data.stock;
+			const tbody = document.getElementById('product-table-body');
+			tbody.innerHTML = '';  // 清空旧行
+
+			let balance = 0;
+
+			stock.history.forEach(item => {
+				balance += item.quantity;
+
+				const isInbound = item.quantity >= 0;
+				const inboundQty = isInbound ? item.quantity : '';
+				const outboundQty = !isInbound ? -item.quantity : '';
+
+				const row = document.createElement('tr');
+				row.innerHTML = `
+					<td>${item.date}</td>
+					<td>${item.reference}</td>
+					<td class="text-green-600">${inboundQty}</td>
+					<td class="text-red-600">${outboundQty}</td>
+					<td>${balance}</td>
+				`;
+				tbody.appendChild(row);
+			});
+
+			document.getElementById('stockModalLabel').textContent = `查看库存 - ${stock.product}`;
+			const modal = new bootstrap.Modal(document.getElementById('stockModal'));
+			modal.show();
+		})
+		.catch(error => {
+			console.error('获取库存出错:', error);
+			alert('无法获取库存数据');
+		});
+	}
+</script>
+{% endblock %}
