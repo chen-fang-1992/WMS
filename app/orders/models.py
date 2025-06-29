@@ -8,6 +8,21 @@ class Order(models.Model):
 	# 日期
 	date = models.CharField(max_length=50, null=True, blank=True)
 
+	# 联系人
+	contact_name = models.CharField(max_length=100, null=True, blank=True)
+
+	# 地址
+	address = models.TextField(null=True, blank=True)
+
+	# 路线记录
+	route_record = models.TextField(null=True, blank=True)
+
+	# 备注
+	notes = models.TextField(null=True, blank=True)
+
+	# 订单状态
+	status = models.CharField(max_length=50, null=True, blank=True)
+
 	class Meta:
 		db_table = 'tms_order'
 		verbose_name = 'Order'

@@ -17,10 +17,16 @@ def create_order(request):
 	if request.method == 'POST':
 		data = json.loads(request.body)
 		reference = data.get('reference')
+		contact_name = data.get('contact_name')
+		address = data.get('address')
+		route_record = data.get('route_record')
+		notes = data.get('notes')
+		status = data.get('status')
 		date = data.get('date')
 		products = data.get('products', [])
 
-		order = Order.objects.create(reference=reference, date=date)
+		order = Order.objects.create(reference=reference, date=date, contact_name=contact_name, 
+			address=address, route_record=route_record, notes=notes, status=status)
 
 		for item in products:
 			product = Product.objects.filter(id=item.get('product_id')).first()
@@ -65,6 +71,11 @@ def order_detail(request, id):
 				'id': order.id,
 				'reference': order.reference,
 				'date': str(order.date),
+				'contact_name': order.contact_name,
+				'address': order.address,
+				'route_record': order.route_record,
+				'notes': order.notes,
+				'status': order.status,
 				'products': [
 					{
 						'product_id': line.product.id,
@@ -87,11 +98,21 @@ def update_order(request, id):
 
 			reference = data.get('reference')
 			date = data.get('date')
+			contact_name = data.get('contact_name')
+			address = data.get('address')
+			route_record = data.get('route_record')
+			notes = data.get('notes')
+			status = data.get('status')
 			products = data.get('products', [])
 
 			order = Order.objects.get(id=id)
 			order.reference = reference
 			order.date = date
+			order.contact_name = contact_name
+			order.address = address
+			order.route_record = route_record
+			order.notes = notes
+			order.status = status
 			order.save()
 
 			# 删除旧的明细行
