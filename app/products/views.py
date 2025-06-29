@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from decimal import Decimal, InvalidOperation
+from django.db.models import Q
 
 def list(request):
 	products = Product.objects.all()
@@ -116,3 +117,26 @@ def update_product(request, id):
 			return JsonResponse({'success': False, 'error': str(e)})
 
 	return JsonResponse({'success': False, 'error': '仅支持 POST 请求'})
+
+def search_products(request):
+	q = request.GET.get('q', '')
+	results = []
+
+	if q:
+		products = Product.objects.filter(
+			Q(name_cn__icontains=q) |
+			Q(name_en__icontains=q) |
+			Q(barcode__icontains=q)
+		)[:50]  # 限制最多返回50条
+
+		results = [
+			{
+				'id': p.id,
+				'name_cn': p.name_cn,
+				'name_en': p.name_en,
+				'barcode': p.barcode
+			}
+			for p in products
+		]
+
+	return JsonResponse({'results': results})
