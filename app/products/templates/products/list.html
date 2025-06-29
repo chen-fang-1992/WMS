@@ -263,25 +263,53 @@ select option {
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
 		const productTable = document.querySelector('tbody');
 
-		filterVarietys.forEach(filterVariety => {
-			filterVariety.addEventListener('change', function () {
-				const selectedVarieties = Array.from(filterVariety.selectedOptions).map(option => option.value);
-				const rows = productTable.querySelectorAll('tr');
+		function applyFilters() {
+			const filters = {};
 
-				rows.forEach(row => {
-					const varietyCell = row.querySelector('td:nth-child(' + filterVariety.dataset.col + ')');
-					if (varietyCell) {
-						const variety = varietyCell.textContent.trim();
-						if (selectedVarieties.length === 0 || selectedVarieties.includes(variety) || selectedVarieties.includes('所有')) {
-							row.style.display = '';
-						} else if (variety === '' && selectedVarieties.includes('空')) {
-							row.style.display = '';
-						} else {
-							row.style.display = 'none';
-						}
-					}
-				});
+			// 收集所有筛选器的选择
+			filterVarietys.forEach(select => {
+				const colIndex = parseInt(select.dataset.col);
+				const selectedValues = Array.from(select.selectedOptions).map(opt => opt.value);
+				filters[colIndex] = selectedValues;
 			});
+
+			const rows = productTable.querySelectorAll('tr');
+			rows.forEach(row => {
+				let visible = true;
+
+				for (const [col, selectedValues] of Object.entries(filters)) {
+					const cell = row.querySelector(`td:nth-child(${col})`);
+					if (!cell) continue;
+
+					const cellText = cell.textContent.trim();
+
+					if (
+						!selectedValues.includes('所有') &&
+						!(
+							selectedValues.includes(cellText) ||
+							(cellText === '' && selectedValues.includes('空'))
+						)
+					) {
+						visible = false;
+						break;
+					}
+				}
+
+				row.style.display = visible ? '' : 'none';
+			});
+		}
+
+		// 绑定所有 select 的事件
+		filterVarietys.forEach(select => {
+			select.addEventListener('change', applyFilters);
+		});
+
+		// 可选：初始化默认值为“所有”
+		filterVarietys.forEach(select => {
+			const allOption = select.querySelector('option[value="所有"]');
+			if (allOption) {
+				allOption.selected = true;
+			}
 		});
 
 		const productForm = document.getElementById('product-form');
