@@ -5,7 +5,7 @@ from ..orders.models import OrderLine
 
 class Stock(models.Model):
 	# 产品ID
-	product = models.ForeignKey(Product, on_delete=models.CASCADE, unique=True)
+	product = models.OneToOneField(Product, on_delete=models.CASCADE)
 
 	# 数量
 	quantity = models.PositiveIntegerField()
