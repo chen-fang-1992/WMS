@@ -1,17 +1,4 @@
 services:
-  db:
-    image: mariadb:10.6
-    container_name: mariadb
-    environment:
-      MYSQL_DATABASE: mydb
-      MYSQL_USER: myuser
-      MYSQL_PASSWORD: mypassword
-      MYSQL_ROOT_PASSWORD: rootpassword
-    ports:
-      - "3307:3306"
-    volumes:
-      - mariadb_data:/var/lib/mysql
-
   web:
     build: .
     container_name: django_app
@@ -22,8 +9,3 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    depends_on:
-      - db
-
-volumes:
-  mariadb_data:
