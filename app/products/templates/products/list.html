@@ -73,7 +73,7 @@ select option {
 					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
 					<th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300">
-						<select class="filter-variety border border-gray-300 p-1 rounded">
+						<select data-col="1" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
 							{% for category in categories %}
 								<option value="{{ category }}">{{ category }}</option>
@@ -81,7 +81,7 @@ select option {
 						</select>
 					</th>
 					<th class="p-1 border border-gray-300">
-						<select class="filter-variety border border-gray-300 p-1 rounded">
+						<select data-col="2" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
 							{% for manufacturer in manufacturers %}
 								<option value="{{ manufacturer }}">{{ manufacturer }}</option>
