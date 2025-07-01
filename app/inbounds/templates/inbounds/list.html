@@ -86,7 +86,7 @@ select option {
 						<button class="text-red-600 hover:underline ml-2" onclick="deleteInbound(`{{ inbound.id }}`)">删除</button>
 					</td>
 					<td class="p-1 border border-gray-300">{{ inbound.reference | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ inbound.date | default_if_none:"" | date:"d/m/Y" }}</td>
+					<td class="p-1 border border-gray-300">{{ inbound.date | default:"" }}</td>
 				</tr>
 				{% empty %}
 				<tr>
