@@ -1,3 +1,20 @@
+<style>
+#productModal {
+	font-size: 0.85em;
+}
+#productModal input {
+	font-size: 1.1em;
+	border-radius: 0.375rem !important;
+}
+#productModal input:not(:read-only) {
+	border: 2px solid black;
+}
+#productModal input:is(:read-only) {
+	background-color: #f8f9fa;
+	border: 1px dashed #ccc;
+	pointer-events: none;
+}
+</style>
 <!-- 弹窗 -->
 <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
 	<div class="modal-dialog modal-lg">
@@ -29,39 +46,31 @@
 						</div>
 					</div>
 					<div class="row mb-3">
-						<div class="col-md-3">
+						<div class="col-md-6">
 							<label for="sku" class="form-label">SKU</label>
 							<input type="text" class="form-control" id="sku" required>
 						</div>
-						<div class="col-md-3">
+						<div class="col-md-6">
 							<label for="barcode" class="form-label">条码</label>
 							<input type="text" class="form-control" id="barcode" required>
-						</div>
-						<div class="col-md-6">
-							<label for="image_url" class="form-label">图片 URL</label>
-							<input type="text" class="form-control" id="image_url">
 						</div>
 					</div>
 					<div class="row mb-3">
 						<div class="col-md-2">
-							<label for="package_length" class="form-label">包装长度 (cm)</label>
-							<input type="text" class="form-control" id="package_length">
-						</div>
-						<div class="col-md-2">
-							<label for="package_length" class="form-label">包装宽度 (cm)</label>
-							<input type="text" class="form-control" id="package_width">
-						</div>
-						<div class="col-md-2">
-							<label for="package_length" class="form-label">包装高度 (cm)</label>
-							<input type="text" class="form-control" id="package_height">
-						</div>
-						<div class="col-md-2">
-							<label for="shipping_volume" class="form-label">运费体积 (m³)</label>
-							<input type="text" class="form-control" id="shipping_volume">
-						</div>
-						<div class="col-md-2">
 							<label for="weight" class="form-label">重量 (kg)</label>
 							<input type="text" class="form-control" id="weight">
+						</div>
+						<div class="col-md-8">
+							<label class="form-label">包装尺寸 (长 × 宽 × 高 cm) = 运费体积 (m³)</label>
+							<div class="input-group">
+								<input type="number" min="1" step="1" class="form-control" id="package_length" placeholder="长">
+								<span class="input-group-text">×</span>
+								<input type="number" min="1" step="1" class="form-control" id="package_width" placeholder="宽">
+								<span class="input-group-text">×</span>
+								<input type="number" min="1" step="1" class="form-control" id="package_height" placeholder="高">
+								<span class="input-group-text">=</span>
+								<input type="text" class="form-control" id="shipping_volume" placeholder="运费体积" readonly>
+							</div>
 						</div>
 					</div>
 					<div class="row mb-3">
@@ -69,17 +78,15 @@
 							<label for="cost_rmb" class="form-label">进价人民币 (¥)</label>
 							<input type="text" class="form-control" id="cost_rmb">
 						</div>
-						<div class="col-md-2">
-							<label for="cost_aud" class="form-label">进价澳币 (A$)</label>
-							<input type="text" class="form-control" id="cost_aud">
-						</div>
-						<div class="col-md-2">
-							<label for="sea_shipping_cost" class="form-label">海运成本 (A$)</label>
-							<input type="text" class="form-control" id="sea_shipping_cost">
-						</div>
-						<div class="col-md-2">
-							<label for="total_cost" class="form-label">实际成本 (A$)</label>
-							<input type="text" class="form-control" id="total_cost">
+						<div class="col-md-6">
+							<label for="cost_aud" class="form-label">进价澳币 (A$) + 海运成本 (A$) = 实际成本 (A$)</label>
+							<div class="input-group">
+								<input type="text" class="form-control" id="cost_aud" readonly>
+								<span class="input-group-text">+</span>
+								<input type="text" class="form-control" id="sea_shipping_cost" readonly>
+								<span class="input-group-text">=</span>
+								<input type="text" class="form-control" id="total_cost" readonly>
+							</div>
 						</div>
 						<div class="col-md-2">
 							<label for="actual_price" class="form-label">实际售价 (A$)</label>
@@ -87,7 +94,7 @@
 						</div>
 						<div class="col-md-2">
 							<label for="profit" class="form-label">实际利润 (A$)</label>
-							<input type="text" class="form-control" id="profit">
+							<input type="text" class="form-control" id="profit" readonly>
 						</div>
 					</div>
 				</div>
@@ -101,6 +108,11 @@
 
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
+		document.getElementById('package_length').addEventListener('input', calculateVolume);
+		document.getElementById('package_width').addEventListener('input', calculateVolume);
+		document.getElementById('package_height').addEventListener('input', calculateVolume);
+		document.getElementById('cost_rmb').addEventListener('input', calculateVolume);
+
 		const productForm = document.getElementById('product-form');
 
 		// 提交表单
@@ -113,7 +125,6 @@
 			const name_cn = document.getElementById('name_cn').value;
 			const sku = document.getElementById('sku').value;
 			const barcode = document.getElementById('barcode').value;
-			const image_url = document.getElementById('image_url').value;
 			const package_length = document.getElementById('package_length').value;
 			const package_width = document.getElementById('package_width').value;
 			const package_height = document.getElementById('package_height').value;
@@ -155,7 +166,6 @@
 					name_cn: name_cn,
 					sku: sku,
 					barcode: barcode,
-					image_url: image_url,
 					package_length: package_length,
 					package_width: package_width,
 					package_height: package_height,
@@ -230,18 +240,17 @@
 			document.getElementById('name_cn').value = product.name_cn || '';
 			document.getElementById('sku').value = product.sku || '';
 			document.getElementById('barcode').value = product.barcode || '';
-			document.getElementById('image_url').value = product.image_url || '';
-			document.getElementById('package_length').value = product.package_length || '';
-			document.getElementById('package_width').value = product.package_width || '';
-			document.getElementById('package_height').value = product.package_height || '';
+			document.getElementById('package_length').value = product.package_length == 0 ? '' : product.package_length;
+			document.getElementById('package_width').value = product.package_width == 0 ? '' : product.package_width;
+			document.getElementById('package_height').value = product.package_height == 0 ? '' : product.package_height;
 			document.getElementById('shipping_volume').value = product.shipping_volume || '';
-			document.getElementById('weight').value = product.weight || '';
-			document.getElementById('cost_rmb').value = product.cost_rmb || '';
-			document.getElementById('cost_aud').value = product.cost_aud || '';
-			document.getElementById('sea_shipping_cost').value = product.sea_shipping_cost || '';
-			document.getElementById('total_cost').value = product.total_cost || '';
-			document.getElementById('actual_price').value = product.actual_price || '';
-			document.getElementById('profit').value = product.profit || '';
+			document.getElementById('weight').value = product.weight == 0 ? '' : product.weight;
+			document.getElementById('cost_rmb').value = product.cost_rmb == 0 ? '' : product.cost_rmb;
+			document.getElementById('cost_aud').value = product.cost_aud == 0 ? '' : product.cost_aud;
+			document.getElementById('sea_shipping_cost').value = product.sea_shipping_cost == 0 ? '' : product.sea_shipping_cost;
+			document.getElementById('total_cost').value = product.total_cost == 0 ? '' : product.total_cost;
+			document.getElementById('actual_price').value = product.actual_price == 0 ? '' : product.actual_price;
+			document.getElementById('profit').value = product.profit == 0 ? '' : product.profit;
 
 			// 标记当前是编辑状态
 			document.getElementById('product-form').dataset.editingId = id;
@@ -255,5 +264,39 @@
 			console.error('获取产品出错:', error);
 			alert('无法获取产品数据');
 		});
+	}
+
+	function calculateVolume() {
+		const l = document.getElementById('package_length').value || 0;
+		const w = document.getElementById('package_width').value || 0;
+		const h = document.getElementById('package_height').value || 0;
+		if (isNaN(l) || isNaN(w) || isNaN(h)) {
+			document.getElementById('shipping_volume').value = '';
+			return;
+		}
+		let volume = (l * w * h) / 1000000;  // cm³ to m³
+		document.getElementById('shipping_volume').value = volume > 0 ? volume.toFixed(3) : '';
+		let sea_shipping_cost = volume * 161;
+		document.getElementById('sea_shipping_cost').value = sea_shipping_cost > 0 ? sea_shipping_cost.toFixed(2) : '';
+
+		const cost_rmb = parseFloat(document.getElementById('cost_rmb').value);
+		if (!isNaN(cost_rmb) && cost_rmb > 0) {
+			const cost_aud = cost_rmb / 4.5;
+			document.getElementById('cost_aud').value = cost_aud.toFixed(2);
+		}
+
+		const final_cost_aud = parseFloat(document.getElementById('cost_aud').value);
+		const final_sea_cost = parseFloat(document.getElementById('sea_shipping_cost').value);
+		if (!isNaN(final_cost_aud) && !isNaN(final_sea_cost)) {
+			const total_cost = final_cost_aud + final_sea_cost;
+			document.getElementById('total_cost').value = total_cost.toFixed(2);
+		}
+
+		const total_cost = parseFloat(document.getElementById('total_cost').value);
+		const actual_price = parseFloat(document.getElementById('actual_price').value);
+		if (!isNaN(actual_price) && !isNaN(total_cost)) {
+			const profit = actual_price - total_cost;
+			document.getElementById('profit').value = profit.toFixed(2);
+		}
 	}
 </script>

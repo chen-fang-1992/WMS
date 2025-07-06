@@ -31,7 +31,6 @@ def create_product(request):
 			name_cn = data['name_cn'],
 			sku = data['sku'],
 			barcode = data['barcode'],
-			image_url = data['image_url'],
 			package_length = data['package_length'],
 			package_width = data['package_width'],
 			package_height = data['package_height'],
@@ -94,7 +93,6 @@ def update_product(request, id):
 			product.name_cn = data['name_cn']
 			product.sku = data['sku']
 			product.barcode = data['barcode']
-			product.image_url = data['image_url']
 			product.package_length = data['package_length']
 			product.package_width = data['package_width']
 			product.package_height = data['package_height']
