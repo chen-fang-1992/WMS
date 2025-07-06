@@ -17,8 +17,18 @@ td {
 	vertical-align: middle;
 	white-space: nowrap;
 }
+td.long-text {
+	word-break: break-word;
+	white-space: normal;
+}
 select option {
 	text-align-last: center;
+}
+.filter-input {
+	width: 100%;
+}
+table {
+	width: 100%;
 }
 </style>
 
@@ -43,7 +53,7 @@ select option {
 
 	<!-- 表格区域 -->
 	<div class="mt-4 bg-white shadow-md rounded-lg">
-		<table class="min-w-max w-full border-collapse text-sm">
+		<table class="min-w-max border-collapse text-sm">
 			<thead class="bg-gray-100">
 				<tr>
 					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
@@ -54,7 +64,7 @@ select option {
 					<th class="p-1 border border-gray-300">产品名称</th>
 					<th class="p-1 border border-gray-300">SKU</th>
 					<th class="p-1 border border-gray-300">条码</th>
-					<th class="p-1 border border-gray-300">图片</th>
+					<!-- <th class="p-1 border border-gray-300">图片</th>
 					<th class="p-1 border border-gray-300">包装尺寸<br>(长×宽×高 cm)</th>
 					<th class="p-1 border border-gray-300">运费体积<br>(m³)</th>
 					<th class="p-1 border border-gray-300">重量<br>(kg)</th>
@@ -67,7 +77,7 @@ select option {
 					<th class="p-1 border border-gray-300">3倍售价<br>(A$)</th>
 					<th class="p-1 border border-gray-300">实际售价<br>(A$)</th>
 					<th class="p-1 border border-gray-300">售价*0.75<br>(折后)</th>
-					<th class="p-1 border border-gray-300">实际利润<br>(A$)</th>
+					<th class="p-1 border border-gray-300">实际利润<br>(A$)</th> -->
 				</tr>
 				<tr>
 					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
@@ -88,6 +98,19 @@ select option {
 							{% endfor %}
 						</select>
 					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-col="3" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-col="4" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-col="5" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-col="6" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<!-- <th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300"></th>
@@ -100,12 +123,7 @@ select option {
 					<th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300"></th> -->
 				</tr>
 			</thead>
 			<tbody>
@@ -118,11 +136,11 @@ select option {
 					</td>
 					<td class="p-1 border border-gray-300">{{ product.category | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.manufacturer | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.name_en | default:"" }}</td>
+					<td class="p-1 border border-gray-300 long-text">{{ product.name_en | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.name_cn | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.sku | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.barcode | default:"" }}</td>
-					<td class="p-1 border border-gray-300">
+					<!-- <td class="p-1 border border-gray-300">
 						{% if product.image_url %}
 							<img src="{{ product.image_url }}" alt="Image" class="w-16 h-16 object-cover rounded mx-auto" />
 						{% else %}
@@ -141,7 +159,7 @@ select option {
 					<td class="p-1 border border-gray-300">{{ product.price_3x | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.actual_price | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.discounted_price | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.profit | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ product.profit | default:"" }}</td> -->
 				</tr>
 				{% empty %}
 				<tr>
@@ -267,37 +285,54 @@ select option {
 	// });
 	document.addEventListener('DOMContentLoaded', function () {
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
+		const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
 		const productTable = document.querySelector('tbody');
 
-		function applyFilters() {
+		function applyAllFilters() {
 			const filters = {};
 
-			// 收集所有筛选器的选择
+			// 收集下拉筛选器
 			filterVarietys.forEach(select => {
 				const colIndex = parseInt(select.dataset.col);
 				const selectedValues = Array.from(select.selectedOptions).map(opt => opt.value);
-				filters[colIndex] = selectedValues;
+				filters[colIndex] = { type: 'select', values: selectedValues };
+			});
+
+			// 收集文本输入筛选器
+			filterInputs.forEach(input => {
+				const colIndex = parseInt(input.dataset.col);
+				const keyword = input.value.trim().toLowerCase();
+				if (keyword) {
+					filters[colIndex] = { type: 'text', keyword: keyword };
+				}
 			});
 
 			const rows = productTable.querySelectorAll('tr');
 			rows.forEach(row => {
 				let visible = true;
 
-				for (const [col, selectedValues] of Object.entries(filters)) {
+				for (const [col, filter] of Object.entries(filters)) {
 					const cell = row.querySelector(`td:nth-child(${parseInt(col) + 1})`);
 					if (!cell) continue;
 
 					const cellText = cell.textContent.trim();
 
-					if (
-						!selectedValues.includes('所有') &&
-						!(
-							selectedValues.includes(cellText) ||
-							(cellText === '' && selectedValues.includes('空'))
-						)
-					) {
-						visible = false;
-						break;
+					if (filter.type === 'select') {
+						if (
+							!filter.values.includes('所有') &&
+							!(
+								filter.values.includes(cellText) ||
+								(cellText === '' && filter.values.includes('空'))
+							)
+						) {
+							visible = false;
+							break;
+						}
+					} else if (filter.type === 'text') {
+						if (!cellText.match(new RegExp(filter.keyword, 'i'))) {
+							visible = false;
+							break;
+						}
 					}
 				}
 
@@ -305,9 +340,14 @@ select option {
 			});
 		}
 
-		// 绑定所有 select 的事件
+		// 输入事件绑定
+		filterInputs.forEach(input => {
+			input.addEventListener('input', applyAllFilters);
+		});
+
+		// 下拉框事件绑定替换
 		filterVarietys.forEach(select => {
-			select.addEventListener('change', applyFilters);
+			select.addEventListener('change', applyAllFilters);
 		});
 
 		// 可选：初始化默认值为“所有”
