@@ -2,6 +2,9 @@
 
 {% block content %}
 <style>
+table {
+	width: 100%;
+}
 th {
 	vertical-align: middle;
 	line-height: 1;
@@ -211,6 +214,10 @@ select option {
 		// 清空表单
 		document.getElementById('inbound-form').reset();
 		document.getElementById('inbound-form').dataset.editingId = '';  // 清除编辑状态
+
+		// 清空旧行
+		const tbody = document.getElementById('product-table-body');
+		tbody.innerHTML = '';
 
 		// 打开 modal
 		document.getElementById('inboundModalLabel').textContent = '添加入库';

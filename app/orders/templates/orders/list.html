@@ -2,6 +2,9 @@
 
 {% block content %}
 <style>
+table {
+	width: 100%;
+}
 th {
 	vertical-align: middle;
 	line-height: 1;
@@ -262,6 +265,10 @@ select option {
 		// 清空表单
 		document.getElementById('order-form').reset();
 		document.getElementById('order-form').dataset.editingId = '';  // 清除编辑状态
+
+		// 清空旧行
+		const tbody = document.getElementById('product-table-body');
+		tbody.innerHTML = '';
 
 		// 打开 modal
 		document.getElementById('orderModalLabel').textContent = '添加订单';

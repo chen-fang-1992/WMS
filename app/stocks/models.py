@@ -38,7 +38,7 @@ class Stock(models.Model):
 		# 更新数据库
 		for product_id, quantity in stock_data.items():
 			product = Product.objects.get(id=product_id)
-			stock, _ = cls.objects.get_or_create(product=product)
+			stock, _ = cls.objects.get_or_create(product=product, defaults={'quantity': 0})
 			stock.quantity = max(quantity, 0)  # 避免负库存
 			stock.save()
 
