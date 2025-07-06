@@ -11,7 +11,8 @@ def list(request):
 	products = Product.objects.all()
 	categories = Product.get_all_categories()
 	manufacturers = Product.get_all_manufacturers()
-	return render(request, 'products/list.html', {'products': products, 'categories': categories, 'manufacturers': manufacturers})
+	types = Product.get_all_types()
+	return render(request, 'products/list.html', {'products': products, 'types': types, 'categories': categories, 'manufacturers': manufacturers})
 
 def parse_decimal(value):
 	try:
@@ -26,6 +27,7 @@ def create_product(request):
 
 		Product.objects.create(
 			name_en = data['name_en'],
+			type = data['type'],
 			category = data['category'],
 			manufacturer = data['manufacturer'],
 			name_cn = data['name_cn'],
@@ -88,6 +90,7 @@ def update_product(request, id):
 		try:
 			product = Product.objects.get(id=id)
 			product.name_en = data['name_en']
+			product.type = data['type']
 			product.category = data['category']
 			product.manufacturer = data['manufacturer']
 			product.name_cn = data['name_cn']

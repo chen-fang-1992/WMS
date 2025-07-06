@@ -1,6 +1,9 @@
 from django.db import models
 
 class Product(models.Model):
+	#类型
+	type = models.CharField(max_length=50, null=True, blank=True)
+
 	# 品种
 	category = models.CharField(max_length=50, null=True, blank=True)
 
@@ -67,6 +70,11 @@ class Product(models.Model):
 		db_table = 'tms_product'
 		verbose_name = 'Product'
 		verbose_name_plural = 'Products'
+
+	@classmethod
+	def get_all_types(cls):
+		types = ['成品', '组件']
+		return types
 
 	@classmethod
 	def get_all_categories(cls):

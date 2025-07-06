@@ -26,9 +26,18 @@
 				</div>
 				<div class="modal-body">
 					<div class="row mb-3">
-						<div class="col-md-12">
+						<div class="col-md-9">
 							<label for="name_en" class="form-label">产品英文名称</label>
 							<input type="text" class="form-control" id="name_en" required>
+						</div>
+						<div class="col-md-3">
+							<label for="type" class="form-label">类型</label>
+							<select class="form-select" id="type" required>
+								<option value="" disabled selected>请选择类型</option>
+								{% for type in types %}
+									<option value="{{ type }}">{{ type }}</option>
+								{% endfor %}
+							</select>
 						</div>
 					</div>
 					<div class="row mb-3">
@@ -119,6 +128,7 @@
 		productForm.addEventListener('submit', function (event) {
 			event.preventDefault();
 
+			const type = document.getElementById('type').value;
 			const category = document.getElementById('category').value;
 			const manufacturer = document.getElementById('manufacturer').value;
 			const name_en = document.getElementById('name_en').value;
@@ -138,7 +148,7 @@
 			const profit = document.getElementById('profit').value;
 
 			// 验证必填字段
-			if (!name_en || !category || !manufacturer || !name_cn || !sku || !barcode) {
+			if (!name_en || !type || !category || !manufacturer || !name_cn || !sku || !barcode) {
 				alert('请填写所有必填字段。');
 				return;
 			}
@@ -161,6 +171,7 @@
 				},
 				body: JSON.stringify({
 					name_en: name_en,
+					type: type,
 					category: category,
 					manufacturer: manufacturer,
 					name_cn: name_cn,
@@ -235,6 +246,7 @@
 
 			// 填充表单
 			document.getElementById('name_en').value = product.name_en || '';
+			document.getElementById('type').value = product.type || '';
 			document.getElementById('category').value = product.category || '';
 			document.getElementById('manufacturer').value = product.manufacturer || '';
 			document.getElementById('name_cn').value = product.name_cn || '';

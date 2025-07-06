@@ -24,7 +24,7 @@ td.long-text {
 	word-break: break-word;
 	white-space: normal;
 }
-select option {
+table select option {
 	text-align-last: center;
 }
 .filter-input {
@@ -58,6 +58,7 @@ select option {
 				<tr>
 					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
 					<th class="p-1 border border-gray-300">操作</th>
+					<th class="p-1 border border-gray-300">类型</th>
 					<th class="p-1 border border-gray-300">品种</th>
 					<th class="p-1 border border-gray-300">厂家</th>
 					<th class="p-1 border border-gray-300">产品英文名称</th>
@@ -85,21 +86,26 @@ select option {
 					<th class="p-1 border border-gray-300">
 						<select data-col="1" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
-							{% for category in categories %}
-								<option value="{{ category }}">{{ category }}</option>
+							{% for type in types %}
+								<option value="{{ type }}">{{ type }}</option>
 							{% endfor %}
 						</select>
 					</th>
 					<th class="p-1 border border-gray-300">
 						<select data-col="2" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
-							{% for manufacturer in manufacturers %}
-								<option value="{{ manufacturer }}">{{ manufacturer }}</option>
+							{% for category in categories %}
+								<option value="{{ category }}">{{ category }}</option>
 							{% endfor %}
 						</select>
 					</th>
 					<th class="p-1 border border-gray-300">
-						<input data-col="3" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+						<select data-col="3" class="filter-variety border border-gray-300 p-1 rounded">
+							<option value="所有">所有</option>
+							{% for manufacturer in manufacturers %}
+								<option value="{{ manufacturer }}">{{ manufacturer }}</option>
+							{% endfor %}
+						</select>
 					</th>
 					<th class="p-1 border border-gray-300">
 						<input data-col="4" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
@@ -109,6 +115,9 @@ select option {
 					</th>
 					<th class="p-1 border border-gray-300">
 						<input data-col="6" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-col="7" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<!-- <th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300"></th>
@@ -134,6 +143,7 @@ select option {
 						<button class="text-blue-600 hover:underline" onclick="editProduct(`{{ product.id }}`)">编辑</button>
 						<button class="text-red-600 hover:underline ml-2" onclick="deleteProduct(`{{ product.id }}`)">删除</button>
 					</td>
+					<td class="p-1 border border-gray-300">{{ product.type | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.category | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.manufacturer | default:"" }}</td>
 					<td class="p-1 border border-gray-300 long-text">{{ product.name_en | default:"" }}</td>
