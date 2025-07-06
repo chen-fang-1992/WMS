@@ -9,7 +9,7 @@ import json
 from django.forms.models import model_to_dict
 
 def list(request):
-	inbounds = Inbound.objects.all()
+	inbounds = Inbound.objects.all().order_by('-date')
 	return render(request, 'inbounds/list.html', {'inbounds': inbounds})
 
 @csrf_exempt
