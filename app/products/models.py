@@ -73,7 +73,7 @@ class Product(models.Model):
 
 	@classmethod
 	def get_all_types(cls):
-		types = ['成品', '组件']
+		types = ['成品(无BOM)', '成品(有BOM)', '组件']
 		return types
 
 	@classmethod
@@ -88,3 +88,26 @@ class Product(models.Model):
 
 	def __str__(self):
 		return f"{self.name_cn or self.name_en or self.sku}"
+
+class ProductBOM(models.Model):
+	product = models.ForeignKey(
+		'Product',
+		on_delete=models.CASCADE,
+		related_name='bom_items',  # 被这个产品“使用”的所有组件
+		verbose_name='成品'
+	)
+	component = models.ForeignKey(
+		'Product',
+		on_delete=models.CASCADE,
+		related_name='used_in_boms',  # 该组件在哪些成品中被使用
+		verbose_name='组件'
+	)
+	quantity = models.IntegerField(default=1, verbose_name='用量')
+
+	class Meta:
+		db_table = 'tms_product_bom'
+		verbose_name = '产品BOM'
+		verbose_name_plural = '产品BOM'
+
+	def __str__(self):
+		return f"{self.product} ← {self.component} x {self.quantity}"

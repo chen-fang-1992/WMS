@@ -14,6 +14,36 @@
 	border: 1px dashed #ccc;
 	pointer-events: none;
 }
+.autocomplete-suggestions {
+	position: absolute;
+	background-color: white;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	z-index: 9999;
+	max-height: 200px;
+	overflow-y: auto;
+	width: 100%;
+	margin-top: 2px;
+	padding: 4px 0;
+	display: none;
+}
+
+.autocomplete-option {
+	padding: 8px 12px;
+	font-size: 0.85rem;
+	border-bottom: 1px solid #eee;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.autocomplete-option:last-child {
+	border-bottom: none;
+}
+
+.autocomplete-option:hover {
+	background-color: #f0f0f0;
+}
 </style>
 <!-- 弹窗 -->
 <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
@@ -106,6 +136,21 @@
 							<input type="text" class="form-control" id="profit" readonly>
 						</div>
 					</div>
+					<div id="bom-section" style="display: none;">
+						<h6 class="mt-3">BOM 组件</h6>
+						<table class="table table-bordered text-sm" id="bom-table">
+							<thead>
+								<tr>
+									<th>组件产品</th>
+									<th>数量</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody id="bom-table-body">
+							</tbody>
+						</table>
+						<button type="button" class="btn btn-sm btn-secondary" onclick="addBOMRow()">+ 添加行</button>
+					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="submit" class="btn btn-primary" id="create-product-btn">保存</button>
@@ -153,6 +198,18 @@
 				return;
 			}
 
+			const component_ids = Array.from(document.querySelectorAll('input[name="component_id[]"]')).map(i => i.value.trim());
+			const bom_quantities = Array.from(document.querySelectorAll('input[name="bom_quantity[]"]')).map(i => parseInt(i.value));
+			let bom_items = [];
+			if (type === '成品(有BOM)') {
+				const component_ids = [...document.querySelectorAll('input[name="component_id[]"]')].map(i => i.value.trim());
+				const bom_quantities = [...document.querySelectorAll('input[name="bom_quantity[]"]')].map(i => parseInt(i.value));
+				bom_items = component_ids.map((component_id, index) => ({
+					component_id,
+					quantity: bom_quantities[index]
+				}));
+			}
+
 			// 提交数据到服务器
 			let url;
 			if (productForm.dataset.editingId) {
@@ -187,7 +244,8 @@
 					sea_shipping_cost: sea_shipping_cost,
 					total_cost: total_cost,
 					actual_price: actual_price,
-					profit: profit
+					profit: profit,
+					bom_items: bom_items
 				})
 			})
 			.then(response => response.json())
@@ -208,6 +266,15 @@
 			const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
 			modal.hide();
 		});
+
+		const typeSelect = document.getElementById('type');
+		typeSelect.addEventListener('change', handleTypeChange);
+		handleTypeChange();
+
+		function handleTypeChange() {
+			const showBOM = typeSelect.value === '成品(有BOM)';
+			document.getElementById('bom-section').style.display = showBOM ? 'block' : 'none';
+		}
 	});
 
 	function addProduct() {
@@ -263,6 +330,31 @@
 			document.getElementById('total_cost').value = product.total_cost == 0 ? '' : product.total_cost;
 			document.getElementById('actual_price').value = product.actual_price == 0 ? '' : product.actual_price;
 			document.getElementById('profit').value = product.profit == 0 ? '' : product.profit;
+			document.getElementById('type').dispatchEvent(new Event('change'));
+
+			// 清空旧 BOM 行
+			const bomTbody = document.getElementById('bom-table-body');
+			bomTbody.innerHTML = '';
+
+			// 添加 BOM 行
+			(data.bom_items || []).forEach(item => {
+				const row = document.createElement('tr');
+				row.innerHTML = `
+					<td>
+						<input type="hidden" name="component_id[]" value="${item.component_id}">
+						<input type="text" class="form-control product-search" value="${item.name}" autocomplete="off">
+						<div class="autocomplete-suggestions"></div>
+					</td>
+					<td>
+						<input type="number" min="1" step="1" class="form-control" name="bom_quantity[]" value="${item.quantity}" required>
+					</td>
+					<td>
+						<button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">删除</button>
+					</td>
+				`;
+				bomTbody.appendChild(row);
+				enableProductSearch(row.querySelector('.product-search'));
+			});
 
 			// 标记当前是编辑状态
 			document.getElementById('product-form').dataset.editingId = id;
@@ -310,5 +402,62 @@
 			const profit = actual_price - total_cost;
 			document.getElementById('profit').value = profit.toFixed(2);
 		}
+	}
+
+	function addBOMRow() {
+		const tbody = document.getElementById('bom-table-body');
+		const newRow = document.createElement('tr');
+		newRow.innerHTML = `
+			<td>
+				<input type="hidden" name="component_id[]" required>
+				<input type="text" class="form-control product-search" placeholder="输入条码或名称搜索" autocomplete="off">
+				<div class="autocomplete-suggestions"></div>
+			</td>
+			<td>
+				<input type="number" min="1" step="1" class="form-control" name="bom_quantity[]" required>
+			</td>
+			<td>
+				<button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">删除</button>
+			</td>
+		`;
+		tbody.appendChild(newRow);
+		enableProductSearch(newRow.querySelector('.product-search'));
+	}
+
+	function removeRow(button) {
+		const row = button.closest('tr');
+		row.remove();
+	}
+
+	function enableProductSearch(input) {
+		input.addEventListener('input', function () {
+			const query = this.value.trim();
+			const suggestionsDiv = this.nextElementSibling;
+
+			if (query.length < 2) {
+				suggestionsDiv.innerHTML = '';
+				suggestionsDiv.style.display = 'none';
+				return;
+			}
+
+			fetch(`/products/search/?q=${encodeURIComponent(query)}&type=组件`)
+				.then(res => res.json())
+				.then(data => {
+					suggestionsDiv.innerHTML = '';
+					data.results.forEach(item => {
+						const option = document.createElement('div');
+						option.textContent = `${item.name_cn || item.name_en}（${item.barcode}）`;
+						option.classList.add('autocomplete-option');
+						option.addEventListener('click', () => {
+							input.value = `${item.name_cn || item.name_en}`;
+							input.previousElementSibling.value = item.id;  // hidden input
+							suggestionsDiv.innerHTML = '';
+							suggestionsDiv.style.display = 'none';
+						});
+						suggestionsDiv.appendChild(option);
+					});
+					suggestionsDiv.style.display = 'block';
+				});
+		});
 	}
 </script>
