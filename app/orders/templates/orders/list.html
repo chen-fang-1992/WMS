@@ -71,7 +71,6 @@ select option {
 		<table class="w-full border-collapse text-sm w-100">
 			<thead class="bg-gray-100">
 				<tr>
-					<th class="p-1 border border-gray-300">操作</th>
 					<th class="p-1 border border-gray-300">日期</th>
 					<th class="p-1 border border-gray-300">订单号码</th>
 					<th class="p-1 border border-gray-300">联系人</th>
@@ -80,15 +79,12 @@ select option {
 					<th class="p-1 border border-gray-300">进度</th>
 					<th class="p-1 border border-gray-300">Aaron 路线记录</th>
 					<th class="p-1 border border-gray-300">备注</th>
+					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for order in orders %}
 				<tr class="hover:bg-gray-50">
-					<td class="p-1 border border-gray-300">
-						<button class="text-blue-600 hover:underline" onclick="editOrder(`{{ order.id }}`)">编辑</button>
-						<button class="text-red-600 hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)">删除</button>
-					</td>
 					<td class="p-1 border border-gray-300">{{ order.date | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ order.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ order.contact_name | default:"" }}</td>
@@ -107,6 +103,10 @@ select option {
 					<td class="p-1 border border-gray-300">{{ order.status | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ order.route_record | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ order.notes | default:"" }}</td>
+					<td class="p-1 border border-gray-300">
+						<button class="text-blue-600 hover:underline" onclick="editOrder(`{{ order.id }}`)">编辑</button>
+						<button class="text-red-600 hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)">删除</button>
+					</td>
 				</tr>
 				{% empty %}
 				<tr>

@@ -45,25 +45,25 @@ select option {
 	<div class="mt-4 bg-white shadow-md rounded-lg w-full overflow-x-auto">
 		<table class="w-full border-collapse text-sm w-100">
 			<colgroup>
-				<col style="width: 15%;">
 				<col style="width: 45%;">
 				<col style="width: 40%;">
+				<col style="width: 15%;">
 			</colgroup>
 			<thead class="bg-gray-100">
 				<tr>
-					<th class="p-1 border border-gray-300">操作</th>
 					<th class="p-1 border border-gray-300">产品</th>
 					<th class="p-1 border border-gray-300">数量</th>
+					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for stock in stocks %}
 				<tr class="hover:bg-gray-50">
+					<td class="p-1 border border-gray-300">{{ stock.product | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ stock.quantity | default:"" }}</td>
 					<td class="p-1 border border-gray-300">
 						<button class="text-blue-600 hover:underline" onclick="viewStock(`{{ stock.id }}`)">查看</button>
 					</td>
-					<td class="p-1 border border-gray-300">{{ stock.product | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ stock.quantity | default:"" }}</td>
 				</tr>
 				{% empty %}
 				<tr>
