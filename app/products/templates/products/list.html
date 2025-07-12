@@ -204,14 +204,14 @@ table select option {
 
 			// 收集下拉筛选器
 			filterVarietys.forEach(select => {
-				const colIndex = parseInt(select.dataset.col);
+				const colIndex = parseInt(select.dataset.col) - 1;
 				const selectedValues = Array.from(select.selectedOptions).map(opt => opt.value);
 				filters[colIndex] = { type: 'select', values: selectedValues };
 			});
 
 			// 收集文本输入筛选器
 			filterInputs.forEach(input => {
-				const colIndex = parseInt(input.dataset.col);
+				const colIndex = parseInt(input.dataset.col) - 1;
 				const keyword = input.value.trim().toLowerCase();
 				if (keyword) {
 					filters[colIndex] = { type: 'text', keyword: keyword };
