@@ -89,9 +89,12 @@
 							<label for="sku" class="form-label">SKU</label>
 							<input type="text" class="form-control" id="sku" required>
 						</div>
-						<div class="col-md-6">
+						<div class="col-md-4">
 							<label for="barcode" class="form-label">条码</label>
 							<input type="text" class="form-control" id="barcode" required>
+						</div>
+						<div class="col-md-2 d-flex align-items-end">
+							<button type="button" class="btn btn-outline-primary form-control" onclick="showBarcodeModal()">打印条码</button>
 						</div>
 					</div>
 					<div class="row mb-3">
@@ -156,6 +159,15 @@
 					<button type="submit" class="btn btn-primary" id="create-product-btn">保存</button>
 				</div>
 			</form>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="barcodeModal" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content text-center p-3">
+			<svg id="barcodeSVG" xmlns="http://www.w3.org/2000/svg" class="d-block mx-auto"></svg>
+			<button class="btn btn-primary btn-sm mt-2" onclick="printBarcode()">打印</button>
 		</div>
 	</div>
 </div>
@@ -459,5 +471,108 @@
 					suggestionsDiv.style.display = 'block';
 				});
 		});
+	}
+
+	function showBarcodeModal() {
+		const modalEl = document.getElementById('barcodeModal');
+		const svg = document.getElementById('barcodeSVG');
+		const bsModal = new bootstrap.Modal(modalEl);
+
+		// 清空旧 SVG 内容
+		svg.innerHTML = '';
+
+		function renderBarcode() {
+			// JS 渲染条码
+			try {
+				barcode = document.getElementById('barcode').value;
+				sku = document.getElementById('sku').value;
+				JsBarcode(svg, barcode, {
+					format: "CODE128",
+					width: 3,
+					height: 100,
+					displayValue: false, // 不显示默认条码数字
+					margin: 10,
+					marginBottom: 50 // 给下方留空间
+				});
+
+				// 添加 SKU 和 Barcode 到 SVG
+				const ns = "http://www.w3.org/2000/svg";
+
+				const barcodeText = document.createElementNS(ns, 'text');
+				barcodeText.setAttribute('x', '50%');
+				barcodeText.setAttribute('y', '133');
+				barcodeText.setAttribute('text-anchor', 'middle');
+				barcodeText.setAttribute('font-size', '20');
+				barcodeText.setAttribute('fill', '#333');
+				barcodeText.textContent = barcode;
+				svg.appendChild(barcodeText);
+
+				const skuText = document.createElementNS(ns, 'text');
+				skuText.setAttribute('x', '50%');
+				skuText.setAttribute('y', '160');
+				skuText.setAttribute('text-anchor', 'middle');
+				skuText.setAttribute('font-size', '24');
+				skuText.setAttribute('font-weight', 'bold');
+				skuText.textContent = sku;
+				svg.appendChild(skuText);
+			} catch (e) {
+				console.error('条码渲染失败:', e);
+				alert('条码渲染失败: ' + e.message);
+			}
+			// 卸载事件，避免重复渲染
+			modalEl.removeEventListener('shown.bs.modal', renderBarcode);
+		}
+
+		// 注册事件：等 modal 显示完再渲染条码
+		modalEl.addEventListener('shown.bs.modal', renderBarcode);
+
+		// 显示 modal
+		bsModal.show();
+	}
+
+	function printBarcode() {
+		const svg = document.getElementById('barcodeSVG');
+		const clone = svg.cloneNode(true);
+		const serializer = new XMLSerializer();
+		const source = serializer.serializeToString(clone);
+
+		const win = window.open('', '_blank');
+		win.document.write(`
+			<html>
+			<head>
+				<title>打印条码</title>
+				<style>
+					@page {
+						size: 60mm 40mm;
+						margin: 0;
+					}
+					body {
+						margin: 0;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						height: 100vh;
+						background: white;
+					}
+					svg {
+						max-width: 100%;
+						max-height: 100%;
+					}
+				</style>
+			</head>
+			<body>
+				${source}
+				<script>
+					window.onload = function() {
+						window.print();
+						window.onafterprint = function() {
+							window.close();
+						};
+					};
+				<\/script>
+			</body>
+			</html>
+		`);
+		win.document.close();
 	}
 </script>
