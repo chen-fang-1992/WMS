@@ -2,15 +2,15 @@ from django.shortcuts import render
 from ..orders.models import Order, OrderLine
 from ..products.models import Product
 from ..stocks.models import Stock
+from .constants import ORDER_STATUS
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from django.forms.models import model_to_dict
 
 def list(request):
 	orders = Order.objects.all()
-	return render(request, 'orders/list.html', {'orders': orders})
+	return render(request, 'orders/list.html', {'orders': orders, 'statuses': ORDER_STATUS})
 
 @csrf_exempt
 def create_order(request):
@@ -18,15 +18,21 @@ def create_order(request):
 		data = json.loads(request.body)
 		reference = data.get('reference')
 		contact_name = data.get('contact_name')
+		phone = data.get('phone')
+		email = data.get('email')
 		address = data.get('address')
+		suburb = data.get('suburb')
+		postcode = data.get('postcode')
+		state = data.get('state')
 		route_record = data.get('route_record')
 		notes = data.get('notes')
+		customer_notes = data.get('customer_notes', '')
 		status = data.get('status')
 		date = data.get('date')
 		products = data.get('products', [])
 
-		order = Order.objects.create(reference=reference, date=date, contact_name=contact_name, 
-			address=address, route_record=route_record, notes=notes, status=status)
+		order = Order.objects.create(reference=reference, date=date, contact_name=contact_name, phone=phone, email=email, 
+			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status)
 
 		for item in products:
 			product = Product.objects.filter(id=item.get('product_id')).first()
@@ -72,9 +78,15 @@ def order_detail(request, id):
 				'reference': order.reference,
 				'date': str(order.date),
 				'contact_name': order.contact_name,
+				'phone': order.phone,
+				'email': order.email,
 				'address': order.address,
+				'suburb': order.suburb,
+				'postcode': order.postcode,
+				'state': order.state,
 				'route_record': order.route_record,
 				'notes': order.notes,
+				'customer_notes': order.customer_notes,
 				'status': order.status,
 				'products': [
 					{
@@ -99,9 +111,15 @@ def update_order(request, id):
 			reference = data.get('reference')
 			date = data.get('date')
 			contact_name = data.get('contact_name')
+			phone = data.get('phone')
+			email = data.get('email')
 			address = data.get('address')
+			suburb = data.get('suburb')
+			postcode = data.get('postcode')
+			state = data.get('state')
 			route_record = data.get('route_record')
 			notes = data.get('notes')
+			customer_notes = data.get('customer_notes', '')
 			status = data.get('status')
 			products = data.get('products', [])
 
@@ -109,9 +127,15 @@ def update_order(request, id):
 			order.reference = reference
 			order.date = date
 			order.contact_name = contact_name
+			order.phone = phone
+			order.email = email
 			order.address = address
+			order.suburb = suburb
+			order.postcode = postcode
+			order.state = state
 			order.route_record = route_record
 			order.notes = notes
+			order.customer_notes = customer_notes
 			order.status = status
 			order.save()
 

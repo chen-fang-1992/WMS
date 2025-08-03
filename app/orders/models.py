@@ -11,14 +11,32 @@ class Order(models.Model):
 	# 联系人
 	contact_name = models.CharField(max_length=100, null=True, blank=True)
 
+	# 联系电话
+	phone = models.CharField(max_length=20, null=True, blank=True)
+
+	# 联系邮箱
+	email = models.CharField(max_length=100, null=True, blank=True)
+
 	# 地址
-	address = models.TextField(null=True, blank=True)
+	address = models.CharField(max_length=300, null=True, blank=True)
+
+	# suburb
+	suburb = models.CharField(max_length=100, null=True, blank=True)
+
+	# postcode
+	postcode = models.CharField(max_length=20, null=True, blank=True)
+
+	# state
+	state = models.CharField(max_length=20, null=True, blank=True)
 
 	# 路线记录
 	route_record = models.TextField(null=True, blank=True)
 
 	# 备注
 	notes = models.TextField(null=True, blank=True)
+
+	# 客服留言
+	customer_notes = models.TextField(null=True, blank=True)
 
 	# 订单状态
 	status = models.CharField(max_length=50, null=True, blank=True)

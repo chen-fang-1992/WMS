@@ -1,0 +1,273 @@
+<style>
+#orderModal {
+	font-size: 0.85em;
+}
+.autocomplete-suggestions {
+	position: absolute;
+	background-color: white;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	z-index: 9999;
+	max-height: 200px;
+	overflow-y: auto;
+	width: 100%;
+	margin-top: 2px;
+	padding: 4px 0;
+	display: none;
+}
+
+.autocomplete-option {
+	padding: 8px 12px;
+	font-size: 0.85rem;
+	border-bottom: 1px solid #eee;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.autocomplete-option:last-child {
+	border-bottom: none;
+}
+
+.autocomplete-option:hover {
+	background-color: #f0f0f0;
+}
+</style>
+
+<!-- 弹窗 -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<form id="order-form">
+				<div class="modal-header">
+					<h5 class="modal-title" id="orderModalLabel">添加订单</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="row mb-3">
+						<div class="col-md-4">
+							<label for="reference" class="form-label">订单号码</label>
+							<input type="text" class="form-control" id="reference" required>
+						</div>
+						<div class="col-md-4">
+							<label for="date" class="form-label">日期</label>
+							<input type="date" class="form-control" id="date" required>
+						</div>
+						<div class="col-md-4">
+							<label for="status" class="form-label">进度</label>
+							<select class="form-control" id="status" required>
+								<option value="">请选择</option>
+								{% for value, label in statuses %}
+									<option value="{{ value }}">{{ label }}</option>
+								{% endfor %}
+							</select>
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-md-4">
+							<label for="contact_name" class="form-label">联系人</label>
+							<input type="text" class="form-control" id="contact_name" required>
+						</div>
+						<div class="col-md-4">
+							<label for="phone" class="form-label">电话</label>
+							<input type="text" class="form-control" id="phone" required>
+						</div>
+						<div class="col-md-4">
+							<label for="email" class="form-label">邮箱</label>
+							<input type="text" class="form-control" id="email" required>
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-md-4">
+							<label for="route_record" class="form-label">路线记录</label>
+							<input type="text" class="form-control" id="route_record">
+						</div>
+						<div class="col-md-8">
+							<label for="address" class="form-label">地址</label>
+							<input type="text" class="form-control" id="address" required>
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-md-4">
+							<label for="suburb" class="form-label">Suburb</label>
+							<input type="text" class="form-control" id="suburb" required>
+						</div>
+						<div class="col-md-4">
+							<label for="postcode" class="form-label">Postcode</label>
+							<input type="text" class="form-control" id="postcode" required>
+						</div>
+						<div class="col-md-4">
+							<label for="state" class="form-label">State</label>
+							<input type="text" class="form-control" id="state" required>
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-md-6">
+							<label for="notes" class="form-label">备注</label>
+							<textarea class="form-control" id="notes"></textarea>
+						</div>
+						<div class="col-md-6">
+							<label for="customer_notes" class="form-label">客服留言</label>
+							<textarea class="form-control" id="customer_notes"></textarea>
+						</div>
+					</div>
+					<h6 class="mt-3">订单产品</h6>
+					<table class="table table-bordered text-sm" id="product-table">
+						<thead>
+							<tr>
+								<th>产品</th>
+								<th>数量</th>
+								<th>操作</th>
+							</tr>
+						</thead>
+						<tbody id="product-table-body">
+						</tbody>
+					</table>
+					<button type="button" class="btn btn-sm btn-secondary" onclick="addRow()">+ 添加行</button>
+				</div>
+				<div class="modal-footer">
+					<button type="submit" class="btn btn-primary" id="create-order-btn">保存</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+	document.addEventListener('DOMContentLoaded', function () {
+		const orderForm = document.getElementById('order-form');
+
+		// 提交表单
+		orderForm.addEventListener('submit', function (event) {
+			event.preventDefault();
+
+			const reference = document.getElementById('reference').value;
+			const date = document.getElementById('date').value;
+			const contact_name = document.getElementById('contact_name').value;
+			const phone = document.getElementById('phone').value;
+			const email = document.getElementById('email').value;
+			const address = document.getElementById('address').value;
+			const suburb = document.getElementById('suburb').value;
+			const postcode = document.getElementById('postcode').value;
+			const state = document.getElementById('state').value;
+			const status = document.getElementById('status').value;
+			const route_record = document.getElementById('route_record').value;
+			const notes = document.getElementById('notes').value;
+			const customer_notes = document.getElementById('customer_notes').value;
+
+			const product_ids = Array.from(document.querySelectorAll('input[name="product_id[]"]')).map(input => input.value.trim());
+			const quantities = Array.from(document.querySelectorAll('input[name="quantity[]"]')).map(input => parseInt(input.value));
+
+			const products = product_ids.map((product_id, index) => ({
+				product_id,
+				quantity: quantities[index]
+			}));
+
+			// 验证必填字段
+			if (!reference || !date) {
+				alert('请填写所有必填字段。');
+				return;
+			}
+
+			// 提交数据到服务器
+			let url;
+			if (orderForm.dataset.editingId) {
+				// 编辑模式
+				const id = orderForm.dataset.editingId;
+				url = '/orders/update/' + id + '/';
+				delete orderForm.dataset.editingId;  // 清除编辑状态
+			} else {
+				// 创建新订单
+				url = '/orders/create/';
+			}
+			fetch(url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					reference: reference,
+					date: date,
+					contact_name: contact_name,
+					phone: phone,
+					email: email,
+					address: address,
+					suburb: suburb,
+					postcode: postcode,
+					state: state,
+					status: status,
+					route_record: route_record,
+					notes: notes,
+					customer_notes: customer_notes,
+					products: products,
+				})
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('订单已保存成功');
+					location.reload();  // 刷新页面显示新数据
+				} else {
+					alert('添加失败: ' + (data.error || '未知错误'));
+				}
+			})
+			.catch(error => {
+				console.error('提交出错:', error);
+				alert('提交失败，请检查控制台');
+			});
+
+			// 隐藏弹窗
+			const modal = bootstrap.Modal.getInstance(document.getElementById('orderModal'));
+			modal.hide();
+		});
+	});
+
+	function addRow() {
+		const tbody = document.getElementById('product-table-body');
+		const newRow = document.createElement('tr');
+		newRow.innerHTML = `
+			<td><input type="hidden" name="product_id[]" required><input type="text" class="form-control product-search" placeholder="输入条码或名称搜索" autocomplete="off"><div class="autocomplete-suggestions"></div></td>
+			<td><input type="number" min="1" step="1" class="form-control" name="quantity[]" required></td>
+			<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">删除</button></td>
+		`;
+		tbody.appendChild(newRow);
+		enableProductSearch(newRow.querySelector('.product-search'));
+	}
+
+	function removeRow(button) {
+		const row = button.closest('tr');
+		row.remove();
+	}
+
+	function enableProductSearch(input) {
+		input.addEventListener('input', function () {
+			const query = this.value.trim();
+			const suggestionsDiv = this.nextElementSibling;
+
+			if (query.length < 2) {
+				suggestionsDiv.innerHTML = '';
+				suggestionsDiv.style.display = 'none';
+				return;
+			}
+
+			fetch(`/products/search/?q=${encodeURIComponent(query)}`)
+				.then(res => res.json())
+				.then(data => {
+					suggestionsDiv.innerHTML = '';
+					data.results.forEach(item => {
+						const option = document.createElement('div');
+						option.textContent = `${item.name_cn || item.name_en}（${item.barcode}）`;
+						option.classList.add('autocomplete-option');
+						option.addEventListener('click', () => {
+							input.value = `${item.name_cn || item.name_en}`;
+							input.previousElementSibling.value = item.id;  // hidden input
+							suggestionsDiv.innerHTML = '';
+							suggestionsDiv.style.display = 'none';
+						});
+						suggestionsDiv.appendChild(option);
+					});
+					suggestionsDiv.style.display = 'block';
+				});
+		});
+	}
+</script>
