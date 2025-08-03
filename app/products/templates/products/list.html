@@ -60,7 +60,7 @@ table select option {
 					<th class="p-1 border border-gray-300">类型</th>
 					<th class="p-1 border border-gray-300">品种</th>
 					<th class="p-1 border border-gray-300">厂家</th>
-					<th class="p-1 border border-gray-300">产品英文名称</th>
+					<!-- <th class="p-1 border border-gray-300">产品英文名称</th> -->
 					<th class="p-1 border border-gray-300">产品名称</th>
 					<th class="p-1 border border-gray-300">SKU</th>
 					<th class="p-1 border border-gray-300">条码</th>
@@ -106,6 +106,9 @@ table select option {
 							{% endfor %}
 						</select>
 					</th>
+					<!-- <th class="p-1 border border-gray-300">
+						<input data-col="4" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th> -->
 					<th class="p-1 border border-gray-300">
 						<input data-col="4" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
@@ -114,9 +117,6 @@ table select option {
 					</th>
 					<th class="p-1 border border-gray-300">
 						<input data-col="6" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
-					</th>
-					<th class="p-1 border border-gray-300">
-						<input data-col="7" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300"></th>
 					<!-- <th class="p-1 border border-gray-300"></th>
@@ -142,7 +142,7 @@ table select option {
 					<td class="p-1 border border-gray-300">{{ product.type | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.category | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.manufacturer | default:"" }}</td>
-					<td class="p-1 border border-gray-300 long-text">{{ product.name_en | default:"" }}</td>
+					<!-- <td class="p-1 border border-gray-300 long-text">{{ product.name_en | default:"" }}</td> -->
 					<td class="p-1 border border-gray-300">{{ product.name_cn | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.sku | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ product.barcode | default:"" }}</td>

@@ -507,11 +507,16 @@
 				barcodeText.textContent = barcode;
 				svg.appendChild(barcodeText);
 
+				const size = sku.length <= 25 ? 24 :
+					sku.length <= 30 ? 20 :
+					sku.length <= 35 ? 17 :
+					sku.length <= 40 ? 15 :
+					13;
 				const skuText = document.createElementNS(ns, 'text');
 				skuText.setAttribute('x', '50%');
 				skuText.setAttribute('y', '160');
 				skuText.setAttribute('text-anchor', 'middle');
-				skuText.setAttribute('font-size', '24');
+				skuText.setAttribute('font-size', size);
 				skuText.setAttribute('font-weight', 'bold');
 				skuText.textContent = sku;
 				svg.appendChild(skuText);
