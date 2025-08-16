@@ -16,6 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.urls import re_path
+from django.conf import settings
+from django.conf.urls.static import static
+from tms.views import page_not_found as page_not_found_view
 
 urlpatterns = [
 	path('admin/', admin.site.urls),
@@ -27,4 +31,13 @@ urlpatterns = [
 	path('', include('app.inbounds.urls')),
 	path('', include('app.orders.urls')),
 	path('', include('app.stocks.urls')),
+	path('accounts/', include('app.accounts.urls')),
+]
+
+if settings.DEBUG:
+	urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+	urlpatterns += static(settings.MEDIA_URL, document_root=getattr(settings, 'MEDIA_ROOT', None))
+
+urlpatterns += [
+	re_path(r'^(?!static/|media/).*$', page_not_found_view),
 ]
