@@ -187,7 +187,8 @@ def search_products(request):
 		products = Product.objects.filter(
 			Q(name_cn__icontains=q) |
 			Q(name_en__icontains=q) |
-			Q(barcode__icontains=q)
+			Q(barcode__icontains=q) |
+			Q(sku__icontains=q)
 		)
 
 		if only_type:
@@ -200,7 +201,8 @@ def search_products(request):
 				'id': p.id,
 				'name_cn': p.name_cn,
 				'name_en': p.name_en,
-				'barcode': p.barcode
+				'barcode': p.barcode,
+				'sku': p.sku
 			}
 			for p in products
 		]

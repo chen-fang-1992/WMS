@@ -32,6 +32,13 @@
 .autocomplete-option:hover {
 	background-color: #f0f0f0;
 }
+
+#product-table .sku[readonly] {
+	background-color: #e9ecef;
+	border-color: #ced4da;
+	cursor: not-allowed;
+	pointer-events: none;
+}
 </style>
 
 <!-- 弹窗 -->
@@ -116,6 +123,7 @@
 						<thead>
 							<tr>
 								<th>产品</th>
+								<th>SKU</th>
 								<th>数量</th>
 								<th>操作</th>
 							</tr>
@@ -227,6 +235,7 @@
 		const newRow = document.createElement('tr');
 		newRow.innerHTML = `
 			<td><input type="hidden" name="product_id[]" required><input type="text" class="form-control product-search" placeholder="输入条码或名称搜索" autocomplete="off"><div class="autocomplete-suggestions"></div></td>
+			<td><input type="text" class="form-control sku" placeholder="SKU" readonly aria-readonly="true"></td>
 			<td><input type="number" min="1" step="1" class="form-control" name="quantity[]" required></td>
 			<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">删除</button></td>
 		`;
@@ -247,6 +256,8 @@
 			if (query.length < 2) {
 				suggestionsDiv.innerHTML = '';
 				suggestionsDiv.style.display = 'none';
+				const skuInput = input.closest('tr').querySelector('.sku');
+				if (skuInput) skuInput.value = '';
 				return;
 			}
 
@@ -261,6 +272,8 @@
 						option.addEventListener('click', () => {
 							input.value = `${item.name_cn || item.name_en}`;
 							input.previousElementSibling.value = item.id;  // hidden input
+							const skuInput = input.closest('tr').querySelector('.sku');
+							if (skuInput) skuInput.value = item.sku || item.barcode || '';
 							suggestionsDiv.innerHTML = '';
 							suggestionsDiv.style.display = 'none';
 						});

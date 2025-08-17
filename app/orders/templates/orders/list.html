@@ -33,7 +33,9 @@ select option {
 	<!-- 顶部操作栏 -->
 	<div class="flex items-center justify-between mt-4">
 		<div class="flex items-center space-x-2">
-			<button type="button" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700" onclick="addOrder()">+ 添加订单</button>
+			<button type="button" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700" onclick="addOrder()">
+				<i class="bi bi-plus-lg"></i> 添加订单
+			</button>
 		</div>
 	</div>
 
@@ -263,6 +265,9 @@ select option {
 						<input type="hidden" name="product_id[]" value="${item.product_id}">
 						<input type="text" class="form-control product-search" value="${item.name}" autocomplete="off">
 						<div class="autocomplete-suggestions"></div>
+					</td>
+					<td>
+						<input type="text" class="form-control sku" placeholder="SKU" value="${item.sku}" readonly aria-readonly="true">
 					</td>
 					<td>
 						<input type="number" min="1" step="1" class="form-control" name="quantity[]" value="${item.quantity}" required>

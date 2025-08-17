@@ -92,7 +92,8 @@ def order_detail(request, id):
 					{
 						'product_id': line.product.id,
 						'name': line.product.name_cn,
-						'quantity': line.quantity
+						'quantity': line.quantity,
+						'sku': line.product.sku
 					} for line in lines
 				]
 			}

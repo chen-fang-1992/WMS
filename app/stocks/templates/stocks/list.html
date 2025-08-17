@@ -37,7 +37,9 @@ select option {
 	<!-- 顶部操作栏 -->
 	<div class="flex items-center justify-between mt-4">
 		<div class="flex items-center space-x-2">
-			<!-- <button type="button" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700" onclick="addStock()">+ 添加库存</button> -->
+			<button type="button" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700" onclick="exportStock()">
+				<i class="bi bi-file-earmark-arrow-down"></i> 导出库存
+			</button>
 		</div>
 	</div>
 
@@ -52,6 +54,7 @@ select option {
 			<thead class="bg-gray-100">
 				<tr>
 					<th class="p-1 border border-gray-300">产品</th>
+					<th class="p-1 border border-gray-300">SKU</th>
 					<th class="p-1 border border-gray-300">数量</th>
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
@@ -60,6 +63,7 @@ select option {
 				{% for stock in stocks %}
 				<tr class="hover:bg-gray-50">
 					<td class="p-1 border border-gray-300">{{ stock.product | default:"" }}</td>
+					<td class="p-1 border border-gray-300">{{ stock.product.sku | default:"" }}</td>
 					<td class="p-1 border border-gray-300">{{ stock.quantity | default:"" }}</td>
 					<td class="p-1 border border-gray-300">
 						<button class="text-blue-600 hover:underline" onclick="viewStock(`{{ stock.id }}`)">查看</button>
@@ -152,6 +156,15 @@ select option {
 			console.error('获取库存出错:', error);
 			alert('无法获取库存数据');
 		});
+	}
+
+	function exportStock() {
+		const url = "/stocks/export/";
+
+		// 如需带筛选参数（示例：只导出非0库存）
+		// const url = "/stocks/export/?only_nonzero=1&q=" + encodeURIComponent(document.querySelector('#keyword')?.value || '');
+
+		window.location.href = url;
 	}
 </script>
 {% endblock %}
