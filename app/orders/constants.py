@@ -7,3 +7,16 @@ ORDER_STATUS = [
 	('Completed', 'Completed'),
 	('Cancelled', 'Cancelled'),
 ]
+
+ORDER_ROUTE_RECORD = [
+	('东', '东'),
+	('南', '南'),
+	('北', '北'),
+	('西北', '西北'),
+	('西南', '西南'),
+	('CC', 'CC'),
+	('ACT', 'ACT'),
+	('WOL', 'WOL'),
+	('BNE', 'BNE'),
+	('MEL', 'MEL'),
+]

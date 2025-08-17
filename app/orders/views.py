@@ -2,7 +2,7 @@ from django.shortcuts import render
 from ..orders.models import Order, OrderLine
 from ..products.models import Product
 from ..stocks.models import Stock
-from .constants import ORDER_STATUS
+from .constants import ORDER_STATUS, ORDER_ROUTE_RECORD
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -10,7 +10,7 @@ import json
 
 def list(request):
 	orders = Order.objects.all()
-	return render(request, 'orders/list.html', {'orders': orders, 'statuses': ORDER_STATUS})
+	return render(request, 'orders/list.html', {'orders': orders, 'statuses': ORDER_STATUS, 'route_records': ORDER_ROUTE_RECORD})
 
 @csrf_exempt
 def create_order(request):

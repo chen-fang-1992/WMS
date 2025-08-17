@@ -87,7 +87,12 @@
 					<div class="row mb-3">
 						<div class="col-md-4">
 							<label for="route_record" class="form-label">路线记录</label>
-							<input type="text" class="form-control" id="route_record">
+							<select class="form-control" id="route_record" required>
+								<option value="">请选择</option>
+								{% for value, label in route_records %}
+									<option value="{{ value }}">{{ label }}</option>
+								{% endfor %}
+							</select>
 						</div>
 						<div class="col-md-8">
 							<label for="address" class="form-label">地址</label>
