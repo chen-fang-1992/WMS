@@ -122,6 +122,7 @@
 					<li class="nav-item"><a class="nav-link {% if request.path == '/stocks/' %}active{% endif %}" href="/stocks">库存</a></li>
 					<li class="nav-item"><a class="nav-link {% if request.path == '/inbounds/' %}active{% endif %}" href="/inbounds">入库</a></li>
 					<li class="nav-item"><a class="nav-link {% if request.path == '/orders/' %}active{% endif %}" href="/orders">订单</a></li>
+					<li class="nav-item"><a class="nav-link {% if request.path == '/account/profile/' %}active{% endif %}" href="{% url 'accounts:profile' %}">个人设置</a></li>
 				</ul>
 
 				<div class="logout">

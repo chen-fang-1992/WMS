@@ -69,3 +69,42 @@ def register(request):
 	else:
 		form = SignUpForm()
 	return render(request, "accounts/register.html", {"form": form})
+
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views.generic import UpdateView
+from django.contrib import messages
+from django.urls import reverse_lazy
+from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
+from django.contrib.auth import get_user_model
+from .forms import ProfileForm
+
+User = get_user_model()
+
+@method_decorator(login_required, name='dispatch')
+class ProfileUpdateView(UpdateView):
+	model = User
+	form_class = ProfileForm
+	template_name = 'accounts/profile.html'
+	success_url = reverse_lazy('accounts:profile')
+
+	def get_object(self, queryset=None):
+		return self.request.user
+
+	def get_form_kwargs(self):
+		kwargs = super().get_form_kwargs()
+		kwargs['user'] = self.request.user
+		return kwargs
+
+	def form_valid(self, form):
+		messages.success(self.request, '资料已更新')
+		return super().form_valid(form)
+
+@method_decorator(login_required, name='dispatch')
+class MyPasswordChangeView(PasswordChangeView):
+	template_name = 'accounts/password_change.html'
+	success_url = reverse_lazy('accounts:password_change_done')
+
+@method_decorator(login_required, name='dispatch')
+class MyPasswordChangeDoneView(PasswordChangeDoneView):
+	template_name = 'accounts/password_change_done.html'

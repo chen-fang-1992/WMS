@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}个人资料{% endblock %}
+{% block content %}
+<h5 class="mb-3">个人资料</h5>
+
+{% if messages %}
+	{% for m in messages %}
+		<div class="alert alert-success py-2 fade show">{{ m }}</div>
+	{% endfor %}
+{% endif %}
+
+<form method="post" class="card card-body" novalidate>
+	{% csrf_token %}
+	<div class="row g-3 mb-3">
+		<div class="col-md-6">
+			<label class="form-label">用户名</label>
+			{{ form.username }}
+			{% for e in form.username.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+		</div>
+		<div class="col-md-6">
+			<label class="form-label">邮箱</label>
+			{{ form.email }}
+			{% for e in form.email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+		</div>
+		<div class="col-md-6">
+			<label class="form-label">姓</label>
+			{{ form.last_name }}
+			{% for e in form.last_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+		</div>
+		<div class="col-md-6">
+			<label class="form-label">名</label>
+			{{ form.first_name }}
+			{% for e in form.first_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+		</div>
+	</div>
+	<div class="mt-3 d-flex gap-2">
+		<button class="btn btn-primary" type="submit">保存</button>
+		<a class="btn btn-light" href="{% url 'accounts:password_change' %}">修改密码</a>
+	</div>
+</form>
+
+<script>
+	document.addEventListener('DOMContentLoaded', () => {
+		const alerts = document.querySelectorAll('.alert');
+		alerts.forEach(alert => {
+			setTimeout(() => {
+				alert.classList.remove('show');
+				alert.classList.add('fade');
+				setTimeout(() => alert.remove(), 500);
+			}, 3000);
+		});
+	});
+</script>
+{% endblock %}
