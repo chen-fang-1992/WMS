@@ -63,13 +63,14 @@ select option {
 				</tr>
 				<tr>
 					<th class="p-1 border border-gray-300">
-						<input data-search_target="product" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+						<input data-search_target="product" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300">
-						<input data-search_target="sku" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+						<input data-search_target="sku" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
 					</th>
 					<th class="p-1 border border-gray-300">
-						<input data-search_target="quantity" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+						<input data-search_target="quantity" data-search_type="number" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 				</tr>
 			</thead>
@@ -134,6 +135,158 @@ select option {
 		const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
 		const productTable = document.querySelector('tbody');
 
+		function normalizeNumber(text) {
+			if (text == null) return null;
+			// 去千分位、空格
+			const clean = String(text).replace(/[, ]+/g, '');
+			const n = Number(clean);
+			return Number.isFinite(n) ? n : null;
+		}
+
+		function parseDate(text) {
+			// 支持 YYYY, YYYY-MM, YYYY-MM-DD
+			if (/^\d{4}$/.test(text)) {
+				// 年份 -> 返回 1 月 1 日
+				return new Date(text + '-01-01T00:00:00');
+			}
+			if (/^\d{4}-\d{2}$/.test(text)) {
+				// 年-月 -> 返回该月 1 日
+				return new Date(text + '-01T00:00:00');
+			}
+			if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+				return new Date(text + 'T00:00:00');
+			}
+			return null;
+		}
+
+		function cmp(a, b) {
+			// 比较器：返回 -1/0/1
+			if (a < b) return -1;
+			if (a > b) return 1;
+			return 0;
+		}
+
+		// 把“查询字符串 + 类型”编译成一个判断单元格文本是否命中的函数
+		function buildPredicate(query, type) {
+			const raw = (query || '').trim();
+			if (!raw) {
+				return () => true;
+			}
+
+			// 支持以空格分隔的 AND；以竖线 | 分隔的 OR
+			// 例：">=10 <20"（AND），或者 "10-20|>=50"（OR）
+			const orParts = raw.split('|').map(s => s.trim()).filter(Boolean);
+
+			const tokenPredicates = orParts.map(orExpr => {
+				const andTokens = orExpr.split(/\s+/).filter(Boolean).map(tok => tok.trim());
+				const preds = andTokens.map(tok => makeTokenPredicate(tok, type));
+				return (cellText) => preds.every(p => p(cellText));
+			});
+
+			return (cellText) => tokenPredicates.some(p => p(cellText));
+		}
+
+		function makeTokenPredicate(token, type) {
+			// 统一处理：比较运算、区间、等值模糊
+			// 支持：<=,>=,<,>,=,!=, 区间 a-b 或 a..b
+			const opMatch = token.match(/^(<=|>=|<|>|=|!=)\s*(.+)$/);
+			const rangeMatch = token.match(/^(.+?)(?:\.\.|-)(.+)$/);
+
+			if (type === 'number') {
+				return makeNumberPredicate(token, opMatch, rangeMatch);
+			}
+			if (type === 'date') {
+				return makeDatePredicate(token, opMatch, rangeMatch);
+			}
+			// text：回退为大小写不敏感包含
+			const rx = new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+			return (cellText) => rx.test(String(cellText || '').trim());
+		}
+
+		function makeNumberPredicate(token, opMatch, rangeMatch) {
+			if (opMatch) {
+				const [, op, rhsRaw] = opMatch;
+				const rhs = normalizeNumber(rhsRaw);
+				if (rhs == null) return () => false;
+				return (cellText) => {
+					const v = normalizeNumber(String(cellText || '').trim());
+					if (v == null) return false;
+					switch (op) {
+						case '<=': return v <= rhs;
+						case '>=': return v >= rhs;
+						case '<':  return v <  rhs;
+						case '>':  return v >  rhs;
+						case '=':  return v === rhs;
+						case '!=': return v !== rhs;
+						default:   return false;
+					}
+				};
+			}
+			if (rangeMatch) {
+				const lhs = normalizeNumber(rangeMatch[1]);
+				const rhs = normalizeNumber(rangeMatch[2]);
+				if (lhs == null || rhs == null) return () => false;
+				const lo = Math.min(lhs, rhs);
+				const hi = Math.max(lhs, rhs);
+				return (cellText) => {
+					const v = normalizeNumber(String(cellText || '').trim());
+					return v != null && v >= lo && v <= hi;
+				};
+			}
+			// 纯数字：等值；否则按包含
+			const val = normalizeNumber(token);
+			if (val != null) {
+				return (cellText) => {
+					const v = normalizeNumber(String(cellText || '').trim());
+					return v === val;
+				};
+			}
+			const rx = new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+			return (cellText) => rx.test(String(cellText || '').trim());
+		}
+
+		function makeDatePredicate(token, opMatch, rangeMatch) {
+			if (opMatch) {
+				const [, op, rhsRaw] = opMatch;
+				const rhs = parseDate(rhsRaw);
+				if (!rhs) return () => false;
+				return (cellText) => {
+					const v = parseDate(String(cellText || '').trim());
+					if (!v) return false;
+					switch (op) {
+						case '<=': return cmp(v, rhs) <= 0;
+						case '>=': return cmp(v, rhs) >= 0;
+						case '<':  return cmp(v, rhs) <  0;
+						case '>':  return cmp(v, rhs) >  0;
+						case '=':  return cmp(v, rhs) === 0;
+						case '!=': return cmp(v, rhs) !== 0;
+						default:   return false;
+					}
+				};
+			}
+			if (rangeMatch) {
+				const d1 = parseDate(rangeMatch[1]);
+				const d2 = parseDate(rangeMatch[2]);
+				if (!d1 || !d2) return () => false;
+				const lo = d1 < d2 ? d1 : d2;
+				const hi = d1 < d2 ? d2 : d1;
+				return (cellText) => {
+					const v = parseDate(String(cellText || '').trim());
+					return !!v && v >= lo && v <= hi;
+				};
+			}
+			// 纯日期：等值；否则按包含
+			const val = parseDate(token);
+			if (val) {
+				return (cellText) => {
+					const v = parseDate(String(cellText || '').trim());
+					return !!v && cmp(v, val) === 0;
+				};
+			}
+			const rx = new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+			return (cellText) => rx.test(String(cellText || '').trim());
+		}
+
 		function applyAllFilters() {
 			const filters = {};
 
@@ -149,9 +302,13 @@ select option {
 			// 收集文本输入筛选器
 			filterInputs.forEach(input => {
 				const field = input.dataset.search_target;
-				const keyword = (input.value || '').trim().toLowerCase();
-				if (keyword) {
-					filters[field] = { type: 'text', keyword };
+				const ftype = (input.dataset.search_type || 'text').toLowerCase(); // text | number | date
+				const query = (input.value || '').trim();
+				if (query) {
+					filters[field] = {
+						type: 'predicate',
+						predicate: buildPredicate(query, ftype)
+					};
 				}
 			});
 
@@ -176,14 +333,14 @@ select option {
 							visible = false;
 							break;
 						}
-					} else if (filter.type === 'text') {
-						if (!cellText.match(new RegExp(filter.keyword, 'i'))) {
+					} else if (filter.type === 'predicate') {
+						if (!filter.predicate(cellText)) {
 							visible = false;
 							break;
 						}
 					}
 				}
-
+				
 				row.style.display = visible ? '' : 'none';
 			});
 		}
