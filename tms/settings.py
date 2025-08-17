@@ -30,6 +30,12 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
+_csrf = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [s.strip() for s in _csrf.split(",") if s.strip()]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 # Application definition
 
