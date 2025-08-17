@@ -38,15 +38,6 @@ table select option {
 	<!-- 顶部操作栏 -->
 	<div class="flex items-center justify-between mt-4">
 		<div class="flex items-center space-x-2">
-			<!-- <input
-				type="text"
-				placeholder="Search"
-				class="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
-				aria-label="Search products"
-			/>
-			<button type="button" class="bg-teal-600 px-4 py-2 rounded-md hover:bg-teal-700">Filter</button> -->
-			<!-- <button type="button" class="px-4 py-2 rounded-md hover:bg-gray-200">Import</button>
-			<button type="button" class="px-4 py-2 rounded-md hover:bg-gray-200">Export</button> -->
 			<button type="button" class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700" onclick="addProduct()">+ 添加产品</button>
 		</div>
 	</div>
@@ -56,34 +47,17 @@ table select option {
 		<table class="min-w-max border-collapse text-sm">
 			<thead class="bg-gray-100">
 				<tr>
-					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
 					<th class="p-1 border border-gray-300">类型</th>
 					<th class="p-1 border border-gray-300">品种</th>
 					<th class="p-1 border border-gray-300">厂家</th>
-					<!-- <th class="p-1 border border-gray-300">产品英文名称</th> -->
 					<th class="p-1 border border-gray-300">产品名称</th>
 					<th class="p-1 border border-gray-300">SKU</th>
 					<th class="p-1 border border-gray-300">条码</th>
 					<th class="p-1 border border-gray-300">操作</th>
-					<!-- <th class="p-1 border border-gray-300">图片</th>
-					<th class="p-1 border border-gray-300">包装尺寸<br>(长×宽×高 cm)</th>
-					<th class="p-1 border border-gray-300">运费体积<br>(m³)</th>
-					<th class="p-1 border border-gray-300">重量<br>(kg)</th>
-					<th class="p-1 border border-gray-300">进价人民币<br>(¥)</th>
-					<th class="p-1 border border-gray-300">进价澳币<br>(A$)</th>
-					<th class="p-1 border border-gray-300">海运成本<br>(A$)</th>
-					<th class="p-1 border border-gray-300">实际成本<br>(A$)</th>
-					<th class="p-1 border border-gray-300">2倍售价<br>(A$)</th>
-					<th class="p-1 border border-gray-300">2.5倍售价<br>(A$)</th>
-					<th class="p-1 border border-gray-300">3倍售价<br>(A$)</th>
-					<th class="p-1 border border-gray-300">实际售价<br>(A$)</th>
-					<th class="p-1 border border-gray-300">售价*0.75<br>(折后)</th>
-					<th class="p-1 border border-gray-300">实际利润<br>(A$)</th> -->
 				</tr>
 				<tr>
-					<!-- <th class="p-1 border border-gray-300"><input id="select-all" type="checkbox" aria-label="Select all" /></th> -->
 					<th class="p-1 border border-gray-300">
-						<select data-col="1" class="filter-variety border border-gray-300 p-1 rounded">
+						<select data-search_target="type" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
 							{% for type in types %}
 								<option value="{{ type }}">{{ type }}</option>
@@ -91,7 +65,7 @@ table select option {
 						</select>
 					</th>
 					<th class="p-1 border border-gray-300">
-						<select data-col="2" class="filter-variety border border-gray-300 p-1 rounded">
+						<select data-search_target="category" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
 							{% for category in categories %}
 								<option value="{{ category }}">{{ category }}</option>
@@ -99,77 +73,38 @@ table select option {
 						</select>
 					</th>
 					<th class="p-1 border border-gray-300">
-						<select data-col="3" class="filter-variety border border-gray-300 p-1 rounded">
+						<select data-search_target="manufacturer" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
 							{% for manufacturer in manufacturers %}
 								<option value="{{ manufacturer }}">{{ manufacturer }}</option>
 							{% endfor %}
 						</select>
 					</th>
-					<!-- <th class="p-1 border border-gray-300">
-						<input data-col="4" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
-					</th> -->
 					<th class="p-1 border border-gray-300">
-						<input data-col="4" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+						<input data-search_target="name_cn" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300">
-						<input data-col="5" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+						<input data-search_target="sku" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300">
-						<input data-col="6" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+						<input data-search_target="barcode" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300"></th>
-					<!-- <th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th> -->
 				</tr>
 			</thead>
 			<tbody>
 				{% for product in products %}
 				<tr class="hover:bg-gray-50">
-					<!-- <td class="p-1 border border-gray-300"><input type="checkbox" name="select_product" value="{{ product.id }}" /></td> -->
-					<td class="p-1 border border-gray-300">{{ product.type | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.category | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.manufacturer | default:"" }}</td>
-					<!-- <td class="p-1 border border-gray-300 long-text">{{ product.name_en | default:"" }}</td> -->
-					<td class="p-1 border border-gray-300">{{ product.name_cn | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.sku | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.barcode | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="type">{{ product.type | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="category">{{ product.category | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="manufacturer">{{ product.manufacturer | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="name_cn">{{ product.name_cn | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="sku">{{ product.sku | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="barcode">{{ product.barcode | default:"" }}</td>
 					<td class="p-1 border border-gray-300">
 						<button class="text-blue-600 hover:underline" onclick="editProduct(`{{ product.id }}`)">编辑</button>
 						<button class="text-red-600 hover:underline ml-2" onclick="deleteProduct(`{{ product.id }}`)">删除</button>
 					</td>
-					<!-- <td class="p-1 border border-gray-300">
-						{% if product.image_url %}
-							<img src="{{ product.image_url }}" alt="Image" class="w-16 h-16 object-cover rounded mx-auto" />
-						{% else %}
-							—
-						{% endif %}
-					</td>
-					<td class="p-1 border border-gray-300">{{ product.package_length | default:"" }}×{{ product.package_width | default:"" }}×{{ product.package_height | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.shipping_volume | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.weight | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.cost_rmb | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.cost_aud | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.sea_shipping_cost | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.total_cost | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.price_2x | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.price_2_5x | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.price_3x | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.actual_price | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.discounted_price | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ product.profit | default:"" }}</td> -->
 				</tr>
 				{% empty %}
 				<tr>
@@ -184,16 +119,6 @@ table select option {
 {% include 'products/modal.html' %}
 
 <script>
-	// 全选功能
-	// document.addEventListener('DOMContentLoaded', function () {
-	// 	const selectAll = document.getElementById('select-all');
-	// 	const checkboxes = document.querySelectorAll('input[name="select_product"]');
-	// 	if (selectAll) {
-	// 		selectAll.addEventListener('change', () => {
-	// 			checkboxes.forEach(cb => cb.checked = selectAll.checked);
-	// 		});
-	// 	}
-	// });
 	document.addEventListener('DOMContentLoaded', function () {
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
 		const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
@@ -204,17 +129,19 @@ table select option {
 
 			// 收集下拉筛选器
 			filterVarietys.forEach(select => {
-				const colIndex = parseInt(select.dataset.col) - 1;
+				const field = select.dataset.search_target;
 				const selectedValues = Array.from(select.selectedOptions).map(opt => opt.value);
-				filters[colIndex] = { type: 'select', values: selectedValues };
+				if (!selectedValues.includes('所有')) {
+					filters[field] = { type: 'select', values: selectedValues };
+				}
 			});
 
 			// 收集文本输入筛选器
 			filterInputs.forEach(input => {
-				const colIndex = parseInt(input.dataset.col) - 1;
-				const keyword = input.value.trim().toLowerCase();
+				const field = input.dataset.search_target;
+				const keyword = (input.value || '').trim().toLowerCase();
 				if (keyword) {
-					filters[colIndex] = { type: 'text', keyword: keyword };
+					filters[field] = { type: 'text', keyword };
 				}
 			});
 
@@ -222,8 +149,8 @@ table select option {
 			rows.forEach(row => {
 				let visible = true;
 
-				for (const [col, filter] of Object.entries(filters)) {
-					const cell = row.querySelector(`td:nth-child(${parseInt(col) + 1})`);
+				for (const [field, filter] of Object.entries(filters)) {
+					const cell = row.querySelector(`td[data-search_field="${field}"]`);
 					if (!cell) continue;
 
 					const cellText = cell.textContent.trim();

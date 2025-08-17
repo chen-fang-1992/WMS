@@ -25,6 +25,9 @@ td {
 select option {
 	text-align-last: center;
 }
+.filter-input {
+	width: 100%;
+}
 </style>
 
 <div class="container mx-auto p-1">
@@ -59,41 +62,63 @@ select option {
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
 				<tr>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300">
-						<select data-col="3" class="filter-variety border border-gray-300 p-1 rounded">
+						<input data-search_target="reference" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="date" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<select data-search_target="status" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
 							{% for value, label in statuses %}
 								<option value="{{ value }}">{{ label }}</option>
 							{% endfor %}
 						</select>
 					</th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300"></th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="contact_name" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="phone" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="address" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="suburb" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="postcode" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="state" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="products" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="route_record" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="notes" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
 					<th class="p-1 border border-gray-300"></th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for order in orders %}
 				<tr class="hover:bg-gray-50">
-					<td class="p-1 border border-gray-300">{{ order.reference | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ order.date | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ order.status | status_label }}</td>
-					<td class="p-1 border border-gray-300">{{ order.contact_name | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ order.phone | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ order.address | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ order.suburb | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ order.postcode | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ order.state | default:"" }}</td>
-					<td class="p-1 border border-gray-300">
+					<td class="p-1 border border-gray-300" data-search_field="reference">{{ order.reference | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="status">{{ order.status | status_label }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="contact_name">{{ order.contact_name | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="phone">{{ order.phone | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="address">{{ order.address | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="suburb">{{ order.suburb | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="postcode">{{ order.postcode | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="state">{{ order.state | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="products">
 						{% for line in order.lines.all %}
 						<div>
 							{% if line.product.name_cn %}
@@ -104,8 +129,8 @@ select option {
 						</div>
 						{% endfor %}
 					</td>
-					<td class="p-1 border border-gray-300">{{ order.route_record | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ order.notes | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="route_record">{{ order.route_record | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="notes">{{ order.notes | default:"" }}</td>
 					<td class="p-1 border border-gray-300">
 						<button class="text-blue-600 hover:underline" onclick="editOrder(`{{ order.id }}`)">编辑</button>
 						<button class="text-red-600 hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)">删除</button>
@@ -134,17 +159,19 @@ select option {
 
 			// 收集下拉筛选器
 			filterVarietys.forEach(select => {
-				const colIndex = parseInt(select.dataset.col) - 1;
+				const field = select.dataset.search_target;
 				const selectedValues = Array.from(select.selectedOptions).map(opt => opt.value);
-				filters[colIndex] = { type: 'select', values: selectedValues };
+				if (!selectedValues.includes('所有')) {
+					filters[field] = { type: 'select', values: selectedValues };
+				}
 			});
 
 			// 收集文本输入筛选器
 			filterInputs.forEach(input => {
-				const colIndex = parseInt(input.dataset.col) - 1;
-				const keyword = input.value.trim().toLowerCase();
+				const field = input.dataset.search_target;
+				const keyword = (input.value || '').trim().toLowerCase();
 				if (keyword) {
-					filters[colIndex] = { type: 'text', keyword: keyword };
+					filters[field] = { type: 'text', keyword };
 				}
 			});
 
@@ -152,8 +179,8 @@ select option {
 			rows.forEach(row => {
 				let visible = true;
 
-				for (const [col, filter] of Object.entries(filters)) {
-					const cell = row.querySelector(`td:nth-child(${parseInt(col) + 1})`);
+				for (const [field, filter] of Object.entries(filters)) {
+					const cell = row.querySelector(`td[data-search_field="${field}"]`);
 					if (!cell) continue;
 
 					const cellText = cell.textContent.trim();

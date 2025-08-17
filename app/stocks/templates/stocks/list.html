@@ -29,6 +29,9 @@ select option {
 .text-red-600 {
 	color: #dc2626 !important;
 }
+.filter-input {
+	width: 100%;
+}
 </style>
 
 <div class="container mx-auto p-1">
@@ -58,13 +61,24 @@ select option {
 					<th class="p-1 border border-gray-300">数量</th>
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
+				<tr>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="product" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="sku" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="quantity" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+				</tr>
 			</thead>
 			<tbody>
 				{% for stock in stocks %}
 				<tr class="hover:bg-gray-50">
-					<td class="p-1 border border-gray-300">{{ stock.product | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ stock.product.sku | default:"" }}</td>
-					<td class="p-1 border border-gray-300">{{ stock.quantity | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="product">{{ stock.product | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="sku">{{ stock.product.sku | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="quantity">{{ stock.quantity | default:"" }}</td>
 					<td class="p-1 border border-gray-300">
 						<button class="text-blue-600 hover:underline" onclick="viewStock(`{{ stock.id }}`)">查看</button>
 					</td>
@@ -115,6 +129,84 @@ select option {
 </div>
 
 <script>
+	document.addEventListener('DOMContentLoaded', function () {
+		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
+		const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
+		const productTable = document.querySelector('tbody');
+
+		function applyAllFilters() {
+			const filters = {};
+
+			// 收集下拉筛选器
+			filterVarietys.forEach(select => {
+				const field = select.dataset.search_target;
+				const selectedValues = Array.from(select.selectedOptions).map(opt => opt.value);
+				if (!selectedValues.includes('所有')) {
+					filters[field] = { type: 'select', values: selectedValues };
+				}
+			});
+
+			// 收集文本输入筛选器
+			filterInputs.forEach(input => {
+				const field = input.dataset.search_target;
+				const keyword = (input.value || '').trim().toLowerCase();
+				if (keyword) {
+					filters[field] = { type: 'text', keyword };
+				}
+			});
+
+			const rows = productTable.querySelectorAll('tr');
+			rows.forEach(row => {
+				let visible = true;
+
+				for (const [field, filter] of Object.entries(filters)) {
+					const cell = row.querySelector(`td[data-search_field="${field}"]`);
+					if (!cell) continue;
+
+					const cellText = cell.textContent.trim();
+
+					if (filter.type === 'select') {
+						if (
+							!filter.values.includes('所有') &&
+							!(
+								filter.values.includes(cellText) ||
+								(cellText === '' && filter.values.includes('空'))
+							)
+						) {
+							visible = false;
+							break;
+						}
+					} else if (filter.type === 'text') {
+						if (!cellText.match(new RegExp(filter.keyword, 'i'))) {
+							visible = false;
+							break;
+						}
+					}
+				}
+
+				row.style.display = visible ? '' : 'none';
+			});
+		}
+
+		// 输入事件绑定
+		filterInputs.forEach(input => {
+			input.addEventListener('input', applyAllFilters);
+		});
+
+		// 下拉框事件绑定替换
+		filterVarietys.forEach(select => {
+			select.addEventListener('change', applyAllFilters);
+		});
+
+		// 可选：初始化默认值为“所有”
+		filterVarietys.forEach(select => {
+			const allOption = select.querySelector('option[value="所有"]');
+			if (allOption) {
+				allOption.selected = true;
+			}
+		});
+	});
+
 	function viewStock(id) {
 		fetch(`/stocks/detail/${id}/`)
 		.then(res => res.json())
