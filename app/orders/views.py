@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 def list(request):
-	orders = Order.objects.all()
+	orders = Order.objects.order_by('-date')
 	return render(request, 'orders/list.html', {'orders': orders, 'statuses': ORDER_STATUS, 'route_records': ORDER_ROUTE_RECORD})
 
 @csrf_exempt
