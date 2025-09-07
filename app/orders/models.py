@@ -3,10 +3,10 @@ from ..products.models import Product
 
 class Order(models.Model):
 	# 参考号
-	reference = models.CharField(max_length=50, null=True, blank=True)
+	reference = models.CharField(max_length=50, unique=True)
 
 	# 日期
-	date = models.CharField(max_length=50, null=True, blank=True)
+	date = models.DateTimeField(null=True, blank=True)
 
 	# 联系人
 	contact_name = models.CharField(max_length=100, null=True, blank=True)
@@ -19,7 +19,7 @@ class Order(models.Model):
 
 	# 地址
 	address = models.CharField(max_length=300, null=True, blank=True)
-
+	
 	# suburb
 	suburb = models.CharField(max_length=100, null=True, blank=True)
 
@@ -41,6 +41,9 @@ class Order(models.Model):
 	# 订单状态
 	status = models.CharField(max_length=50, null=True, blank=True)
 
+	# 总价
+	total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
 	class Meta:
 		db_table = 'tms_order'
 		verbose_name = 'Order'
@@ -54,7 +57,10 @@ class OrderLine(models.Model):
 	order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='lines')
 
 	# 产品ID
-	product = models.ForeignKey(Product, on_delete=models.CASCADE)
+	product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+
+	# 原始 SKU
+	raw_sku = models.CharField(max_length=100, null=True, blank=True)
 
 	# 数量
 	quantity = models.PositiveIntegerField()
@@ -65,4 +71,6 @@ class OrderLine(models.Model):
 		verbose_name_plural = 'OrderLines'
 
 	def __str__(self):
-		return f"{self.product} x {self.quantity}"
+		if self.product:
+			return f"{self.product} x {self.quantity}"
+		return f"{self.raw_sku or '未知SKU'} x {self.quantity}"

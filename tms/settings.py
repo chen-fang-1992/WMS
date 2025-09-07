@@ -104,6 +104,10 @@ DATABASES = {
 		'PASSWORD': os.getenv("DB_PASSWORD"),
 		'HOST': os.getenv("DB_HOST"),
 		'PORT': '3306',
+		'OPTIONS': {
+			'charset': 'utf8mb4',
+			'init_command': "SET NAMES 'utf8mb4'"
+		}
 	}
 }
 
@@ -151,3 +155,12 @@ MEDIA_URL = '/media/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# WooCommerce settings
+WOOCOMMERCE = {
+	"URL": os.getenv("WC_URL"),
+	"CONSUMER_KEY": os.getenv("WC_CONSUMER_KEY"),
+	"CONSUMER_SECRET": os.getenv("WC_CONSUMER_SECRET"),
+	"VERSION": os.getenv("WC_VERSION", "wc/v3"),
+}
