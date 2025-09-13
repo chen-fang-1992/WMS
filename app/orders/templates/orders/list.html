@@ -120,7 +120,7 @@ table select option {
 				{% for order in orders %}
 				<tr class="hover:bg-gray-50">
 					<td class="p-1 border border-gray-300" data-search_field="reference">{{ order.reference | default:"" }}</td>
-					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date|date:"Y-m-d" }}<br>{{ order.date|date:"H:i" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date|date:"d/m/Y" }}<br>{{ order.date|date:"h:i A" }}</td>
 					<td class="p-1 border border-gray-300 break-word" data-search_field="status">{{ order.status | status_label }}</td>
 					<td class="p-1 border border-gray-300 break-word" data-search_field="contact_name">{{ order.contact_name | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="phone">{{ order.phone | default:"" }}</td>
@@ -420,6 +420,15 @@ table select option {
 		}
 	}
 
+	function toDatetimeLocal(date) {
+		const pad = n => String(n).padStart(2, '0');
+		return date.getFullYear() + '-' +
+			pad(date.getMonth() + 1) + '-' +
+			pad(date.getDate()) + 'T' +
+			pad(date.getHours()) + ':' +
+			pad(date.getMinutes());
+	}
+
 	function editOrder(id) {
 		fetch(`/orders/detail/${id}/`)
 		.then(res => res.json())
@@ -432,8 +441,9 @@ table select option {
 			const order = data.order;
 
 			// 填充基本信息
+			const date = new Date(order.date);
 			document.getElementById('reference').value = order.reference || '';
-			document.getElementById('date').value = order.date || '';
+			document.getElementById('date').value = toDatetimeLocal(date);
 			document.getElementById('contact_name').value = order.contact_name || '';
 			document.getElementById('phone').value = order.phone || '';
 			document.getElementById('email').value = order.email || '';
