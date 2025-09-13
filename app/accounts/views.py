@@ -6,6 +6,8 @@ from django.conf import settings
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UsernameField
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 User = get_user_model()
 
 class SignUpForm(UserCreationForm):
@@ -69,6 +71,18 @@ def register(request):
 	else:
 		form = SignUpForm()
 	return render(request, "accounts/register.html", {"form": form})
+
+@csrf_exempt
+@require_GET
+def guest_login(request):
+	User = get_user_model()
+	guest_user, created = User.objects.get_or_create(
+		username="guest",
+		defaults={"email": "guest@example.com"}
+	)
+	login(request, guest_user)
+	next_url = request.GET.get("next") or "/home"
+	return redirect(next_url)
 
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator

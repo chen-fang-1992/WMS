@@ -9,7 +9,12 @@
 	<style>
 		body { font-family: sans-serif; max-width: 520px; margin: 12vh auto; padding: 16px; }
 		label { display: block; margin: 12px 0 6px; }
-		input[type="text"], input[type="password"] { width: 100%; padding: 5px 10px; box-sizing: border-box; }
+		input[type="text"], input[type="password"] {
+			width: 100%;
+			padding: 5px 10px;
+			box-sizing: border-box;
+			border-radius: var(--bs-border-radius);
+		}
 		button { width: 100%; padding: 10px; margin-top: 16px; }
 		.row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
 		.errorlist { color: #b00020; margin: 8px 0; list-style: none; padding: 0; }
@@ -43,9 +48,14 @@
 			{% endif %}
 		</div>
 
-		<button type="submit">登录</button>
+		<button class="btn btn-outline-dark w-100" type="submit">登录</button>
 		<p style="margin-top:12px;">
 			还没有账号？<a href="{% url 'accounts:register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">去注册</a>
+		</p>
+		<p style="margin-top:12px;">
+			<a class="btn btn-outline-secondary w-100" href="{% url 'accounts:guest_login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">
+				以访客身份进入
+			</a>
 		</p>
 	</form>
 </body>

@@ -14,6 +14,7 @@ class LoginRequiredMiddleware:
 			'/accounts/register/',
 			'/accounts/login/',
 			'/accounts/logout/',
+			'/accounts/guest/',
 			settings.STATIC_URL,
 			settings.MEDIA_URL,
 		]

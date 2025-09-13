@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import register, RememberMeLoginView, DoLogoutView
 from .views import ProfileUpdateView, MyPasswordChangeView, MyPasswordChangeDoneView
+from . import views
 
 app_name = 'accounts'
 
@@ -11,4 +12,5 @@ urlpatterns = [
 	path('profile/', ProfileUpdateView.as_view(), name='profile'),
 	path('password/', MyPasswordChangeView.as_view(), name='password_change'),
 	path('password/done/', MyPasswordChangeDoneView.as_view(), name='password_change_done'),
+	path("guest/", views.guest_login, name="guest_login"),
 ]

@@ -9,7 +9,12 @@
 	<style>
 		body { font-family: sans-serif; max-width: 520px; margin: 5vh auto; padding: 16px; }
 		label { display: block; margin: 12px 0 6px; }
-		input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 5px 10px; box-sizing: border-box; }
+		input[type="text"], input[type="email"], input[type="password"] {
+			width: 100%;
+			padding: 5px 10px;
+			box-sizing: border-box;
+			border-radius: var(--bs-border-radius);
+		}
 		button { width: 100%; padding: 10px; margin-top: 16px; }
 		.errorlist { color: #b00020; margin: 8px 0; list-style: none; padding: 0; }
 		a { text-decoration: none; }
@@ -61,7 +66,7 @@
 			</div>
 		</div>
 
-		<button type="submit">注册并登录</button>
+		<button class="btn btn-outline-dark w-100" type="submit">注册并登录</button>
 	</form>
 
 	<p style="margin-top:12px;">已有账号？<a href="{% url 'accounts:login' %}">去登录</a></p>
