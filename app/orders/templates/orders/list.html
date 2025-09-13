@@ -24,14 +24,23 @@ td {
 }
 td.break-word {
 	white-space: normal;
-	word-break: keep-all;
-	overflow-wrap: normal;
+	word-break: break-word;
+	overflow-wrap: anywhere;
 }
 table select option {
 	text-align-last: center;
 }
 .filter-input {
 	width: 100%;
+}
+.reference {
+	max-width: 60px;
+}
+.postcode {
+	max-width: 65px;
+}
+.state {
+	max-width: 50px;
 }
 </style>
 
@@ -56,28 +65,29 @@ table select option {
 			<thead class="bg-gray-100">
 				<tr>
 					<th class="p-1 border border-gray-300"><input type="checkbox" id="select-all"></th>
-					<th class="p-1 border border-gray-300">订单号码</th>
+					<th class="p-1 border border-gray-300 reference">订单号码</th>
 					<th class="p-1 border border-gray-300">日期</th>
-					<th class="p-1 border border-gray-300">进度</th>
+					<th class="p-1 border border-gray-300 status">进度</th>
 					<th class="p-1 border border-gray-300">联系人</th>
 					<th class="p-1 border border-gray-300">电话</th>
 					<th class="p-1 border border-gray-300">Suburb</th>
-					<th class="p-1 border border-gray-300">Postcode</th>
-					<th class="p-1 border border-gray-300">State</th>
+					<th class="p-1 border border-gray-300 postcode">Postcode</th>
+					<th class="p-1 border border-gray-300 state">State</th>
 					<th class="p-1 border border-gray-300">产品</th>
 					<th class="p-1 border border-gray-300">路线记录</th>
 					<th class="p-1 border border-gray-300">备注</th>
+					<th class="p-1 border border-gray-300">来源</th>
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
 				<tr>
 					<th class="p-1 border border-gray-300"></th>
-					<th class="p-1 border border-gray-300">
+					<th class="p-1 border border-gray-300 reference">
 						<input data-search_target="reference" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="date" data-search_type="date" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
-					<th class="p-1 border border-gray-300">
+					<th class="p-1 border border-gray-300 status">
 						<select data-search_target="status" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
 							{% for value, label in statuses %}
@@ -94,10 +104,10 @@ table select option {
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="suburb" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
-					<th class="p-1 border border-gray-300">
+					<th class="p-1 border border-gray-300 postcode">
 						<input data-search_target="postcode" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
-					<th class="p-1 border border-gray-300">
+					<th class="p-1 border border-gray-300 state">
 						<input data-search_target="state" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300">
@@ -114,6 +124,9 @@ table select option {
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="notes" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="source" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
 					<th class="p-1 border border-gray-300"></th>
 				</tr>
 			</thead>
@@ -121,14 +134,14 @@ table select option {
 				{% for order in orders %}
 				<tr class="hover:bg-gray-50">
 					<td class="p-1 border border-gray-300"><input type="checkbox" class="order-checkbox" value="{{ order.id }}"></td>
-					<td class="p-1 border border-gray-300" data-search_field="reference">{{ order.reference | default:"" }}</td>
+					<td class="p-1 border border-gray-300 reference" data-search_field="reference">{{ order.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date|date:"d/m/Y" }}<br>{{ order.date|date:"h:i A" }}</td>
-					<td class="p-1 border border-gray-300 break-word" data-search_field="status">{{ order.status | status_label }}</td>
+					<td class="p-1 border border-gray-300 status" data-search_field="status">{{ order.status | status_label }}</td>
 					<td class="p-1 border border-gray-300 break-word" data-search_field="contact_name">{{ order.contact_name | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="phone">{{ order.phone | default:"" }}</td>
 					<td class="p-1 border border-gray-300 break-word" data-search_field="suburb">{{ order.suburb | default:"" }}</td>
-					<td class="p-1 border border-gray-300" data-search_field="postcode">{{ order.postcode | default:"" }}</td>
-					<td class="p-1 border border-gray-300 break-word" data-search_field="state">{{ order.state | default:"" }}</td>
+					<td class="p-1 border border-gray-300 postcode" data-search_field="postcode">{{ order.postcode | default:"" }}</td>
+					<td class="p-1 border border-gray-300 state" data-search_field="state">{{ order.state | default:"" }}</td>
 					<td class="p-1 border border-gray-300 break-word" data-search_field="products">
 						{% for line in order.lines.all %}
 						<div>
@@ -146,7 +159,8 @@ table select option {
 						{% endfor %}
 					</td>
 					<td class="p-1 border border-gray-300" data-search_field="route_record">{{ order.route_record | route_record_label }}</td>
-					<td class="p-1 border border-gray-300" data-search_field="notes">{{ order.notes | default:"" }}</td>
+					<td class="p-1 border border-gray-300 break-word" data-search_field="notes">{{ order.notes | default:"" }}</td>
+					<td class="p-1 border border-gray-300 break-word" data-search_field="source">{{ order.source | default:"" }}</td>
 					<td class="p-1 border border-gray-300 break-word">
 						<button class="text-blue-600 hover:underline" onclick="editOrder(`{{ order.id }}`)">编辑</button>
 						<button class="text-red-600 hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)">删除</button>

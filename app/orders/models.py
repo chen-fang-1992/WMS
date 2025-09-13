@@ -44,6 +44,12 @@ class Order(models.Model):
 	# 总价
 	total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
+	# 来源
+	source = models.CharField(max_length=100, null=True, blank=True)
+
+	# 其他元数据
+	meta = models.JSONField(null=True, blank=True)
+
 	class Meta:
 		db_table = 'tms_order'
 		verbose_name = 'Order'
