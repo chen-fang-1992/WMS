@@ -57,7 +57,6 @@ table select option {
 					<th class="p-1 border border-gray-300">进度</th>
 					<th class="p-1 border border-gray-300">联系人</th>
 					<th class="p-1 border border-gray-300">电话</th>
-					<th class="p-1 border border-gray-300">地址</th>
 					<th class="p-1 border border-gray-300">Suburb</th>
 					<th class="p-1 border border-gray-300">Postcode</th>
 					<th class="p-1 border border-gray-300">State</th>
@@ -86,9 +85,6 @@ table select option {
 					</th>
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="phone" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
-					</th>
-					<th class="p-1 border border-gray-300">
-						<input data-search_target="address" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="suburb" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
@@ -124,7 +120,6 @@ table select option {
 					<td class="p-1 border border-gray-300 break-word" data-search_field="status">{{ order.status | status_label }}</td>
 					<td class="p-1 border border-gray-300 break-word" data-search_field="contact_name">{{ order.contact_name | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="phone">{{ order.phone | default:"" }}</td>
-					<td class="p-1 border border-gray-300 break-word" data-search_field="address">{{ order.address | default:"" }}</td>
 					<td class="p-1 border border-gray-300 break-word" data-search_field="suburb">{{ order.suburb | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="postcode">{{ order.postcode | default:"" }}</td>
 					<td class="p-1 border border-gray-300 break-word" data-search_field="state">{{ order.state | default:"" }}</td>
