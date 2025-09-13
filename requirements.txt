@@ -2,3 +2,5 @@ Django==5.1.7
 mysqlclient
 woocommerce
 openpyxl>=3.1.0
+whitenoise>=6.6.0
+gunicorn

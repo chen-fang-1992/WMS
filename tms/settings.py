@@ -63,6 +63,7 @@ LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',
+	'whitenoise.middleware.WhiteNoiseMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
 	'django.middleware.common.CommonMiddleware',
 	'django.middleware.csrf.CsrfViewMiddleware',
@@ -164,3 +165,5 @@ WOOCOMMERCE = {
 	"CONSUMER_SECRET": os.getenv("WC_CONSUMER_SECRET"),
 	"VERSION": os.getenv("WC_VERSION", "wc/v3"),
 }
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
