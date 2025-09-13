@@ -74,3 +74,8 @@ class OrderLine(models.Model):
 		if self.product:
 			return f"{self.product} x {self.quantity}"
 		return f"{self.raw_sku or '未知SKU'} x {self.quantity}"
+
+	def display_name(self):
+		if self.product:
+			return self.product.name_cn or self.product.name_en or self.raw_sku or "未知SKU"
+		return self.raw_sku or "未知SKU"

@@ -8,6 +8,15 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 
+import csv
+from django.http import HttpResponse
+from django.utils import timezone
+from datetime import timedelta
+
+import openpyxl
+from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
+
 def list(request):
 	orders = Order.objects.order_by('-date')
 	return render(request, 'orders/list.html', {'orders': orders, 'statuses': ORDER_STATUS, 'route_records': ORDER_ROUTE_RECORD})
@@ -170,3 +179,112 @@ def update_order(request, id):
 			return JsonResponse({'success': False, 'error': str(e)})
 
 	return JsonResponse({'success': False, 'error': '仅支持 POST 请求'})
+
+@csrf_exempt
+def export_orders(request):
+	ids = request.GET.get('ids', '')
+	id_list = [int(x) for x in ids.split(',') if x.isdigit()]
+
+	orders = Order.objects.filter(id__in=id_list).prefetch_related('lines')
+
+	wb = openpyxl.Workbook()
+	ws = wb.active
+	ws.title = 'Orders'
+
+	font = Font(name='Arial', size=14)
+	alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+	from openpyxl.styles import Border, Side
+	thin_border = Border(
+		left=Side(style='thin'),
+		right=Side(style='thin'),
+		top=Side(style='thin'),
+		bottom=Side(style='thin')
+	)
+
+	# 行高
+	for i in range(1, len(orders) + 10):
+		ws.row_dimensions[i].height = 74.25
+
+	# 抬头日期（次日）
+	header_date = (timezone.localtime() + timedelta(days=1)).strftime('%m-%d-%Y')
+	ws.append(['DELIVERY LIST'] + [''] * 11 + ['DATE', header_date])
+
+	# 第二行：表头
+	headers = [
+		'NUMBER',
+		'ITEM DESCRIPTION',
+		'DELIVERY INSTRUCTION',
+		'PACKAGE',
+		'CUSTOMER NAME',
+		'CONTACT NO.',
+		'ADDRESS',
+		'SUBURB',
+		'POST CODE',
+		'STATE',
+		'Invoice No.',
+		'NOTE',
+		'SIGNATURE OF RECEIPIENT',
+		'DATE',
+	]
+	ws.append(headers)
+
+	# 数据行
+	for order in orders:
+		product_lines = '; '.join([
+			f'{line.display_name()} × {line.quantity}'
+			for line in order.lines.all()
+		])
+
+		ws.append([
+			order.reference,
+			product_lines,
+			'',
+			'',
+			order.contact_name or '',
+			order.phone or '',
+			order.address or '',
+			order.suburb or '',
+			order.postcode or '',
+			order.state or '',
+			'',
+			order.notes or '',
+			'',
+			header_date
+		])
+
+	# 样式 + 边框
+	for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+		for cell in row:
+			cell.font = font
+			cell.alignment = alignment
+			cell.border = thin_border
+
+	# 列宽自适应（考虑中文宽度）
+	def text_width(val):
+		return sum(2 if ord(c) > 127 else 1 for c in str(val))
+
+	for col in ws.columns:
+		max_length = 0
+		col_letter = get_column_letter(col[0].column)
+		for cell in col:
+			if cell.value:
+				val_length = text_width(cell.value)
+				if val_length > max_length:
+					max_length = val_length
+		adjusted_width = max(15, min((max_length + 2) * 1.2, 50))
+		ws.column_dimensions[col_letter].width = adjusted_width
+
+	# 页面设置
+	ws.sheet_properties.pageSetUpPr.fitToPage = True
+	ws.page_setup.fitToHeight = False
+	ws.page_setup.fitToWidth = 1
+	ws.page_setup.scale = 55
+	ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+
+	filename = f'orders_{timezone.localtime().strftime("%Y%m%d_%H%M%S")}.xlsx'
+	response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+	response['Content-Disposition'] = f'attachment; filename="{filename}"'
+	wb.save(response)
+
+	return response

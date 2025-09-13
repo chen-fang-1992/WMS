@@ -44,6 +44,9 @@ table select option {
 			<button type="button" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700" onclick="addOrder()">
 				<i class="bi bi-plus-lg"></i> 添加订单
 			</button>
+			<button id="export-btn" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700">
+				<i class="bi bi-file-earmark-arrow-down"></i> 导出发货单
+			</button>
 		</div>
 	</div>
 
@@ -52,6 +55,7 @@ table select option {
 		<table class="w-full border-collapse text-sm w-100">
 			<thead class="bg-gray-100">
 				<tr>
+					<th class="p-1 border border-gray-300"><input type="checkbox" id="select-all"></th>
 					<th class="p-1 border border-gray-300">订单号码</th>
 					<th class="p-1 border border-gray-300">日期</th>
 					<th class="p-1 border border-gray-300">进度</th>
@@ -66,6 +70,7 @@ table select option {
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
 				<tr>
+					<th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="reference" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
@@ -115,6 +120,7 @@ table select option {
 			<tbody>
 				{% for order in orders %}
 				<tr class="hover:bg-gray-50">
+					<td class="p-1 border border-gray-300"><input type="checkbox" class="order-checkbox" value="{{ order.id }}"></td>
 					<td class="p-1 border border-gray-300" data-search_field="reference">{{ order.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date|date:"d/m/Y" }}<br>{{ order.date|date:"h:i A" }}</td>
 					<td class="p-1 border border-gray-300 break-word" data-search_field="status">{{ order.status | status_label }}</td>
@@ -390,6 +396,23 @@ table select option {
 			if (allOption) {
 				allOption.selected = true;
 			}
+		});
+
+		// 全选功能
+		document.getElementById('select-all').addEventListener('change', function() {
+			document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked);
+		});
+
+		document.getElementById('export-btn').addEventListener('click', function() {
+			const ids = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
+
+			if (ids.length === 0) {
+				alert('请先勾选需要导出的订单！');
+				return;
+			}
+
+			const url = `/orders/export/?ids=${ids.join(',')}`;
+			window.location.href = url;
 		});
 	});
 
