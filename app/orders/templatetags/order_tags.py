@@ -9,4 +9,6 @@ def status_label(code):
 
 @register.filter
 def route_record_label(code):
+	if not code:
+		return ''
 	return dict(ORDER_ROUTE_RECORD).get(code, code)
