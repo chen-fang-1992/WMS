@@ -29,6 +29,31 @@ def get_order_source(order):
 		return clean_text(f"{source}")
 	else:
 		return 'Unknown'
+	
+def update_order_if_missing(order_data):
+	try:
+		obj = Order.objects.get(reference=order_data['id'])
+	except Order.DoesNotExist:
+		return False
+
+	changed = False
+
+	if not obj.source:
+		new_source = get_order_source(order_data)
+		obj.source = new_source
+		changed = True
+
+	if not obj.meta:
+		obj.meta = order_data
+		changed = True
+
+	if changed:
+		obj.save(update_fields=['source', 'meta'])
+		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta 补全")
+	else:
+		print(f"⏩ 已存在订单 WC#{obj.reference}，无需更新")
+
+	return changed
 
 def sync_wc_orders():
 	wc = get_wc_client()
@@ -48,7 +73,7 @@ def sync_wc_orders():
 			print(f"Processing order ID: {order['id']}")
 
 			if Order.objects.filter(reference=order["id"]).exists():
-				print(f"⏩ 已存在订单 WC#{order['id']}，跳过")
+				update_order_if_missing(order)
 				continue
 
 			source = get_order_source(order)
