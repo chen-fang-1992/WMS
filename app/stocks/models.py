@@ -37,7 +37,11 @@ class Stock(models.Model):
 
 		# 更新数据库
 		for product_id, quantity in stock_data.items():
-			product = Product.objects.get(id=product_id)
+			if not product_id:
+				continue
+			product = Product.objects.filter(id=product_id).first()
+			if not product:
+				continue
 			stock, _ = cls.objects.get_or_create(product=product, defaults={'quantity': 0})
 			stock.quantity = max(quantity, 0)  # 避免负库存
 			stock.save()

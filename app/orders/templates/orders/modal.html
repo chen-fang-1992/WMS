@@ -170,10 +170,13 @@
 
 			const product_ids = Array.from(document.querySelectorAll('input[name="product_id[]"]')).map(input => input.value.trim());
 			const quantities = Array.from(document.querySelectorAll('input[name="quantity[]"]')).map(input => parseInt(input.value));
+			const skus = Array.from(document.querySelectorAll('input[name="sku[]"]')).map(input => input.value.trim());
+			console.log(skus);
 
 			const products = product_ids.map((product_id, index) => ({
 				product_id,
-				quantity: quantities[index]
+				quantity: quantities[index],
+				sku: skus[index],
 			}));
 
 			// 验证必填字段
@@ -240,7 +243,7 @@
 		const newRow = document.createElement('tr');
 		newRow.innerHTML = `
 			<td><input type="hidden" name="product_id[]" required><input type="text" class="form-control product-search" placeholder="输入条码或名称搜索" autocomplete="off"><div class="autocomplete-suggestions"></div></td>
-			<td><input type="text" class="form-control sku" placeholder="SKU" readonly aria-readonly="true"></td>
+			<td><input type="text" class="form-control sku" placeholder="SKU" name="sku[]"></td>
 			<td><input type="number" min="1" step="1" class="form-control" name="quantity[]" required></td>
 			<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">删除</button></td>
 		`;

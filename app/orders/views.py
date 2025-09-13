@@ -154,25 +154,25 @@ def update_order(request, id):
 
 			# 添加新的明细行
 			for item in products:
+				product = None
 				product_id = item.get('product_id')
 				quantity = item.get('quantity', 0)
 
 				if product_id:
-					try:
-						product = Product.objects.get(id=product_id)
-						OrderLine.objects.create(
-							order=order,
-							product=product,
-							quantity=quantity
-						)
-					except Product.DoesNotExist:
-						continue  # 如果产品ID无效，就跳过这条
+					product = Product.objects.filter(id=product_id).first()
+
+				OrderLine.objects.create(
+					order=order,
+					product=product,
+					raw_sku=item.get('sku', ''),
+					quantity=quantity
+				)
 
 			Stock.recalculate_all()
 			return JsonResponse({'success': True})
 
 		except Order.DoesNotExist:
-			return JsonResponse({'success': False, 'error': '未找到订单单'})
+			return JsonResponse({'success': False, 'error': '未找到订单'})
 		except json.JSONDecodeError:
 			return JsonResponse({'success': False, 'error': '无效的 JSON 格式'})
 		except Exception as e:

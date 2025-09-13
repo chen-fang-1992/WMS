@@ -507,7 +507,7 @@ table select option {
 						<div class="autocomplete-suggestions"></div>
 					</td>
 					<td>
-						<input type="text" class="form-control sku" placeholder="SKU" value="${item.sku}" readonly aria-readonly="true">
+						<input type="text" class="form-control sku" placeholder="SKU" name="sku[]" value="${item.sku}">
 					</td>
 					<td>
 						<input type="number" min="1" step="1" class="form-control" name="quantity[]" value="${item.quantity}" required>
