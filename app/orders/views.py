@@ -90,10 +90,10 @@ def order_detail(request, id):
 				'status': order.status,
 				'products': [
 					{
-						'product_id': line.product.id,
-						'name': line.product.name_cn,
+						'product_id': line.product.id if line.product else '',
+						'name': line.product.name_cn if line.product else '',
 						'quantity': line.quantity,
-						'sku': line.product.sku
+						'sku': line.product.sku if line.product else line.raw_sku,
 					} for line in lines
 				]
 			}
