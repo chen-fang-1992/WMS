@@ -148,12 +148,13 @@ def update_product(request, id):
 			product.package_height = data['package_height']
 			product.shipping_volume = data['shipping_volume']
 			product.weight = parse_decimal(data['weight'])
-			product.cost_rmb = parse_decimal(data['cost_rmb'])
-			product.cost_aud = parse_decimal(data['cost_aud'])
-			product.sea_shipping_cost = parse_decimal(data['sea_shipping_cost'])
-			product.total_cost = parse_decimal(data['total_cost'])
-			product.actual_price = parse_decimal(data['actual_price'])
-			product.profit = parse_decimal(data['profit'])
+			if request.user.is_staff or request.user.is_superuser:
+				product.cost_rmb = parse_decimal(data['cost_rmb'])
+				product.cost_aud = parse_decimal(data['cost_aud'])
+				product.sea_shipping_cost = parse_decimal(data['sea_shipping_cost'])
+				product.total_cost = parse_decimal(data['total_cost'])
+				product.actual_price = parse_decimal(data['actual_price'])
+				product.profit = parse_decimal(data['profit'])
 			product.save()
 
 			# 清空旧的 BOM
