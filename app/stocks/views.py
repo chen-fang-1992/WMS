@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from ..products.models import Product
 from ..stocks.models import Stock
 from ..inbounds.models import InboundLine
 from ..orders.models import OrderLine
@@ -13,7 +14,8 @@ from django.utils import timezone
 
 def list(request):
 	stocks = Stock.objects.all()
-	return render(request, 'stocks/list.html', {'stocks': stocks})
+	categories = Product.get_all_categories()
+	return render(request, 'stocks/list.html', {'stocks': stocks, 'categories': categories})
 
 @csrf_exempt
 def stock_detail(request, id):
