@@ -82,6 +82,7 @@ def sync_wc_orders():
 				reference=order["id"],
 				status="New",
 				total=order["total"],
+				shipping=order["shipping_total"],
 				contact_name=f"{order['billing']['first_name']} {order['billing']['last_name']}".strip(),
 				phone=order["billing"].get("phone", ""),
 				email=order["billing"].get("email", ""),

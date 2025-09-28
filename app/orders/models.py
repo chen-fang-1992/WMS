@@ -44,6 +44,9 @@ class Order(models.Model):
 	# 总价
 	total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
+	# 运费
+	shipping = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
 	# 来源
 	source = models.CharField(max_length=100, null=True, blank=True)
 
