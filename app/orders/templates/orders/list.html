@@ -153,16 +153,7 @@ table select option {
 					<td class="p-1 border border-gray-300 break-word" data-search_field="products">
 						{% for line in order.lines.all %}
 						<div>
-							{% if line.product %}
-								{% if line.product.name_cn %}
-									{{ line.product.name_cn }}
-								{% else %}
-									{{ line.product.name_en }}
-								{% endif %}
-							{% else %}
-								{{ line.raw_sku|default:"未知SKU" }}
-							{% endif %}
-							* {{ line.quantity }}
+							{{ line.raw_sku|default:"未知SKU" }} * {{ line.quantity }}
 						</div>
 						{% endfor %}
 					</td>
