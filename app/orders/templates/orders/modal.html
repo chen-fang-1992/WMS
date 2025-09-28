@@ -33,7 +33,14 @@
 	background-color: #f0f0f0;
 }
 
-#product-table .sku[readonly] {
+#product-table .barcode {
+	background-color: #e9ecef;
+	border-color: #ced4da;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+#product-table .sku {
 	background-color: #e9ecef;
 	border-color: #ced4da;
 	cursor: not-allowed;
@@ -128,6 +135,7 @@
 						<thead>
 							<tr>
 								<th>产品</th>
+								<th>条码</th>
 								<th>SKU</th>
 								<th>数量</th>
 								<th>操作</th>
@@ -169,14 +177,15 @@
 			const customer_notes = document.getElementById('customer_notes').value;
 
 			const product_ids = Array.from(document.querySelectorAll('input[name="product_id[]"]')).map(input => input.value.trim());
-			const quantities = Array.from(document.querySelectorAll('input[name="quantity[]"]')).map(input => parseInt(input.value));
+			const barcodes = Array.from(document.querySelectorAll('input[name="barcode[]"]')).map(input => input.value.trim());
 			const skus = Array.from(document.querySelectorAll('input[name="sku[]"]')).map(input => input.value.trim());
-			console.log(skus);
+			const quantities = Array.from(document.querySelectorAll('input[name="quantity[]"]')).map(input => parseInt(input.value));
 
 			const products = product_ids.map((product_id, index) => ({
 				product_id,
-				quantity: quantities[index],
+				barcode: barcodes[index],
 				sku: skus[index],
+				quantity: quantities[index],
 			}));
 
 			// 验证必填字段
@@ -243,6 +252,7 @@
 		const newRow = document.createElement('tr');
 		newRow.innerHTML = `
 			<td><input type="hidden" name="product_id[]" required><input type="text" class="form-control product-search" placeholder="输入条码或名称搜索" autocomplete="off"><div class="autocomplete-suggestions"></div></td>
+			<td><input type="text" class="form-control barcode" placeholder="条码" name="barcode[]"></td>
 			<td><input type="text" class="form-control sku" placeholder="SKU" name="sku[]"></td>
 			<td><input type="number" min="1" step="1" class="form-control" name="quantity[]" required></td>
 			<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">删除</button></td>
@@ -266,6 +276,8 @@
 				suggestionsDiv.style.display = 'none';
 				const skuInput = input.closest('tr').querySelector('.sku');
 				if (skuInput) skuInput.value = '';
+				const barcodeInput = input.closest('tr').querySelector('.barcode');
+				if (barcodeInput) barcodeInput.value = '';
 				return;
 			}
 
@@ -282,6 +294,8 @@
 							input.previousElementSibling.value = item.id;  // hidden input
 							const skuInput = input.closest('tr').querySelector('.sku');
 							if (skuInput) skuInput.value = item.sku || item.barcode || '';
+							const barcodeInput = input.closest('tr').querySelector('.barcode');
+							if (barcodeInput) barcodeInput.value = item.barcode || '';
 							suggestionsDiv.innerHTML = '';
 							suggestionsDiv.style.display = 'none';
 						});

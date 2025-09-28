@@ -101,8 +101,9 @@ def order_detail(request, id):
 					{
 						'product_id': line.product.id if line.product else '',
 						'name': line.product.name_cn if line.product else '',
-						'quantity': line.quantity,
+						'barcode': line.product.barcode if line.product else '',
 						'sku': line.product.sku if line.product else line.raw_sku,
+						'quantity': line.quantity,
 					} for line in lines
 				]
 			}
