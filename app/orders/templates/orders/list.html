@@ -390,6 +390,17 @@ table select option {
 						}
 					}
 				}
+
+				// ⚡ 默认隐藏 completed / cancelled
+				const statusCell = row.querySelector('td[data-search_field="status"]');
+				if (statusCell) {
+					const status = statusCell.textContent.trim().toLowerCase();
+
+					// 如果用户没有筛选 status，则隐藏 completed/cancelled
+					if (!filters['status'] && (status === 'completed' || status === 'cancelled')) {
+						visible = false;
+					}
+				}
 				
 				row.style.display = visible ? '' : 'none';
 			});
@@ -429,6 +440,8 @@ table select option {
 			const url = `/orders/export/?ids=${ids.join(',')}`;
 			window.location.href = url;
 		});
+
+		applyAllFilters();
 	});
 
 	function addOrder() {
