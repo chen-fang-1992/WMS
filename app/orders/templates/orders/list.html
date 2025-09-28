@@ -42,6 +42,9 @@ table select option {
 .state {
 	max-width: 50px;
 }
+.cursor-pointer {
+	cursor: pointer;
+}
 </style>
 
 <div class="mx-auto p-1">
@@ -65,20 +68,20 @@ table select option {
 			<thead class="bg-gray-100">
 				<tr>
 					<th class="p-1 border border-gray-300"><input type="checkbox" id="select-all"></th>
-					<th class="p-1 border border-gray-300 reference">订单号码</th>
-					<th class="p-1 border border-gray-300">日期</th>
-					<th class="p-1 border border-gray-300 status">进度</th>
-					<th class="p-1 border border-gray-300">联系人</th>
-					<th class="p-1 border border-gray-300">电话</th>
-					<th class="p-1 border border-gray-300">Suburb</th>
-					<th class="p-1 border border-gray-300 postcode">Postcode</th>
-					<th class="p-1 border border-gray-300 state">State</th>
-					<th class="p-1 border border-gray-300">产品</th>
-					<th class="p-1 border border-gray-300">总金额</th>
-					<th class="p-1 border border-gray-300">运费</th>
-					<th class="p-1 border border-gray-300">路线记录</th>
-					<th class="p-1 border border-gray-300">客户备注</th>
-					<th class="p-1 border border-gray-300">备注</th>
+					<th class="p-1 border border-gray-300 reference cursor-pointer" data-sort_field="reference">订单号码</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="date">日期</th>
+					<th class="p-1 border border-gray-300 status cursor-pointer" data-sort_field="status">进度</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="contact_name">联系人</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="phone">电话</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="suburb">Suburb</th>
+					<th class="p-1 border border-gray-300 postcode cursor-pointer" data-sort_field="postcode">Postcode</th>
+					<th class="p-1 border border-gray-300 state cursor-pointer" data-sort_field="state">State</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="products">产品</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="total">总金额</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="shipping">运费</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="route_record">路线记录</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="customer_notes">客户备注</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="notes">备注</th>
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
 				<tr>
@@ -184,6 +187,8 @@ table select option {
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
 		const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
 		const productTable = document.querySelector('tbody');
+		const headers = document.querySelectorAll('th[data-sort_field]');
+		let sortState = {};
 
 		function normalizeNumber(text) {
 			if (text == null) return null;
@@ -337,6 +342,27 @@ table select option {
 			return (cellText) => rx.test(String(cellText || '').trim());
 		}
 
+		function parseDateString(text) {
+			// 支持格式：dd/mm/yyyy hh:mm AM/PM
+			const match = text.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})\s*(AM|PM))?/i);
+			if (!match) return null;
+
+			let [, dd, mm, yyyy, hh, min, ap] = match;
+			let hours = parseInt(hh || "0", 10);
+			if (ap) {
+				if (ap.toUpperCase() === "PM" && hours < 12) hours += 12;
+				if (ap.toUpperCase() === "AM" && hours === 12) hours = 0;
+			}
+
+			return new Date(
+				parseInt(yyyy, 10),
+				parseInt(mm, 10) - 1,
+				parseInt(dd, 10),
+				hours,
+				parseInt(min || "0", 10)
+			);
+		}
+
 		function applyAllFilters() {
 			const filters = {};
 
@@ -439,6 +465,51 @@ table select option {
 
 			const url = `/orders/export/?ids=${ids.join(',')}`;
 			window.location.href = url;
+		});
+
+		headers.forEach(header => {
+			header.addEventListener('click', function () {
+				const field = header.dataset.sort_field;
+				const rows = Array.from(productTable.querySelectorAll('tr'));
+
+				// 切换排序方向
+				sortState[field] = sortState[field] === 'asc' ? 'desc' : 'asc';
+				const direction = sortState[field];
+
+				rows.sort((a, b) => {
+					const cellA = a.querySelector(`td[data-search_field="${field}"]`);
+					const cellB = b.querySelector(`td[data-search_field="${field}"]`);
+					const valA = cellA ? cellA.textContent.trim() : '';
+					const valB = cellB ? cellB.textContent.trim() : '';
+
+					let cmp = 0;
+
+					if (field === "date") {
+						// ⚡ 特殊处理日期
+						const dateA = parseDateString(valA);
+						const dateB = parseDateString(valB);
+						if (dateA && dateB) {
+							cmp = dateA - dateB;
+						} else {
+							cmp = valA.localeCompare(valB, 'zh');
+						}
+					} else {
+						// 数字优先
+						const numA = parseFloat(valA.replace(/[^0-9.-]/g, ''));
+						const numB = parseFloat(valB.replace(/[^0-9.-]/g, ''));
+						if (!isNaN(numA) && !isNaN(numB)) {
+							cmp = numA - numB;
+						} else {
+							cmp = valA.localeCompare(valB, 'zh');
+						}
+					}
+
+					return direction === 'asc' ? cmp : -cmp;
+				});
+
+				// 重新插入排序后的行
+				rows.forEach(row => productTable.appendChild(row));
+			});
 		});
 
 		applyAllFilters();
