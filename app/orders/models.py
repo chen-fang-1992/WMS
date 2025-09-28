@@ -32,11 +32,11 @@ class Order(models.Model):
 	# 路线记录
 	route_record = models.TextField(null=True, blank=True)
 
+	# 客户备注
+	customer_notes = models.TextField(null=True, blank=True)
+
 	# 备注
 	notes = models.TextField(null=True, blank=True)
-
-	# 客服留言
-	customer_notes = models.TextField(null=True, blank=True)
 
 	# 订单状态
 	status = models.CharField(max_length=50, null=True, blank=True)
