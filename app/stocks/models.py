@@ -43,7 +43,7 @@ class Stock(models.Model):
 			if not product:
 				continue
 			stock, _ = cls.objects.get_or_create(product=product, defaults={'quantity': 0})
-			stock.quantity = max(quantity, 0)  # 避免负库存
+			stock.quantity = quantity
 			stock.save()
 
 		# 可选：清除已删除产品的库存记录

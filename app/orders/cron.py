@@ -1,9 +1,9 @@
-import re
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from app.services.woocommerce_client import get_wc_client
 from app.orders.models import Order, OrderLine
 from app.products.models import Product
+from app.stocks.models import Stock
 
 
 def parse_wc_datetime(dt_str):
@@ -126,3 +126,5 @@ def sync_wc_orders():
 			print(f"✅ 新订单同步: WC#{obj.reference}")
 
 		page += 1
+
+	Stock.recalculate_all()
