@@ -50,7 +50,6 @@ table select option {
 					<th class="p-1 border border-gray-300">类型</th>
 					<th class="p-1 border border-gray-300">品种</th>
 					<th class="p-1 border border-gray-300">厂家</th>
-					<th class="p-1 border border-gray-300">产品名称</th>
 					<th class="p-1 border border-gray-300">SKU</th>
 					<th class="p-1 border border-gray-300">条码</th>
 					<th class="p-1 border border-gray-300">操作</th>
@@ -81,9 +80,6 @@ table select option {
 						</select>
 					</th>
 					<th class="p-1 border border-gray-300">
-						<input data-search_target="name_cn" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
-					</th>
-					<th class="p-1 border border-gray-300">
 						<input data-search_target="sku" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300">
@@ -98,7 +94,6 @@ table select option {
 					<td class="p-1 border border-gray-300" data-search_field="type">{{ product.type | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="category">{{ product.category | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="manufacturer">{{ product.manufacturer | default:"" }}</td>
-					<td class="p-1 border border-gray-300" data-search_field="name_cn">{{ product.name_cn | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="sku">{{ product.sku | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="barcode">{{ product.barcode | default:"" }}</td>
 					<td class="p-1 border border-gray-300">
