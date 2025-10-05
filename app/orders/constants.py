@@ -20,4 +20,8 @@ ORDER_ROUTE_RECORD = [
 	('WOL', 'WOL'),
 	('BNE', 'BNE'),
 	('MEL', 'MEL'),
+	('BNE 第三方物流送货', 'BNE 第三方物流送货'),
+	('BNE 第三方物流ALLIED', 'BNE 第三方物流ALLIED'),
+	('MEL 第三方物流送货', 'MEL 第三方物流送货'),
+	('MEL 第三方物流ALLIED', 'MEL 第三方物流ALLIED'),
 ]
