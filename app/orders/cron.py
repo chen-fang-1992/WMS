@@ -47,9 +47,18 @@ def update_order_if_missing(order_data):
 		obj.meta = order_data
 		changed = True
 
+	if order_data.get('fee_lines') and not obj.special_fees:
+		obj.special_fees = ''
+		for item in order_data['fee_lines']:
+			if item.get('total', '0.00') == '0.00':
+				continue
+			obj.special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
+		obj.special_fees = obj.special_fees.strip()
+		changed = True
+
 	if changed:
-		obj.save(update_fields=['source', 'meta'])
-		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta 补全")
+		obj.save(update_fields=['source', 'meta', 'special_fees'])
+		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta/special_fees 补全")
 	else:
 		print(f"⏩ 已存在订单 WC#{obj.reference}，无需更新")
 
@@ -122,6 +131,12 @@ def sync_wc_orders():
 						quantity=quantity
 					)
 					print(f"❌ SKU {sku} 不存在，已保存为原始 SKU 行")
+
+			if order.get('fee_lines'):
+				for item in order.get('fee_lines', []):
+					obj.special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
+				obj.special_fees = obj.special_fees.strip()
+				obj.save(update_fields=['special_fees'])
 
 			print(f"✅ 新订单同步: WC#{obj.reference}")
 

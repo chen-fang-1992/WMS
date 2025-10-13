@@ -23,12 +23,6 @@ td {
 table select option {
 	text-align-last: center;
 }
-.text-green-600 {
-	color: #16a34a !important;
-}
-.text-red-600 {
-	color: #dc2626 !important;
-}
 .filter-input {
 	width: 100%;
 }
@@ -101,7 +95,7 @@ table select option {
 					<td class="p-1 border border-gray-300" data-search_field="sku">{{ stock.product.sku | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="quantity">{{ stock.quantity | default:0 }}</td>
 					<td class="p-1 border border-gray-300">
-						<button class="text-blue-600 hover:underline" onclick="viewStock(`{{ stock.id }}`)">查看</button>
+						<button class="text-primary hover:underline" onclick="viewStock(`{{ stock.id }}`)">查看</button>
 					</td>
 				</tr>
 				{% empty %}
@@ -410,8 +404,8 @@ table select option {
 				row.innerHTML = `
 					<td>${item.date}</td>
 					<td>${item.reference}</td>
-					<td class="text-green-600">${inboundQty}</td>
-					<td class="text-red-600">${outboundQty}</td>
+					<td class="text-success">${inboundQty}</td>
+					<td class="text-danger">${outboundQty}</td>
 					<td>${balance}</td>
 				`;
 				tbody.appendChild(row);

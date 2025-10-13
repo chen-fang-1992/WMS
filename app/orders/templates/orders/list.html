@@ -5,7 +5,10 @@
 {% block content %}
 <style>
 table {
-	width: 100%;
+	width: auto;
+	table-layout: auto;
+	border-collapse: collapse;
+	max-width: 100%;
 }
 th {
 	vertical-align: middle;
@@ -77,6 +80,7 @@ table select option {
 					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="products">产品</th>
 					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="total">总金额</th>
 					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="shipping">运费</th>
+					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="special_fees">特殊费用</th>
 					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="route_record">路线记录</th>
 					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="customer_notes">客户备注</th>
 					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="notes">备注</th>
@@ -123,6 +127,9 @@ table select option {
 						<input data-search_target="shipping" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300">
+						<input data-search_target="special_fees" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />	
+					</th>
+					<th class="p-1 border border-gray-300">
 						<select data-search_target="route_record" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
 							{% for value, label in route_records %}
@@ -146,12 +153,12 @@ table select option {
 					<td class="p-1 border border-gray-300 reference" data-search_field="reference">{{ order.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date|date:"d/m/Y" }}<br>{{ order.date|date:"h:i A" }}</td>
 					<td class="p-1 border border-gray-300 status" data-search_field="status">{{ order.status | status_label }}</td>
-					<td class="p-1 border border-gray-300 break-word" data-search_field="contact_name">{{ order.contact_name | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="contact_name">{{ order.contact_name | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="phone">{{ order.phone | default:"" }}</td>
-					<td class="p-1 border border-gray-300 break-word" data-search_field="suburb">{{ order.suburb | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="suburb">{{ order.suburb | default:"" }}</td>
 					<td class="p-1 border border-gray-300 postcode" data-search_field="postcode">{{ order.postcode | default:"" }}</td>
 					<td class="p-1 border border-gray-300 state" data-search_field="state">{{ order.state | default:"" }}</td>
-					<td class="p-1 border border-gray-300 break-word" data-search_field="products">
+					<td class="p-1 border border-gray-300" data-search_field="products">
 						{% for line in order.lines.all %}
 						<div>
 							{{ line.raw_sku|default:"未知SKU" }} * {{ line.quantity }}
@@ -160,12 +167,37 @@ table select option {
 					</td>
 					<td class="p-1 border border-gray-300" data-search_field="total">{{ order.total | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="shipping">{{ order.shipping | default:"" }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="special_fees">
+						{% if order.special_fees %}
+							<i class="bi bi-info-circle fs-5 text-primary cursor-pointer" 
+								data-bs-toggle="tooltip"
+								data-bs-placement="top"
+								title="{{ order.special_fees }}"></i>
+							<span style="display: none;">{{ order.special_fees }}</span>
+						{% endif %}
+					</td>
 					<td class="p-1 border border-gray-300" data-search_field="route_record">{{ order.route_record | route_record_label }}</td>
-					<td class="p-1 border border-gray-300 break-word" data-search_field="customer_notes">{{ order.customer_notes | default:"" }}</td>
-					<td class="p-1 border border-gray-300 break-word" data-search_field="notes">{{ order.notes | default:"" }}</td>
-					<td class="p-1 border border-gray-300 break-word">
-						<button class="text-blue-600 hover:underline" onclick="editOrder(`{{ order.id }}`)"><i class="bi bi-pencil-square"></i></button>
-						<button class="text-red-600 hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)"><i class="bi bi-trash"></i></button>
+					<td class="p-1 border border-gray-300" data-search_field="customer_notes">
+						{% if order.customer_notes %}
+							<i class="bi bi-info-circle fs-5 text-primary cursor-pointer" 
+								data-bs-toggle="tooltip"
+								data-bs-placement="top"
+								title="{{ order.customer_notes }}"></i>
+							<span style="display: none;">{{ order.customer_notes }}</span>
+						{% endif %}
+					</td>
+					<td class="p-1 border border-gray-300" data-search_field="notes">
+						{% if order.notes %}
+							<i class="bi bi-info-circle fs-5 text-primary cursor-pointer" 
+								data-bs-toggle="tooltip"
+								data-bs-placement="top"
+								title="{{ order.notes }}"></i>
+							<span style="display: none;">{{ order.notes }}</span>
+						{% endif %}
+					</td>
+					<td class="p-1 border border-gray-300">
+						<button class="text-primary hover:underline" onclick="editOrder(`{{ order.id }}`)"><i class="bi bi-pencil-square"></i></button>
+						<button class="text-danger hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)"><i class="bi bi-trash"></i></button>
 					</td>
 				</tr>
 				{% empty %}
@@ -511,6 +543,9 @@ table select option {
 		});
 
 		applyAllFilters();
+
+		const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+		tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
 	});
 
 	function addOrder() {
