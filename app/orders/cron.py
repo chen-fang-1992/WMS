@@ -104,6 +104,7 @@ def sync_wc_orders():
 				customer_notes=order.get("customer_note", ""),
 				date=parse_wc_datetime(order["date_created"]),
 				source=source,
+				special_fees='',
 				meta=order,
 			)
 
