@@ -232,16 +232,31 @@ def export_orders(request):
 
 	# 数据行
 	for order in orders:
-		product_lines = '; '.join([
-			f'{line.display_name()} × {line.quantity}'
+		product_lines = '\n'.join([
+			f'{line.raw_sku} × {line.quantity}'
 			for line in order.lines.all()
 		])
+
+		packages = []
+		for line in order.lines.all():
+			product = line.product
+			if not product:
+				packages.append(f'{line.raw_sku} x {line.quantity}')
+				continue
+
+			bom_items = product.bom_items.select_related('component').all()
+			if bom_items.exists():
+				for bom in bom_items:
+					packages.append(f'{bom.component.sku} × {bom.quantity * line.quantity}')
+			else:
+				packages.append(f'{product.sku} × {line.quantity}')
+		packages = '\n'.join(packages)
 
 		ws.append([
 			order.reference,
 			product_lines,
 			'',
-			'',
+			packages,
 			order.contact_name or '',
 			order.phone or '',
 			order.address or '',
