@@ -52,6 +52,9 @@ class Order(models.Model):
 
 	# 特殊费用
 	special_fees = models.TextField(null=True, blank=True)
+	
+	# tracking number
+	tracking_number = models.CharField(max_length=100, null=True, blank=True)
 
 	# 其他元数据
 	meta = models.JSONField(null=True, blank=True)

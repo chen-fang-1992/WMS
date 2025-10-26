@@ -130,6 +130,12 @@
 							<textarea class="form-control" id="notes"></textarea>
 						</div>
 					</div>
+					<div class="row mb-3">
+						<div class="col-md-4">
+							<label for="tracking_number" class="form-label">快递单号</label>
+							<input type="text" class="form-control" id="tracking_number">
+						</div>
+					</div>
 					<h6 class="mt-3">订单产品</h6>
 					<table class="table table-bordered text-sm" id="product-table">
 						<colgroup>
@@ -182,6 +188,7 @@
 			const route_record = document.getElementById('route_record').value;
 			const notes = document.getElementById('notes').value;
 			const customer_notes = document.getElementById('customer_notes').value;
+			const tracking_number = document.getElementById('tracking_number').value;
 
 			const product_ids = Array.from(document.querySelectorAll('input[name="product_id[]"]')).map(input => input.value.trim());
 			const barcodes = Array.from(document.querySelectorAll('input[name="barcode[]"]')).map(input => input.value.trim());
@@ -231,6 +238,7 @@
 					route_record: route_record,
 					notes: notes,
 					customer_notes: customer_notes,
+					tracking_number: tracking_number,
 					products: products,
 				})
 			})

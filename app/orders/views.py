@@ -38,10 +38,11 @@ def create_order(request):
 		customer_notes = data.get('customer_notes', '')
 		status = data.get('status')
 		date = data.get('date')
+		tracking_number = data.get('tracking_number', '')
 		products = data.get('products', [])
 
 		order = Order.objects.create(reference=reference, date=date, contact_name=contact_name, phone=phone, email=email, 
-			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status)
+			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status, tracking_number=tracking_number)
 
 		for item in products:
 			product = Product.objects.filter(id=item.get('product_id')).first()
@@ -97,6 +98,7 @@ def order_detail(request, id):
 				'notes': order.notes,
 				'customer_notes': order.customer_notes,
 				'status': order.status,
+				'tracking_number': order.tracking_number,
 				'products': [
 					{
 						'product_id': line.product.id if line.product else '',
@@ -132,6 +134,7 @@ def update_order(request, id):
 			notes = data.get('notes')
 			customer_notes = data.get('customer_notes', '')
 			status = data.get('status')
+			tracking_number = data.get('tracking_number', '')
 			products = data.get('products', [])
 
 			order = Order.objects.get(id=id)
@@ -148,6 +151,7 @@ def update_order(request, id):
 			order.notes = notes
 			order.customer_notes = customer_notes
 			order.status = status
+			order.tracking_number = tracking_number
 			order.save()
 
 			# 删除旧的明细行
