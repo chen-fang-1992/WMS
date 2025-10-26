@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from app.services.woocommerce_client import get_wc_client
@@ -68,11 +69,12 @@ def sync_wc_orders():
 	wc = get_wc_client()
 	page = 1
 	per_page = 100
+	since_date = (timezone.now() - timedelta(days=30)).isoformat()
 
 	while True:
 		orders = wc.get(
 			"orders",
-			params={"per_page": per_page, "page": page, "orderby": "date", "order": "asc"}
+			params={"per_page": per_page, "page": page, "orderby": "date", "order": "asc", "after": since_date}
 		).json()
 
 		if not orders:
