@@ -105,6 +105,7 @@ def sync_wc_orders():
 				date=parse_wc_datetime(order["date_created"]),
 				source=source,
 				special_fees='',
+				tracking_number='',
 				meta=order,
 			)
 
