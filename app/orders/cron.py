@@ -135,6 +135,7 @@ def sync_wc_orders():
 					print(f"❌ SKU {sku} 不存在，已保存为原始 SKU 行")
 
 			if order.get('fee_lines'):
+				obj.special_fees = ''
 				for item in order.get('fee_lines', []):
 					obj.special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
 				obj.special_fees = obj.special_fees.strip()
