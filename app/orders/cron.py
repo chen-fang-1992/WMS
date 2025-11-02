@@ -60,8 +60,12 @@ def update_order_if_missing(order_data):
 		obj.special_fees = obj.special_fees.strip()
 		changed = True
 
-	if obj.status != 'Completed' and order_data.get('status') == 'completed':
+	if order_data.get('status') == 'completed' and obj.status != 'Completed':
 		obj.status = 'Completed'
+		changed = True
+
+	if order_data.get('status') == 'cancelled' and obj.status != 'Cancelled':
+		obj.status = 'Cancelled'
 		changed = True
 
 	if changed:
