@@ -50,7 +50,7 @@ def update_order_if_missing(order_data):
 		obj.meta = order_data
 		changed = True
 
-	if order_data.get('fee_lines') and not obj.special_fees:
+	if order_data.get('fee_lines'):
 		obj.special_fees = ''
 		for item in order_data['fee_lines']:
 			if item.get('total', '0.00') == '0.00':
@@ -141,6 +141,8 @@ def sync_wc_orders():
 			if order.get('fee_lines'):
 				obj.special_fees = ''
 				for item in order.get('fee_lines', []):
+					if item.get('total', '0.00') == '0.00':
+						continue
 					obj.special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
 				obj.special_fees = obj.special_fees.strip()
 				obj.save(update_fields=['special_fees'])
