@@ -7,6 +7,7 @@ from app.products.models import Product
 from app.stocks.models import Stock
 from decimal import Decimal
 import traceback
+from django.conf import settings
 
 
 def parse_wc_datetime(dt_str):
@@ -59,9 +60,13 @@ def update_order_if_missing(order_data):
 		obj.special_fees = obj.special_fees.strip()
 		changed = True
 
+	if obj.status != 'Completed' and order_data.get('status') == 'completed':
+		obj.status = 'Completed'
+		changed = True
+
 	if changed:
-		obj.save(update_fields=['source', 'meta', 'special_fees'])
-		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta/special_fees 补全")
+		obj.save(update_fields=['source', 'meta', 'special_fees', 'status'])
+		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta/special_fees/status 补全")
 	else:
 		print(f"⏩ 已存在订单 WC#{obj.reference}，无需更新")
 
@@ -71,7 +76,7 @@ def sync_wc_orders():
 	wc = get_wc_client()
 	page = 1
 	per_page = 100
-	since_date = (timezone.now() - timedelta(days=30)).isoformat()
+	since_date = (timezone.now() - timedelta(days=settings.WOOCOMMERCE["SYNC_ORDERS_SINCE"])).isoformat()
 
 	while True:
 		orders = wc.get(

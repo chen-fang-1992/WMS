@@ -164,6 +164,7 @@ WOOCOMMERCE = {
 	"CONSUMER_KEY": os.getenv("WC_CONSUMER_KEY"),
 	"CONSUMER_SECRET": os.getenv("WC_CONSUMER_SECRET"),
 	"VERSION": os.getenv("WC_VERSION", "wc/v3"),
+	"SYNC_ORDERS_SINCE": int(os.getenv("WC_SYNC_ORDERS_SINCE", "30")),
 }
 
 # Shippit settings
