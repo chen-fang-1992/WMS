@@ -17,6 +17,8 @@ import openpyxl
 from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
 
+from ..orders.cron import push_order_to_wc
+
 def list(request):
 	orders = Order.objects.order_by('-date')
 	return render(request, 'orders/list.html', {'orders': orders, 'statuses': ORDER_STATUS, 'route_records': ORDER_ROUTE_RECORD})
@@ -53,6 +55,7 @@ def create_order(request):
 			)
 
 		Stock.recalculate_all()
+		push_order_to_wc(order.id)
 		return JsonResponse({'success': True})
 
 	return JsonResponse({'success': False, 'error': 'Invalid method'})

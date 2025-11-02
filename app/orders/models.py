@@ -94,3 +94,8 @@ class OrderLine(models.Model):
 		if self.product:
 			return self.product.name_cn or self.product.name_en or self.raw_sku or "未知SKU"
 		return self.raw_sku or "未知SKU"
+
+	def display_name_en(self):
+		if self.product:
+			return self.product.name_en or self.product.name_cn or self.raw_sku or "未知SKU"
+		return self.raw_sku or "未知SKU"

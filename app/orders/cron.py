@@ -5,6 +5,8 @@ from app.services.woocommerce_client import get_wc_client
 from app.orders.models import Order, OrderLine
 from app.products.models import Product
 from app.stocks.models import Stock
+from decimal import Decimal
+import traceback
 
 
 def parse_wc_datetime(dt_str):
@@ -148,3 +150,125 @@ def sync_wc_orders():
 		page += 1
 
 	Stock.recalculate_all()
+
+def push_order_to_wc(order_id):
+	wc = get_wc_client()
+	order = Order.objects.get(id=order_id)
+	lines = OrderLine.objects.filter(order=order)
+
+	# 基础订单结构
+	data = {
+		"status": "processing",
+		"currency": "AUD",
+		"payment_method": "",
+		"payment_method_title": "",
+		"set_paid": True,
+		"billing": {
+			"first_name": "",
+			"last_name": "",
+			"company": "",
+			"address_1": order.address or "",
+			"address_2": "",
+			"city": order.suburb or "",
+			"state": order.state or "",
+			"postcode": order.postcode or "",
+			"country": "AU",
+			"email": order.email or "",
+			"phone": order.phone or "",
+		},
+		"shipping": {
+			"first_name": "",
+			"last_name": "",
+			"company": "",
+			"address_1": order.address or "",
+			"address_2": "",
+			"city": order.suburb or "",
+			"state": order.state or "",
+			"postcode": order.postcode or "",
+			"country": "AU",
+			"phone": "",
+		},
+		"line_items": [],
+		"shipping_lines": [],
+		"fee_lines": [],
+		"customer_note": order.customer_notes or "",
+		"meta_data": [
+			{"key": "tms_order_id", "value": order.id},
+			{"key": "source_system", "value": "WMS"},
+		],
+	}
+
+	# 拆分姓名
+	if order.contact_name:
+		parts = order.contact_name.strip().split(" ", 1)
+		data["billing"]["first_name"] = parts[0]
+		data["shipping"]["first_name"] = parts[0]
+		if len(parts) > 1:
+			data["billing"]["last_name"] = parts[1]
+			data["shipping"]["last_name"] = parts[1]
+
+	# 商品行
+	for line in lines:
+		item = {
+			"quantity": line.quantity,
+			"name": line.display_name_en(),
+			"total": str(line.product.price if hasattr(line.product, "price") else 0),
+		}
+
+		if line.product and getattr(line.product, "meta", None) and "id" in line.product.meta:
+			item["product_id"] = line.product.meta["id"]
+		elif line.raw_sku:
+			item["sku"] = line.raw_sku
+		else:
+			print(f"⚠️ 订单 {order.id} 中有商品缺 SKU，跳过该行")
+			continue
+
+		data["line_items"].append(item)
+
+	# 运费
+	if order.shipping and Decimal(order.shipping) > 0:
+		data["shipping_lines"].append({
+			"method_id": "flat_rate",
+			"method_title": "Flat Rate",
+			"total": str(order.shipping),
+			"meta_data": [
+				{"key": "Items", "value": ", ".join([l.display_name_en() for l in lines])}
+			]
+		})
+	else:
+		data["shipping_lines"].append({
+			"method_id": "free_shipping",
+			"method_title": "Free shipping",
+			"total": "0.00",
+			"meta_data": [
+				{"key": "Items", "value": ", ".join([l.display_name_en() for l in lines])}
+			]
+		})
+
+	# 特殊费用
+	if order.special_fees:
+		for fee in order.special_fees.split("\n"):
+			if ":" in fee:
+				name, total = fee.split(":", 1)
+				data["fee_lines"].append({
+					"name": name.strip(),
+					"tax_class": "",
+					"tax_status": "taxable",
+					"total": total.replace("$", "").strip() or "0.00"
+				})
+
+	# 推送到 WooCommerce
+	try:
+		response = wc.post("orders", data).json()
+		if "id" in response:
+			order.reference = str(response["id"])
+			order.meta = response
+			order.save(update_fields=["reference", "meta"])
+			print(f"✅ 已推送到 WooCommerce，WC#{response['id']}")
+			return True
+		else:
+			print(f"⚠️ WooCommerce 返回异常: {response}")
+	except Exception as e:
+		print(f"❌ 推送失败: {e}\n{traceback.format_exc()}")
+
+	return False
