@@ -19,6 +19,7 @@ from openpyxl.utils import get_column_letter
 
 from ..orders.cron import push_order_to_wc
 from ..services.shippit_client import get_shipping_quote
+from ..orders.cron import sync_wc_orders
 
 def list(request):
 	orders = Order.objects.order_by('-date')
@@ -326,3 +327,14 @@ def shipping_quotes(request, id):
 		})
 	except Exception as e:
 		return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+def sync_orders(request):
+	if request.method == 'POST':
+		try:
+			sync_wc_orders()
+			return JsonResponse({'success': True})
+		except Exception as e:
+			return JsonResponse({'success': False, 'error': str(e)})
+	
+	return JsonResponse({'success': False, 'error': '仅支持 POST 请求'})
