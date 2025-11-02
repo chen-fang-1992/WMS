@@ -198,6 +198,9 @@ table select option {
 					<td class="p-1 border border-gray-300">
 						<button class="text-primary hover:underline" onclick="editOrder(`{{ order.id }}`)"><i class="bi bi-pencil-square"></i></button>
 						<button class="text-danger hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)"><i class="bi bi-trash"></i></button>
+						<button class="text-success hover:underline ml-2" onclick="getShippingQuotes(`{{ order.id }}`)">
+							<i class="bi bi-truck"></i>
+						</button>
 					</td>
 				</tr>
 				{% empty %}
@@ -211,6 +214,8 @@ table select option {
 </div>
 
 {% include 'orders/modal.html' %}
+
+{% include 'orders/shipping_quotes.html' %}
 
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
@@ -653,6 +658,47 @@ table select option {
 		.catch(error => {
 			console.error('获取订单出错:', error);
 			alert('无法获取订单数据');
+		});
+	}
+
+	function getShippingQuotes(id) {
+		const modal = new bootstrap.Modal(document.getElementById('shippingQuotesModal'));
+		const loading = document.getElementById('quotes-loading');
+		const table = document.getElementById('quotes-table');
+		const tbody = table.querySelector('tbody');
+
+		// 清空旧数据
+		tbody.innerHTML = '';
+		table.style.display = 'none';
+		loading.style.display = '';
+
+		modal.show();
+
+		fetch(`/orders/shipping_quotes/${id}/`)
+		.then(res => res.json())
+		.then(data => {
+			loading.style.display = 'none';
+
+			const quotes = data.quotes || [];
+			if (quotes.length === 0) {
+				tbody.innerHTML = `<tr><td colspan="4">无可用报价</td></tr>`;
+			} else {
+				for (const q of quotes) {
+					const row = document.createElement('tr');
+					row.innerHTML = `
+						<td>${q.courier}</td>
+						<td>${q.service_level}</td>
+						<td>${parseFloat(q.price || 0).toFixed(2)}</td>
+						<td>${q.eta}</td>
+					`;
+					tbody.appendChild(row);
+				}
+			}
+			table.style.display = '';
+		})
+		.catch(err => {
+			loading.style.display = 'none';
+			alert('无法连接到服务器: ' + err);
 		});
 	}
 </script>

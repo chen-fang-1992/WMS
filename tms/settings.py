@@ -166,4 +166,10 @@ WOOCOMMERCE = {
 	"VERSION": os.getenv("WC_VERSION", "wc/v3"),
 }
 
+# Shippit settings
+SHIPPIT = {
+	"API_URL": os.getenv("SHIPPIT_API_URL"),
+	"API_KEY": os.getenv("SHIPPIT_API_KEY"),
+}
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

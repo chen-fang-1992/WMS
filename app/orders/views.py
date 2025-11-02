@@ -18,6 +18,7 @@ from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
 
 from ..orders.cron import push_order_to_wc
+from ..services.shippit_client import get_shipping_quote
 
 def list(request):
 	orders = Order.objects.order_by('-date')
@@ -311,3 +312,17 @@ def export_orders(request):
 	wb.save(response)
 
 	return response
+
+@csrf_exempt
+def shipping_quotes(request, id):
+	try:
+		result = get_shipping_quote(id)
+		if not result:
+			return JsonResponse({'success': False, 'error': '未获取到任何报价'})
+		return JsonResponse({
+			'success': True,
+			'quotes': result['all'],
+			'best': result['best'],
+		})
+	except Exception as e:
+		return JsonResponse({'success': False, 'error': str(e)})
