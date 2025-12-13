@@ -85,7 +85,7 @@ def sync_wc_orders():
 	while True:
 		orders = wc.get(
 			"orders",
-			params={"per_page": per_page, "page": page, "orderby": "date", "order": "asc", "after": since_date}
+			params={"per_page": per_page, "page": page, "orderby": "date", "order": "asc", "modified_after": since_date}
 		).json()
 
 		if not orders:
