@@ -63,6 +63,9 @@ table select option {
 .filter-input {
 	width: 100%;
 }
+.filter-variety {
+	width: 100%;
+}
 </style>
 
 <div class="mx-auto p-1">
@@ -81,17 +84,27 @@ table select option {
 	<div class="mt-4 bg-white shadow-md rounded-lg w-full overflow-x-auto">
 		<table class="w-full border-collapse text-sm w-100">
 			<colgroup>
+				<col style="width: 20%;">
 				<col style="width: 45%;">
 				<col style="width: 40%;">
 				<col style="width: 15%;">
 			</colgroup>
 			<thead class="bg-gray-100">
 				<tr>
+					<th class="p-1 border border-gray-300">仓库</th>
 					<th class="p-1 border border-gray-300">参考号</th>
 					<th class="p-1 border border-gray-300">日期</th>
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
 				<tr>
+					<th class="p-1 border border-gray-300">
+						<select data-search_target="warehouse" class="filter-variety border border-gray-300 p-1 rounded">
+							<option value="所有">所有</option>
+							{% for value, label in warehouses %}
+								<option value="{{ value }}">{{ label }}</option>
+							{% endfor %}
+						</select>
+					</th>
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="reference" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
@@ -104,6 +117,7 @@ table select option {
 			<tbody>
 				{% for inbound in inbounds %}
 				<tr class="hover:bg-gray-50">
+					<td class="p-1 border border-gray-300" data-search_field="warehouse">{{ inbound.warehouse | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="reference">{{ inbound.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="date">{{ inbound.date | default:"" }}</td>
 					<td class="p-1 border border-gray-300">
@@ -132,11 +146,20 @@ table select option {
 				</div>
 				<div class="modal-body">
 					<div class="row mb-3">
-						<div class="col-md-6">
+						<div class="col-md-4">
+							<label for="warehouse" class="form-label">仓库</label>
+							<select class="form-select" id="warehouse" required>
+								<option value="" disabled selected>请选择仓库</option>
+								{% for value, label in warehouses %}
+									<option value="{{ value }}">{{ label }}</option>
+								{% endfor %}
+							</select>
+						</div>
+						<div class="col-md-4">
 							<label for="reference" class="form-label">参考号</label>
 							<input type="text" class="form-control" id="reference" required>
 						</div>
-						<div class="col-md-6">
+						<div class="col-md-4">
 							<label for="date" class="form-label">日期</label>
 							<input type="date" class="form-control" id="date" required>
 						</div>
@@ -404,6 +427,7 @@ table select option {
 		inboundForm.addEventListener('submit', function (event) {
 			event.preventDefault();
 
+			const warehouse = document.getElementById('warehouse').value;
 			const reference = document.getElementById('reference').value;
 			const date = document.getElementById('date').value;
 
@@ -416,7 +440,7 @@ table select option {
 			}));
 
 			// 验证必填字段
-			if (!reference || !date) {
+			if (!warehouse || !reference || !date) {
 				alert('请填写所有必填字段。');
 				return;
 			}
@@ -438,6 +462,7 @@ table select option {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
+					warehouse: warehouse,
 					reference: reference,
 					date: date,
 					products: products,
@@ -502,6 +527,7 @@ table select option {
 			const inbound = data.inbound;
 
 			// 填充基本信息
+			document.getElementById('warehouse').value = inbound.warehouse || '';
 			document.getElementById('reference').value = inbound.reference || '';
 			document.getElementById('date').value = inbound.date || '';
 

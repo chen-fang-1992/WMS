@@ -2,6 +2,7 @@ from django.shortcuts import render
 from ..inbounds.models import Inbound, InboundLine
 from ..products.models import Product
 from ..stocks.models import Stock
+from ..stocks.constants import STOCK_WAREHOUSE
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -10,17 +11,18 @@ from django.forms.models import model_to_dict
 
 def list(request):
 	inbounds = Inbound.objects.all().order_by('-date')
-	return render(request, 'inbounds/list.html', {'inbounds': inbounds})
+	return render(request, 'inbounds/list.html', {'inbounds': inbounds, 'warehouses': STOCK_WAREHOUSE})
 
 @csrf_exempt
 def create_inbound(request):
 	if request.method == 'POST':
 		data = json.loads(request.body)
+		warehouse = data.get('warehouse')
 		reference = data.get('reference')
 		date = data.get('date')
 		products = data.get('products', [])
 
-		inbound = Inbound.objects.create(reference=reference, date=date)
+		inbound = Inbound.objects.create(warehouse=warehouse, reference=reference, date=date)
 
 		for item in products:
 			product = Product.objects.filter(id=item.get('product_id')).first()
@@ -63,6 +65,7 @@ def inbound_detail(request, id):
 
 			data = {
 				'id': inbound.id,
+				'warehouse': inbound.warehouse,
 				'reference': inbound.reference,
 				'date': str(inbound.date),
 				'products': [
@@ -86,11 +89,13 @@ def update_inbound(request, id):
 		try:
 			data = json.loads(request.body)
 
+			warehouse = data.get('warehouse')
 			reference = data.get('reference')
 			date = data.get('date')
 			products = data.get('products', [])
 
 			inbound = Inbound.objects.get(id=id)
+			inbound.warehouse = warehouse
 			inbound.reference = reference
 			inbound.date = date
 			inbound.save()

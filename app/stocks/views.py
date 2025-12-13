@@ -3,6 +3,7 @@ from ..products.models import Product
 from ..stocks.models import Stock
 from ..inbounds.models import InboundLine
 from ..orders.models import OrderLine
+from .constants import STOCK_WAREHOUSE
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -15,7 +16,7 @@ from django.utils import timezone
 def list(request):
 	stocks = Stock.objects.all()
 	categories = Product.get_all_categories()
-	return render(request, 'stocks/list.html', {'stocks': stocks, 'categories': categories})
+	return render(request, 'stocks/list.html', {'stocks': stocks, 'categories': categories, 'warehouses': STOCK_WAREHOUSE})
 
 @csrf_exempt
 def stock_detail(request, id):

@@ -51,11 +51,13 @@ table select option {
 				<col style="width: 20%;">
 				<col style="width: 20%;">
 				<col style="width: 20%;">
+				<col style="width: 20%;">
 				<col style="width: 10%;">
 				<col style="width: 10%;">
 			</colgroup>
 			<thead class="bg-gray-100">
 				<tr>
+					<th class="p-1 border border-gray-300">仓库</th>
 					<th class="p-1 border border-gray-300">品种</th>
 					<th class="p-1 border border-gray-300">条码</th>
 					<th class="p-1 border border-gray-300">产品</th>
@@ -64,6 +66,14 @@ table select option {
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
 				<tr>
+					<th class="p-1 border border-gray-300">
+						<select data-search_target="warehouse" class="filter-variety border border-gray-300 p-1 rounded">
+							<option value="所有">所有</option>
+							{% for value, label in warehouses %}
+								<option value="{{ value }}">{{ label }}</option>
+							{% endfor %}
+						</select>
+					</th>
 					<th class="p-1 border border-gray-300">
 						<select data-search_target="category" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
@@ -89,6 +99,7 @@ table select option {
 			<tbody>
 				{% for stock in stocks %}
 				<tr class="hover:bg-gray-50">
+					<td class="p-1 border border-gray-300" data-search_field="warehouse">{{ stock.warehouse | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="category">{{ stock.product.category | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="barcode">{{ stock.product.barcode | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="product">{{ stock.product | default:"" }}</td>

@@ -5,6 +5,9 @@ class Inbound(models.Model):
 	# 参考号
 	reference = models.CharField(max_length=50, null=True, blank=True)
 
+	# 仓库
+	warehouse = models.CharField(max_length=50)
+
 	# 日期
 	date = models.CharField(max_length=50, null=True, blank=True)
 
