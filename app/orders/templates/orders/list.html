@@ -507,40 +507,43 @@ table select option {
 			window.location.href = url;
 		});
 
-		document.getElementById('sync-btn').addEventListener('click', function() {
-			if (!confirm('确认同步 WooCommerce 订单吗？')) return;
+		const syncBtn = document.getElementById('sync-btn');
+		if (syncBtn) {
+			syncBtn.addEventListener('click', function() {
+				if (!confirm('确认同步 WooCommerce 订单吗？')) return;
 
-			const xhr = new XMLHttpRequest();
-			xhr.open('POST', '/orders/sync/', true);
-			xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+				const xhr = new XMLHttpRequest();
+				xhr.open('POST', '/orders/sync/', true);
+				xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
 
-			const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-			if (csrftoken) xhr.setRequestHeader('X-CSRFToken', csrftoken);
+				const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+				if (csrftoken) xhr.setRequestHeader('X-CSRFToken', csrftoken);
 
-			xhr.onload = function() {
-				if (xhr.status >= 200 && xhr.status < 300) {
-					try {
-						const data = JSON.parse(xhr.responseText);
-						if (data.success) {
-							alert('✅ 同步成功');
-							location.reload();
-						} else {
-							alert('⚠️ 同步失败：' + (data.error || '未知错误'));
+				xhr.onload = function() {
+					if (xhr.status >= 200 && xhr.status < 300) {
+						try {
+							const data = JSON.parse(xhr.responseText);
+							if (data.success) {
+								alert('✅ 同步成功');
+								location.reload();
+							} else {
+								alert('⚠️ 同步失败：' + (data.error || '未知错误'));
+							}
+						} catch (e) {
+							alert('⚠️ 返回数据格式错误');
 						}
-					} catch (e) {
-						alert('⚠️ 返回数据格式错误');
+					} else {
+						alert('❌ 同步请求失败：' + xhr.status);
 					}
-				} else {
-					alert('❌ 同步请求失败：' + xhr.status);
-				}
-			};
+				};
 
-			xhr.onerror = function() {
-				alert('❌ 网络错误，请检查服务器连接');
-			};
+				xhr.onerror = function() {
+					alert('❌ 网络错误，请检查服务器连接');
+				};
 
-			xhr.send();
-		});
+				xhr.send();
+			});
+		}
 
 		headers.forEach(header => {
 			header.addEventListener('click', function () {
