@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from app.services.woocommerce_client import get_wc_client
+from app.services.woocommerce_client import wc_get, wc_post
 from app.orders.models import Order, OrderLine
 from app.products.models import Product
 from app.stocks.models import Stock
@@ -77,13 +77,12 @@ def update_order_if_missing(order_data):
 	return changed
 
 def sync_wc_orders():
-	wc = get_wc_client()
 	page = 1
 	per_page = 100
 	since_date = (timezone.now() - timedelta(days=settings.WOOCOMMERCE["SYNC_ORDERS_SINCE"])).isoformat()
 
 	while True:
-		orders = wc.get(
+		orders = wc_get(
 			"orders",
 			params={"per_page": per_page, "page": page, "orderby": "date", "order": "asc", "modified_after": since_date}
 		).json()
@@ -163,7 +162,6 @@ def sync_wc_orders():
 	Stock.recalculate_all()
 
 def push_order_to_wc(order_id):
-	wc = get_wc_client()
 	order = Order.objects.get(id=order_id)
 	lines = OrderLine.objects.filter(order=order)
 
@@ -270,7 +268,7 @@ def push_order_to_wc(order_id):
 
 	# 推送到 WooCommerce
 	try:
-		response = wc.post("orders", data).json()
+		response = wc_post("orders", data).json()
 		if "id" in response:
 			order.reference = str(response["id"])
 			order.meta = response
