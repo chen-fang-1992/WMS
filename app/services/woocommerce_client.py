@@ -37,3 +37,21 @@ def wc_post(endpoint, params=None):
 	)
 
 	return resp
+
+def wc_put(endpoint, json=None):
+	base = settings.WOOCOMMERCE["URL"].rstrip("/")
+	url = f"{base}/wp-json/wc/v3/{endpoint.lstrip('/')}"
+
+	json = json or {}
+
+	resp = requests.put(
+		url,
+		json=json,
+		auth=(
+			settings.WOOCOMMERCE["CONSUMER_KEY"],
+			settings.WOOCOMMERCE["CONSUMER_SECRET"],
+		),
+		timeout=30,
+	)
+
+	return resp

@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from app.services.woocommerce_client import wc_get, wc_post
+from app.services.woocommerce_client import wc_get, wc_post, wc_put
 from app.orders.models import Order, OrderLine
 from app.products.models import Product
 from app.stocks.models import Stock
@@ -281,3 +281,33 @@ def push_order_to_wc(order_id):
 		print(f"❌ 推送失败: {e}\n{traceback.format_exc()}")
 
 	return False
+
+def sync_woo_order_completed(order):
+	if not order.reference:
+		print(f"❌ 订单 {order.id} 无 WooCommerce 参考号，无法同步完成状态")
+		return False
+
+	try:
+		resp = wc_get(f"orders/{order.reference}")
+		woo_order = resp.json()
+	except Exception as e:
+		print(f"❌ 获取 WooCommerce 订单失败: {e}\n{traceback.format_exc()}")
+		return False
+
+	current_status = woo_order.get("status", "")
+	if current_status != "processing":
+		print(f"⚠️ 订单 {order.id} 当前状态为 {current_status}，无法同步完成状态")
+		return False
+
+	try:
+		resp = wc_put(
+			f"orders/{order.reference}",
+			json={"status": "completed"},
+		)
+		updated_order = resp.json()
+		print(f"✅ 订单 {order.id} 已同步为完成状态，WC 状态: {updated_order.get('status', '')}")
+	except Exception as e:
+		print(f"❌ 同步完成状态失败: {e}\n{traceback.format_exc()}")
+		return False
+
+	return True

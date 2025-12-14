@@ -17,7 +17,7 @@ import openpyxl
 from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
 
-from ..orders.cron import push_order_to_wc
+from ..orders.cron import push_order_to_wc, sync_woo_order_completed
 from ..services.shippit_client import get_shipping_quote
 from ..orders.cron import sync_wc_orders
 
@@ -179,6 +179,8 @@ def update_order(request, id):
 				)
 
 			Stock.recalculate_all()
+			if order.status == "Completed":
+				sync_woo_order_completed(order)
 			return JsonResponse({'success': True})
 
 		except Order.DoesNotExist:
