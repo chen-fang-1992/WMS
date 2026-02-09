@@ -111,7 +111,8 @@ def get_shipping_quote(order_id):
 
 	result = {
 		'best': best_quote,
-		'all': available_quotes
+		'all': available_quotes,
+		'parcel_attributes': parcel_attributes
 	}
 
 	print('✅ Shippit 最低报价:', best_quote)

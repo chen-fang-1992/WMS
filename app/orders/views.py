@@ -326,6 +326,7 @@ def shipping_quotes(request, id):
 			'success': True,
 			'quotes': result['all'],
 			'best': result['best'],
+			'parcel_attributes': result['parcel_attributes'],
 		})
 	except Exception as e:
 		return JsonResponse({'success': False, 'error': str(e)})

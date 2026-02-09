@@ -718,12 +718,16 @@ table select option {
 	function getShippingQuotes(id) {
 		const modal = new bootstrap.Modal(document.getElementById('shippingQuotesModal'));
 		const loading = document.getElementById('quotes-loading');
-		const table = document.getElementById('quotes-table');
-		const tbody = table.querySelector('tbody');
+		const quotesTable = document.getElementById('quotes-table');
+		const quotesTbody = quotesTable.querySelector('tbody');
+		const parcelsTable = document.getElementById('parcels-table');
+		const parcelsTbody = parcelsTable.querySelector('tbody');
 
 		// 清空旧数据
-		tbody.innerHTML = '';
-		table.style.display = 'none';
+		quotesTbody.innerHTML = '';
+		quotesTable.style.display = 'none';
+		parcelsTbody.innerHTML = '';
+		parcelsTable.style.display = 'none';
 		loading.style.display = '';
 
 		modal.show();
@@ -733,9 +737,27 @@ table select option {
 		.then(data => {
 			loading.style.display = 'none';
 
+			const parcelAttributes = data.parcel_attributes || [];
+			if (parcelAttributes.length === 0) {
+				parcelsTbody.innerHTML = `<tr><td colspan="4">读取包裹属性失败</td></tr>`;
+			} else {
+				for (const q of parcelAttributes) {
+					const row = document.createElement('tr');
+					row.innerHTML = `
+						<td>${q.qty || ''}</td>
+						<td>${q.weight || ''}kg</td>
+						<td>${q.length || ''}m</td>
+						<td>${q.width || ''}m</td>
+						<td>${q.height || ''}m</td>
+					`;
+					parcelsTbody.appendChild(row);
+				}
+			}
+			parcelsTable.style.display = '';
+
 			const quotes = data.quotes || [];
 			if (quotes.length === 0) {
-				tbody.innerHTML = `<tr><td colspan="4">无可用报价</td></tr>`;
+				quotesTbody.innerHTML = `<tr><td colspan="4">无可用报价</td></tr>`;
 			} else {
 				for (const q of quotes) {
 					const row = document.createElement('tr');
@@ -745,10 +767,10 @@ table select option {
 						<td>${parseFloat(q.price || 0).toFixed(2)}</td>
 						<td>${q.eta}</td>
 					`;
-					tbody.appendChild(row);
+					quotesTbody.appendChild(row);
 				}
 			}
-			table.style.display = '';
+			quotesTable.style.display = '';
 		})
 		.catch(err => {
 			loading.style.display = 'none';
