@@ -105,6 +105,7 @@ table select option {
 					<th class="p-1 border border-gray-300 status">
 						<select data-search_target="status" class="filter-variety border border-gray-300 p-1 rounded">
 							<option value="所有">所有</option>
+							<option value="Open">Open</option>
 							{% for value, label in statuses %}
 								<option value="{{ value }}">{{ label }}</option>
 							{% endfor %}
@@ -445,6 +446,7 @@ table select option {
 					if (filter.type === 'select') {
 						if (
 							!filter.values.includes('所有') &&
+							!filter.values.includes('Open') &&
 							!(
 								filter.values.includes(cellText) ||
 								(cellText === '' && filter.values.includes('空'))
@@ -467,7 +469,7 @@ table select option {
 					const status = statusCell.textContent.trim().toLowerCase();
 
 					// 如果用户没有筛选 status，则隐藏 completed/cancelled
-					if (!filters['status'] && (status === 'completed' || status === 'cancelled')) {
+					if (filters['status'] && filters['status'].values && filters['status'].values.includes('Open') && (status === 'completed' || status === 'cancelled')) {
 						visible = false;
 					}
 				}
@@ -495,7 +497,12 @@ table select option {
 
 		// 可选：初始化默认值为“所有”
 		filterVarietys.forEach(select => {
-			const allOption = select.querySelector('option[value="所有"]');
+			let allOption;
+			if (select.dataset.search_target == 'status') {
+				allOption = select.querySelector('option[value="Open"]');
+			} else {
+				allOption = select.querySelector('option[value="所有"]');
+			}
 			if (allOption) {
 				allOption.selected = true;
 			}
