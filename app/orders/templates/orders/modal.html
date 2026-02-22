@@ -59,21 +59,28 @@
 				</div>
 				<div class="modal-body">
 					<div class="row mb-3">
-						<div class="col-md-4">
+						<div class="col-md-3">
 							<label for="reference" class="form-label">订单号码</label>
 							<input type="text" class="form-control" id="reference" required>
 						</div>
-						<div class="col-md-4">
+						<div class="col-md-3">
 							<label for="date" class="form-label">日期</label>
 							<input type="datetime-local" class="form-control" id="date" required>
 						</div>
-						<div class="col-md-4">
+						<div class="col-md-3">
 							<label for="status" class="form-label">进度</label>
 							<select class="form-control" id="status" required>
 								<option value="">请选择</option>
 								{% for value, label in statuses %}
 									<option value="{{ value }}">{{ label }}</option>
 								{% endfor %}
+							</select>
+						</div>
+						<div class="col-md-3">
+							<label for="urgent" class="form-label">加急单</label>
+							<select class="form-control" id="urgent">
+								<option value="false" selected>否</option>
+								<option value="true">是</option>
 							</select>
 						</div>
 					</div>
@@ -124,7 +131,7 @@
 					<div class="row mb-3">
 						<div class="col-md-4">
 							<label for="route_record" class="form-label">路线记录</label>
-							<select class="form-control" id="route_record" required>
+							<select class="form-control" id="route_record">
 								<option value="">请选择</option>
 								{% for value, label in route_records %}
 									<option value="{{ value }}">{{ label }}</option>
@@ -190,6 +197,7 @@
 			const state = document.getElementById('state').value;
 			const status = document.getElementById('status').value;
 			const route_record = document.getElementById('route_record').value;
+			const urgent = document.getElementById('urgent').value === 'true';
 			const notes = document.getElementById('notes').value;
 			const customer_notes = document.getElementById('customer_notes').value;
 			const tracking_number = document.getElementById('tracking_number').value;
@@ -241,6 +249,7 @@
 					state: state,
 					status: status,
 					route_record: route_record,
+					urgent: urgent,
 					notes: notes,
 					customer_notes: customer_notes,
 					tracking_number: tracking_number,

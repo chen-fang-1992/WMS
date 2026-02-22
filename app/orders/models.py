@@ -59,6 +59,8 @@ class Order(models.Model):
 	# tracking number
 	tracking_number = models.CharField(max_length=100, null=True, blank=True)
 
+	urgent = models.BooleanField(default=False)
+
 	# 送货日期
 	delivery_date = models.DateField(null=True, blank=True)
 

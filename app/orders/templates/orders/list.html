@@ -46,6 +46,12 @@ table select option {
 .cursor-pointer {
 	cursor: pointer;
 }
+.urgent-row {
+	background-color: #ffedd5;
+}
+.urgent-row:hover {
+	background-color: #fed7aa;
+}
 </style>
 
 <div class="mx-auto p-1">
@@ -166,7 +172,7 @@ table select option {
 			</thead>
 			<tbody>
 				{% for order in orders %}
-				<tr class="hover:bg-gray-50">
+				<tr class="{% if order.urgent %}urgent-row{% else %}hover:bg-gray-50{% endif %}">
 					<td class="p-1 border border-gray-300"><input type="checkbox" class="order-checkbox" value="{{ order.id }}"></td>
 					<td class="p-1 border border-gray-300 reference" data-search_field="reference">{{ order.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date|date:"d/m/Y" }}<br>{{ order.date|date:"h:i A" }}</td>
@@ -697,6 +703,7 @@ table select option {
 			document.getElementById('state').value = order.state || '';
 			document.getElementById('status').value = order.status || '';
 			document.getElementById('route_record').value = order.route_record || '';
+			document.getElementById('urgent').value = order.urgent ? 'true' : 'false';
 			document.getElementById('notes').value = order.notes || '';
 			document.getElementById('customer_notes').value = order.customer_notes || '';
 			document.getElementById('tracking_number').value = order.tracking_number || '';

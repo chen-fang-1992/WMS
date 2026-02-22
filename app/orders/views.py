@@ -21,6 +21,13 @@ from ..orders.cron import push_order_to_wc, sync_woo_order_completed
 from ..services.shippit_client import get_shipping_quote
 from ..orders.cron import sync_wc_orders
 
+def parse_bool(value):
+	if isinstance(value, bool):
+		return value
+	if value is None:
+		return False
+	return str(value).strip().lower() in ['1', 'true', 'yes', 'on']
+
 def list(request):
 	orders = Order.objects.order_by('-date')
 	return render(request, 'orders/list.html', {'orders': orders, 'woo_statuses': ORDER_WOO_STATUS, 'statuses': ORDER_STATUS, 'route_records': ORDER_ROUTE_RECORD})
@@ -41,6 +48,7 @@ def create_order(request):
 		notes = data.get('notes')
 		customer_notes = data.get('customer_notes', '')
 		status = data.get('status')
+		urgent = parse_bool(data.get('urgent', False))
 		date = data.get('date')
 		tracking_number = data.get('tracking_number', '')
 		delivery_date = data.get('delivery_date', '')
@@ -49,7 +57,7 @@ def create_order(request):
 		products = data.get('products', [])
 
 		order = Order.objects.create(reference=reference, date=date, contact_name=contact_name, phone=phone, email=email, 
-			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status, tracking_number=tracking_number, delivery_date=delivery_date)
+			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status, urgent=urgent, tracking_number=tracking_number, delivery_date=delivery_date)
 
 		for item in products:
 			product = Product.objects.filter(id=item.get('product_id')).first()
@@ -109,6 +117,7 @@ def order_detail(request, id):
 				'notes': order.notes,
 				'customer_notes': order.customer_notes,
 				'status': order.status,
+				'urgent': order.urgent,
 				'tracking_number': order.tracking_number,
 				'delivery_date': order.delivery_date,
 				'products': [
@@ -146,6 +155,7 @@ def update_order(request, id):
 			notes = data.get('notes')
 			customer_notes = data.get('customer_notes', '')
 			status = data.get('status')
+			urgent = parse_bool(data.get('urgent', False))
 			tracking_number = data.get('tracking_number', '')
 			delivery_date = data.get('delivery_date', '')
 			if delivery_date == '':
@@ -166,6 +176,7 @@ def update_order(request, id):
 			order.notes = notes
 			order.customer_notes = customer_notes
 			order.status = status
+			order.urgent = urgent
 			order.tracking_number = tracking_number
 			order.delivery_date = delivery_date
 			order.save()
