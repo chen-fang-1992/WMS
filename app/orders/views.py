@@ -11,6 +11,7 @@ import json
 import csv
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from datetime import timedelta
 
 import openpyxl
@@ -216,8 +217,131 @@ def update_order(request, id):
 
 @csrf_exempt
 def export_orders(request):
+	ids = (request.GET.get('ids') or '').strip()
+	if ids:
+		return export_orders_delivery(request)
+
+	start_date_raw = (request.GET.get('start_date') or '').strip()
+	end_date_raw = (request.GET.get('end_date') or '').strip()
+	start_date = parse_date(start_date_raw) if start_date_raw else None
+	end_date = parse_date(end_date_raw) if end_date_raw else None
+
+	if not start_date or not end_date:
+		return JsonResponse({'success': False, 'error': '请提供开始日期和结束日期'}, status=400)
+
+	if start_date > end_date:
+		return JsonResponse({'success': False, 'error': '开始日期不能晚于结束日期'}, status=400)
+
+	orders = (
+		Order.objects
+		.filter(date__date__gte=start_date, date__date__lte=end_date)
+		.order_by('date', 'id')
+		.prefetch_related('lines')
+	)
+
+	wb = openpyxl.Workbook()
+	ws = wb.active
+	ws.title = 'Order Export'
+
+	headers = [
+		'Order No',
+		'Order Date',
+		'Status',
+		'Woo Status',
+		'Customer',
+		'Phone',
+		'Email',
+		'Address',
+		'Suburb',
+		'Postcode',
+		'State',
+		'Products',
+		'Total',
+		'Shipping',
+		'Special Fee',
+		'Tracking No',
+		'Delivery Date',
+		'Route Record',
+		'Customer Notes',
+		'Notes',
+	]
+	ws.append(headers)
+	woo_status_map = dict(ORDER_WOO_STATUS)
+
+	for order in orders:
+		order_dt = order.date
+		if order_dt and timezone.is_aware(order_dt):
+			order_dt = timezone.localtime(order_dt)
+		delivery_date_str = ''
+		if order.delivery_date and order.delivery_date.strftime('%Y-%m-%d') != '1970-01-01':
+			delivery_date_str = order.delivery_date.strftime('%Y-%m-%d')
+		product_lines = '\n'.join([
+			f'{(line.raw_sku or (line.product.sku if (line.product and line.product.sku) else ""))} x {line.quantity}'
+			for line in order.lines.all()
+		])
+
+		ws.append([
+			order.reference or '',
+			order_dt.strftime('%Y-%m-%d %H:%M:%S') if order_dt else '',
+			order.status or '',
+			woo_status_map.get(order.woo_status, order.woo_status or ''),
+			order.contact_name or '',
+			order.phone or '',
+			order.email or '',
+			order.address or '',
+			order.suburb or '',
+			order.postcode or '',
+			order.state or '',
+			product_lines,
+			str(order.total or ''),
+			str(order.shipping or ''),
+			order.special_fees or '',
+			order.tracking_number or '',
+			delivery_date_str,
+			order.route_record or '',
+			order.customer_notes or '',
+			order.notes or '',
+		])
+
+	header_font = Font(name='Arial', size=11, bold=True)
+	body_font = Font(name='Arial', size=10)
+	alignment = Alignment(vertical='top', wrap_text=True)
+	header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+	for row_idx, row in enumerate(ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column), start=1):
+		for cell in row:
+			cell.font = header_font if row_idx == 1 else body_font
+			cell.alignment = header_alignment if row_idx == 1 else alignment
+
+	ws.freeze_panes = 'A2'
+
+	def text_width(val):
+		return sum(2 if ord(c) > 127 else 1 for c in str(val))
+
+	for col in ws.columns:
+		max_length = 0
+		col_letter = get_column_letter(col[0].column)
+		for cell in col:
+			if cell.value:
+				max_length = max(max_length, text_width(cell.value))
+		ws.column_dimensions[col_letter].width = max(12, min((max_length + 2) * 1.1, 60))
+
+	for i in range(2, ws.max_row + 1):
+		ws.row_dimensions[i].height = 36
+
+	filename = f'orders_{start_date.strftime("%Y%m%d")}_{end_date.strftime("%Y%m%d")}.xlsx'
+	response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+	response['Content-Disposition'] = f'attachment; filename="{filename}"'
+	wb.save(response)
+	return response
+
+@csrf_exempt
+def export_orders_delivery(request):
 	ids = request.GET.get('ids', '')
 	id_list = [int(x) for x in ids.split(',') if x.isdigit()]
+
+	if not id_list:
+		return JsonResponse({'success': False, 'error': '请先选择要导出的订单'}, status=400)
 
 	orders = Order.objects.filter(id__in=id_list).prefetch_related('lines')
 

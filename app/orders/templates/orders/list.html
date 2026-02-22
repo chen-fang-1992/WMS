@@ -66,8 +66,11 @@ table select option {
 			<button type="button" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700" onclick="addOrder()">
 				<i class="bi bi-plus-lg"></i> 添加订单
 			</button>
-			<button id="export-btn" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700">
+			<button id="export-orders-delivery-btn" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700">
 				<i class="bi bi-file-earmark-arrow-down"></i> 导出发货单
+			</button>
+			<button id="export-orders-btn" class="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-700">
+				<i class="bi bi-calendar-range"></i> 导出订单
 			</button>
 			{% if request.user.is_superuser %}
 			<button id="sync-btn" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700">
@@ -242,12 +245,47 @@ table select option {
 
 {% include 'orders/shipping_quotes.html' %}
 
+<div class="modal fade" id="exportOrdersModal" tabindex="-1" aria-labelledby="exportOrdersModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exportOrdersModalLabel">导出订单</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="mb-3">
+					<label for="export-modal-start-date" class="form-label">开始日期</label>
+					<input id="export-modal-start-date" type="date" class="form-control">
+				</div>
+				<div class="mb-2">
+					<label for="export-modal-end-date" class="form-label">结束日期</label>
+					<input id="export-modal-end-date" type="date" class="form-control">
+				</div>
+				<div class="text-muted text-sm">请填写时间区间后再导出。</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+				<button type="button" class="btn btn-success" id="export-modal-confirm-btn">
+					<i class="bi bi-file-earmark-arrow-down"></i> 导出
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
 		const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
 		const productTable = document.querySelector('tbody');
 		const headers = document.querySelectorAll('th[data-sort_field]');
+		const exportBtn = document.getElementById('export-orders-delivery-btn');
+		const exportOrdersBtn = document.getElementById('export-orders-btn');
+		const exportModalEl = document.getElementById('exportOrdersModal');
+		const exportModal = exportModalEl ? new bootstrap.Modal(exportModalEl) : null;
+		const exportModalConfirmBtn = document.getElementById('export-modal-confirm-btn');
+		const exportModalStartInput = document.getElementById('export-modal-start-date');
+		const exportModalEndInput = document.getElementById('export-modal-end-date');
 		let sortState = {};
 
 		function normalizeNumber(text) {
@@ -529,17 +567,48 @@ table select option {
 			document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked);
 		});
 
-		document.getElementById('export-btn').addEventListener('click', function() {
-			const ids = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
+		if (exportBtn) {
+			exportBtn.addEventListener('click', function() {
+				const ids = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
 
-			if (ids.length === 0) {
-				alert('请先勾选需要导出的订单！');
-				return;
-			}
+				if (ids.length === 0) {
+					alert('请先勾选需要导出的订单！');
+					return;
+				}
 
-			const url = `/orders/export/?ids=${ids.join(',')}`;
-			window.location.href = url;
-		});
+				window.location.href = `/orders/export/?ids=${ids.join(',')}`;
+			});
+		}
+
+		if (exportOrdersBtn && exportModal) {
+			exportOrdersBtn.addEventListener('click', function() {
+				exportModal.show();
+			});
+		}
+
+		if (exportModalConfirmBtn) {
+			exportModalConfirmBtn.addEventListener('click', function() {
+				const startDate = exportModalStartInput?.value || '';
+				const endDate = exportModalEndInput?.value || '';
+
+				if (!startDate || !endDate) {
+					alert('请先填写开始日期和结束日期！');
+					return;
+				}
+
+				if (startDate > endDate) {
+					alert('导出开始日期不能晚于结束日期！');
+					return;
+				}
+
+				const params = new URLSearchParams();
+				params.set('start_date', startDate);
+				params.set('end_date', endDate);
+
+				exportModal.hide();
+				window.location.href = `/orders/export/?${params.toString()}`;
+			});
+		}
 
 		const syncBtn = document.getElementById('sync-btn');
 		if (syncBtn) {
