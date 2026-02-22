@@ -56,6 +56,9 @@ class Order(models.Model):
 	# tracking number
 	tracking_number = models.CharField(max_length=100, null=True, blank=True)
 
+	# 送货日期
+	delivery_date = models.DateField(null=True, blank=True)
+
 	# 其他元数据
 	meta = models.JSONField(null=True, blank=True)
 

@@ -92,16 +92,7 @@
 						</div>
 					</div>
 					<div class="row mb-3">
-						<div class="col-md-4">
-							<label for="route_record" class="form-label">路线记录</label>
-							<select class="form-control" id="route_record" required>
-								<option value="">请选择</option>
-								{% for value, label in route_records %}
-									<option value="{{ value }}">{{ label }}</option>
-								{% endfor %}
-							</select>
-						</div>
-						<div class="col-md-8">
+						<div class="col-md-12">
 							<label for="address" class="form-label">地址</label>
 							<input type="text" class="form-control" id="address" required>
 						</div>
@@ -131,6 +122,19 @@
 						</div>
 					</div>
 					<div class="row mb-3">
+						<div class="col-md-4">
+							<label for="route_record" class="form-label">路线记录</label>
+							<select class="form-control" id="route_record" required>
+								<option value="">请选择</option>
+								{% for value, label in route_records %}
+									<option value="{{ value }}">{{ label }}</option>
+								{% endfor %}
+							</select>
+						</div>
+						<div class="col-md-4">
+							<label for="delivery_date" class="form-label">送货日期</label>
+							<input type="date" class="form-control" id="delivery_date">
+						</div>
 						<div class="col-md-4">
 							<label for="tracking_number" class="form-label">快递单号</label>
 							<input type="text" class="form-control" id="tracking_number">
@@ -189,6 +193,7 @@
 			const notes = document.getElementById('notes').value;
 			const customer_notes = document.getElementById('customer_notes').value;
 			const tracking_number = document.getElementById('tracking_number').value;
+			const delivery_date = document.getElementById('delivery_date').value;
 
 			const product_ids = Array.from(document.querySelectorAll('input[name="product_id[]"]')).map(input => input.value.trim());
 			const barcodes = Array.from(document.querySelectorAll('input[name="barcode[]"]')).map(input => input.value.trim());
@@ -239,6 +244,7 @@
 					notes: notes,
 					customer_notes: customer_notes,
 					tracking_number: tracking_number,
+					delivery_date: delivery_date,
 					products: products,
 				})
 			})

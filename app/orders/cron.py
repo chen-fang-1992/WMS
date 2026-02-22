@@ -116,6 +116,7 @@ def sync_wc_orders():
 				source=source,
 				special_fees='',
 				tracking_number='',
+				delivery_date='',
 				meta=order,
 			)
 
