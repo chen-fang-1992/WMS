@@ -2,7 +2,7 @@ from django.shortcuts import render
 from ..orders.models import Order, OrderLine
 from ..products.models import Product
 from ..stocks.models import Stock
-from .constants import ORDER_STATUS, ORDER_ROUTE_RECORD
+from .constants import ORDER_STATUS, ORDER_ROUTE_RECORD, ORDER_WOO_STATUS
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -23,7 +23,7 @@ from ..orders.cron import sync_wc_orders
 
 def list(request):
 	orders = Order.objects.order_by('-date')
-	return render(request, 'orders/list.html', {'orders': orders, 'statuses': ORDER_STATUS, 'route_records': ORDER_ROUTE_RECORD})
+	return render(request, 'orders/list.html', {'orders': orders, 'woo_statuses': ORDER_WOO_STATUS, 'statuses': ORDER_STATUS, 'route_records': ORDER_ROUTE_RECORD})
 
 @csrf_exempt
 def create_order(request):
@@ -44,6 +44,8 @@ def create_order(request):
 		date = data.get('date')
 		tracking_number = data.get('tracking_number', '')
 		delivery_date = data.get('delivery_date', '')
+		if delivery_date == '':
+			delivery_date = '1970-01-01'
 		products = data.get('products', [])
 
 		order = Order.objects.create(reference=reference, date=date, contact_name=contact_name, phone=phone, email=email, 
@@ -88,6 +90,9 @@ def order_detail(request, id):
 		try:
 			order = Order.objects.get(id=id)
 			lines = order.lines.all()
+
+			if order.delivery_date and order.delivery_date.strftime('%Y-%m-%d') == '1970-01-01':
+				order.delivery_date = None
 
 			data = {
 				'id': order.id,
@@ -143,6 +148,8 @@ def update_order(request, id):
 			status = data.get('status')
 			tracking_number = data.get('tracking_number', '')
 			delivery_date = data.get('delivery_date', '')
+			if delivery_date == '':
+				delivery_date = '1970-01-01'
 			products = data.get('products', [])
 
 			order = Order.objects.get(id=id)

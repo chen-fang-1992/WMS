@@ -25,3 +25,11 @@ ORDER_ROUTE_RECORD = [
 	('MEL 第三方物流送货', 'MEL 第三方物流送货'),
 	('MEL 第三方物流ALLIED', 'MEL 第三方物流ALLIED'),
 ]
+
+ORDER_WOO_STATUS = [
+	('processing', 'Processing'),
+	('pre-ordered', 'Pre-ordered'),
+	('completed', 'Completed'),
+	('cancelled', 'Cancelled'),
+	('failed', 'Failed'),
+]

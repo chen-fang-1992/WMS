@@ -51,14 +51,20 @@ def update_order_if_missing(order_data):
 		obj.meta = order_data
 		changed = True
 
+	if not obj.woo_status or obj.woo_status != order_data.get('status', ''):
+		obj.woo_status = order_data.get('status', '')
+		changed = True
+
 	if order_data.get('fee_lines'):
-		obj.special_fees = ''
+		special_fees = ''
 		for item in order_data['fee_lines']:
 			if item.get('total', '0.00') == '0.00':
 				continue
-			obj.special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
-		obj.special_fees = obj.special_fees.strip()
-		changed = True
+			special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
+		special_fees = special_fees.strip()
+		if obj.special_fees != special_fees:
+			obj.special_fees = special_fees
+			changed = True
 
 	if order_data.get('status') == 'completed' and obj.status != 'Completed':
 		obj.status = 'Completed'
@@ -69,8 +75,8 @@ def update_order_if_missing(order_data):
 		changed = True
 
 	if changed:
-		obj.save(update_fields=['source', 'meta', 'special_fees', 'status'])
-		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta/special_fees/status 补全")
+		obj.save(update_fields=['source', 'meta', 'special_fees', 'status', 'woo_status'])
+		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta/special_fees/status/woo_status 补全")
 	else:
 		print(f"⏩ 已存在订单 WC#{obj.reference}，无需更新")
 
@@ -101,6 +107,7 @@ def sync_wc_orders():
 
 			obj = Order.objects.create(
 				reference=order["id"],
+				woo_status=order.get("status", ""),
 				status="New",
 				total=order["total"],
 				shipping=order["shipping_total"],
@@ -116,7 +123,7 @@ def sync_wc_orders():
 				source=source,
 				special_fees='',
 				tracking_number='',
-				delivery_date='',
+				delivery_date='1970-01-01',
 				meta=order,
 			)
 

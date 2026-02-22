@@ -41,6 +41,9 @@ class Order(models.Model):
 	# 订单状态
 	status = models.CharField(max_length=50, null=True, blank=True)
 
+	# Woo订单状态
+	woo_status = models.CharField(max_length=50, null=True, blank=True)
+
 	# 总价
 	total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
