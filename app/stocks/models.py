@@ -13,6 +13,8 @@ class Stock(models.Model):
 
 	# 数量
 	quantity = models.PositiveIntegerField()
+	quantity_reserved = models.PositiveIntegerField(default=0)
+	quantity_available = models.IntegerField(default=0)
 
 	class Meta:
 		db_table = 'tms_stock'
@@ -40,7 +42,7 @@ class Stock(models.Model):
 	@classmethod
 	def recalculate_all(cls):
 		# 初始化库存字典
-		stock_data = defaultdict(int)
+		stock_data = defaultdict(lambda: {'quantity': 0, 'quantity_reserved': 0})
 
 		# 加入入库数量（正数）
 		for line in InboundLine.objects.select_related('product', 'inbound'):
@@ -51,12 +53,12 @@ class Stock(models.Model):
 				continue
 
 			key = (product_id, warehouse)
-			stock_data[key] += line.quantity
+			stock_data[key]['quantity'] += line.quantity
 
 		# 减去订单数量（负数）
 		for line in OrderLine.objects.select_related('product', 'order'):
 			product_id = line.product_id
-			route = getattr(line.order, 'route', None)
+			route = getattr(line.order, 'route_record', None)
 
 			warehouse = cls.route_to_warehouse(route)
 
@@ -64,19 +66,25 @@ class Stock(models.Model):
 				continue
 
 			key = (product_id, warehouse)
-			stock_data[key] -= line.quantity
+			order_status = (getattr(line.order, 'status', '') or '').strip().lower()
+			if order_status == 'completed':
+				stock_data[key]['quantity'] -= line.quantity
+			elif order_status not in {'cancelled', 'shipping'}:
+				stock_data[key]['quantity_reserved'] += line.quantity
 
 		# 写入 Stock
 		seen_ids = []
 
-		for (product_id, warehouse), quantity in stock_data.items():
+		for (product_id, warehouse), values in stock_data.items():
 			stock, _ = cls.objects.get_or_create(
 				product_id=product_id,
 				warehouse=warehouse,
-				defaults={'quantity': 0}
+				defaults={'quantity': 0, 'quantity_reserved': 0, 'quantity_available': 0}
 			)
-			stock.quantity = quantity
-			stock.save()
+			stock.quantity = values['quantity']
+			stock.quantity_reserved = values['quantity_reserved']
+			stock.quantity_available = values['quantity'] - values['quantity_reserved']
+			stock.save(update_fields=['quantity', 'quantity_reserved', 'quantity_available'])
 			seen_ids.append(stock.id)
 
 		# 可选：清除已删除产品的库存记录

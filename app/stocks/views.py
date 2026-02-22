@@ -38,7 +38,7 @@ def stock_detail(request, id):
 			]
 
 			# 获取出库记录
-			order_lines = OrderLine.objects.filter(product=product).select_related('order')
+			order_lines = OrderLine.objects.filter(product=product, order__status__iexact='completed').select_related('order')
 			order_data = [
 				{
 					'type': '出库',
@@ -57,6 +57,8 @@ def stock_detail(request, id):
 				'id': stock.id,
 				'product': product.name_cn or product.name_en or product.sku,
 				'current_quantity': stock.quantity,
+				'quantity_reserved': stock.quantity_reserved,
+				'quantity_available': stock.quantity_available,
 				'history': history
 			}
 			return JsonResponse({'success': True, 'stock': data})
@@ -84,7 +86,7 @@ def export_stocks(request):
 			Q(product__barcode__icontains=q)
 		)
 	if only_nonzero:
-		qs = qs.exclude(quantity=0)
+		qs = qs.exclude(quantity=0, quantity_reserved=0, quantity_available=0)
 
 	qs = qs.order_by('product__name_cn', 'product__name_en', 'product__sku')
 
@@ -96,11 +98,11 @@ def export_stocks(request):
 	response.write('\ufeff')
 
 	writer = csv.writer(response)
-	writer.writerow(['产品', 'SKU', '条码', '数量'])
+	writer.writerow(['产品', 'SKU', '条码', '在库数量', '预留数量', '可用数量'])
 
 	for s in qs:
 		p = s.product
 		name = p.name_cn or p.name_en or ''
-		writer.writerow([name, p.sku or '', p.barcode or '', s.quantity])
+		writer.writerow([name, p.sku or '', p.barcode or '', s.quantity, s.quantity_reserved, s.quantity_available])
 
 	return response

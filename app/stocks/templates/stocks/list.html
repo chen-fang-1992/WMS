@@ -54,6 +54,8 @@ table select option {
 				<col style="width: 20%;">
 				<col style="width: 10%;">
 				<col style="width: 10%;">
+				<col style="width: 10%;">
+				<col style="width: 10%;">
 			</colgroup>
 			<thead class="bg-gray-100">
 				<tr>
@@ -62,7 +64,9 @@ table select option {
 					<th class="p-1 border border-gray-300">条码</th>
 					<th class="p-1 border border-gray-300">产品</th>
 					<th class="p-1 border border-gray-300">SKU</th>
-					<th class="p-1 border border-gray-300">数量</th>
+					<th class="p-1 border border-gray-300">在库数量</th>
+					<th class="p-1 border border-gray-300">预留数量</th>
+					<th class="p-1 border border-gray-300">可用数量</th>
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
 				<tr>
@@ -94,6 +98,12 @@ table select option {
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="quantity" data-search_type="number" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="quantity_reserved" data-search_type="number" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="quantity_available" data-search_type="number" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -105,6 +115,8 @@ table select option {
 					<td class="p-1 border border-gray-300" data-search_field="product">{{ stock.product | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="sku">{{ stock.product.sku | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="quantity">{{ stock.quantity | default:0 }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="quantity_reserved">{{ stock.quantity_reserved | default:0 }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="quantity_available">{{ stock.quantity_available | default:0 }}</td>
 					<td class="p-1 border border-gray-300">
 						<button class="text-primary hover:underline" onclick="viewStock(`{{ stock.id }}`)">查看</button>
 					</td>
