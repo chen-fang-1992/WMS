@@ -74,6 +74,10 @@ def update_order_if_missing(order_data):
 		obj.status = 'Cancelled'
 		changed = True
 
+	if order_data.get('status') == 'pre-ordered' and obj.status != 'Pre-ordered':
+		obj.status = 'Pre-ordered'
+		changed = True
+
 	if changed:
 		obj.save(update_fields=['source', 'meta', 'special_fees', 'status', 'woo_status'])
 		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta/special_fees/status/woo_status 补全")
