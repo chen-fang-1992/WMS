@@ -179,7 +179,7 @@ table select option {
 					<td class="p-1 border border-gray-300"><input type="checkbox" class="order-checkbox" value="{{ order.id }}"></td>
 					<td class="p-1 border border-gray-300 reference" data-search_field="reference">{{ order.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date|date:"d/m/Y" }}<br>{{ order.date|date:"h:i A" }}</td>
-					<td class="p-1 border border-gray-300 woo_status" data-search_field="woo_status">{{ order.woo_status | woo_status_label }}</td>
+					<td class="p-1 border border-gray-300 woo_status" data-search_field="woo_status" data-search_value="{{ order.woo_status|default:'' }}">{{ order.woo_status | woo_status_label }}</td>
 					<td class="p-1 border border-gray-300 status" data-search_field="status">{{ order.status | status_label }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="contact_name">{{ order.contact_name | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="phone">{{ order.phone | default:"" }}</td>
@@ -496,13 +496,14 @@ table select option {
 					if (!cell) continue;
 
 					const cellText = cell.textContent.trim();
+					const cellValue = (cell.dataset.search_value || cellText).trim();
 
 					if (filter.type === 'select') {
 						if (
 							!filter.values.includes('所有') &&
 							!filter.values.includes('Open') &&
 							!(
-								filter.values.includes(cellText) ||
+								filter.values.includes(cellValue) ||
 								(cellText === '' && filter.values.includes('空'))
 							)
 						) {
