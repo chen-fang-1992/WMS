@@ -6,13 +6,17 @@ from .constants import ORDER_STATUS, ORDER_ROUTE_RECORD, ORDER_WOO_STATUS
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q, CharField
+from django.db.models.functions import Cast
 import json
+import re
 
 import csv
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 
 import openpyxl
 from openpyxl.styles import Alignment, Font
@@ -29,9 +33,206 @@ def parse_bool(value):
 		return False
 	return str(value).strip().lower() in ['1', 'true', 'yes', 'on']
 
+def _clean_param(request, key):
+	return (request.GET.get(key) or '').strip()
+
+def _parse_decimal_value(value):
+	if value is None:
+		return None
+	try:
+		return Decimal(str(value).replace(',', '').strip())
+	except (InvalidOperation, ValueError, TypeError):
+		return None
+
+def _apply_text_filter(queryset, field, raw):
+	if not raw:
+		return queryset
+	return queryset.filter(**{f'{field}__icontains': raw})
+
+def _apply_number_filter(queryset, field, raw):
+	raw = (raw or '').strip()
+	if not raw:
+		return queryset
+
+	op_match = re.match(r'^(<=|>=|<|>|=|!=)\s*(.+)$', raw)
+	range_match = re.match(r'^(.+?)(?:\.\.|-)(.+)$', raw)
+
+	if op_match:
+		op, rhs_raw = op_match.groups()
+		rhs = _parse_decimal_value(rhs_raw)
+		if rhs is None:
+			return queryset
+
+		if op == '!=':
+			return queryset.exclude(**{field: rhs})
+
+		lookup_map = {
+			'<=': 'lte',
+			'>=': 'gte',
+			'<': 'lt',
+			'>': 'gt',
+			'=': 'exact',
+		}
+		lookup = lookup_map.get(op)
+		if not lookup:
+			return queryset
+		return queryset.filter(**{f'{field}__{lookup}': rhs})
+
+	if range_match:
+		left_raw, right_raw = range_match.groups()
+		left = _parse_decimal_value(left_raw)
+		right = _parse_decimal_value(right_raw)
+		if left is None or right is None:
+			return queryset
+		low = min(left, right)
+		high = max(left, right)
+		return queryset.filter(**{f'{field}__gte': low, f'{field}__lte': high})
+
+	value = _parse_decimal_value(raw)
+	if value is None:
+		return queryset
+	return queryset.filter(**{field: value})
+
+def _apply_date_filter(queryset, field, raw):
+	raw = (raw or '').strip()
+	if not raw:
+		return queryset
+
+	def parse_token(token):
+		token = (token or '').strip()
+		if re.fullmatch(r'\d{4}', token):
+			return ('year', int(token))
+		if re.fullmatch(r'\d{4}-\d{2}', token):
+			year, month = token.split('-')
+			return ('month', int(year), int(month))
+		d = parse_date(token)
+		if d:
+			return ('date', d)
+		return None
+
+	def apply_exact(qs, parsed):
+		kind = parsed[0]
+		if kind == 'year':
+			return qs.filter(**{f'{field}__year': parsed[1]})
+		if kind == 'month':
+			return qs.filter(**{f'{field}__year': parsed[1], f'{field}__month': parsed[2]})
+		return qs.filter(**{f'{field}__date': parsed[1]})
+
+	def apply_exclude_exact(qs, parsed):
+		kind = parsed[0]
+		if kind == 'year':
+			return qs.exclude(**{f'{field}__year': parsed[1]})
+		if kind == 'month':
+			return qs.exclude(**{f'{field}__year': parsed[1], f'{field}__month': parsed[2]})
+		return qs.exclude(**{f'{field}__date': parsed[1]})
+
+	def token_as_date(parsed):
+		kind = parsed[0]
+		if kind == 'date':
+			return parsed[1]
+		return None
+
+	op_match = re.match(r'^(<=|>=|<|>|=|!=)\s*(.+)$', raw)
+	range_match = re.match(r'^(.+?)\.\.(.+)$', raw)
+	if not range_match:
+		range_match = re.match(r'^(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})$', raw)
+
+	if op_match:
+		op, rhs_raw = op_match.groups()
+		parsed = parse_token(rhs_raw)
+		if not parsed:
+			return queryset
+		if op == '=':
+			return apply_exact(queryset, parsed)
+		if op == '!=':
+			return apply_exclude_exact(queryset, parsed)
+
+		rhs_date = token_as_date(parsed)
+		if rhs_date is None:
+			return queryset
+
+		lookup_map = {
+			'<=': 'lte',
+			'>=': 'gte',
+			'<': 'lt',
+			'>': 'gt',
+		}
+		lookup = lookup_map.get(op)
+		if not lookup:
+			return queryset
+		return queryset.filter(**{f'{field}__date__{lookup}': rhs_date})
+
+	if range_match:
+		left_raw, right_raw = range_match.groups()
+		left_parsed = parse_token(left_raw)
+		right_parsed = parse_token(right_raw)
+		left_date = token_as_date(left_parsed) if left_parsed else None
+		right_date = token_as_date(right_parsed) if right_parsed else None
+		if left_date is None or right_date is None:
+			return queryset
+		low = min(left_date, right_date)
+		high = max(left_date, right_date)
+		return queryset.filter(**{f'{field}__date__gte': low, f'{field}__date__lte': high})
+
+	parsed = parse_token(raw)
+	if not parsed:
+		# Fallback to substring matching (similar to previous frontend behavior),
+		# e.g. input "22" can match datetimes whose rendered value contains "22".
+		alias = f'_{field}_str'
+		return queryset.annotate(**{alias: Cast(field, CharField())}).filter(**{f'{alias}__icontains': raw})
+	return apply_exact(queryset, parsed)
+
 def list(request):
-	orders = Order.objects.order_by('-date')
-	return render(request, 'orders/list.html', {'orders': orders, 'woo_statuses': ORDER_WOO_STATUS, 'statuses': ORDER_STATUS, 'route_records': ORDER_ROUTE_RECORD})
+	orders = Order.objects.all()
+	needs_distinct = False
+
+	for field in ['reference', 'contact_name', 'phone', 'suburb', 'postcode', 'state', 'special_fees', 'customer_notes', 'notes']:
+		orders = _apply_text_filter(orders, field, _clean_param(request, field))
+
+	orders = _apply_date_filter(orders, 'date', _clean_param(request, 'date'))
+	orders = _apply_number_filter(orders, 'total', _clean_param(request, 'total'))
+	orders = _apply_number_filter(orders, 'shipping', _clean_param(request, 'shipping'))
+
+	woo_status = _clean_param(request, 'woo_status')
+	if woo_status:
+		orders = orders.filter(woo_status=woo_status)
+
+	route_record = _clean_param(request, 'route_record')
+	if route_record:
+		orders = orders.filter(route_record=route_record)
+
+	status_param_present = 'status' in request.GET
+	status = _clean_param(request, 'status')
+	if status_param_present:
+		if status == 'Open':
+			orders = orders.exclude(status__in=['Completed', 'Cancelled'])
+		elif status:
+			orders = orders.filter(status=status)
+	else:
+		orders = orders.exclude(status__in=['Completed', 'Cancelled'])
+
+	products = _clean_param(request, 'products')
+	if products:
+		orders = orders.filter(
+			Q(lines__raw_sku__icontains=products) |
+			Q(lines__product__sku__icontains=products) |
+			Q(lines__product__barcode__icontains=products) |
+			Q(lines__product__name_cn__icontains=products) |
+			Q(lines__product__name_en__icontains=products)
+		)
+		needs_distinct = True
+
+	if needs_distinct:
+		orders = orders.distinct()
+
+	orders = orders.prefetch_related('lines').order_by('-date')
+
+	return render(request, 'orders/list.html', {
+		'orders': orders,
+		'woo_statuses': ORDER_WOO_STATUS,
+		'statuses': ORDER_STATUS,
+		'route_records': ORDER_ROUTE_RECORD,
+	})
 
 @csrf_exempt
 def create_order(request):

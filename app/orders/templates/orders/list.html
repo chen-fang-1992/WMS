@@ -104,7 +104,7 @@ table select option {
 					<th class="p-1 border border-gray-300 cursor-pointer" data-sort_field="notes">备注</th>
 					<th class="p-1 border border-gray-300">操作</th>
 				</tr>
-				<tr>
+				<tr id="order-filter-row" style="visibility: hidden;">
 					<th class="p-1 border border-gray-300"></th>
 					<th class="p-1 border border-gray-300 reference">
 						<input data-search_target="reference" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
@@ -461,7 +461,139 @@ table select option {
 			);
 		}
 
+		function updateRowCount() {
+			const counter = document.getElementById('row-count');
+			if (!counter) return;
+			const count = document.querySelectorAll('.order-checkbox').length;
+			counter.textContent = count;
+			counter.style.display = count > 0 ? 'inline-flex' : 'none';
+		}
+
+		function initBackendFilters() {
+			const currentParams = new URLSearchParams(window.location.search);
+			let submitTimer = null;
+			const FILTER_INPUT_DEBOUNCE_MS = 1000;
+
+			filterInputs.forEach(input => {
+				const key = input.dataset.search_target;
+				if (!key) return;
+				input.value = currentParams.get(key) || '';
+			});
+
+			filterVarietys.forEach(select => {
+				const key = select.dataset.search_target;
+				if (!key) return;
+
+				const rawValue = currentParams.get(key);
+				if (rawValue === null) {
+					if (key === 'status') {
+						const hasOpen = Array.from(select.options).some(opt => opt.value === 'Open');
+						if (hasOpen) {
+							select.value = 'Open';
+							return;
+						}
+					}
+					select.selectedIndex = 0;
+					return;
+				}
+
+				if (rawValue === '') {
+					select.selectedIndex = 0;
+					return;
+				}
+
+				const hasOption = Array.from(select.options).some(opt => opt.value === rawValue);
+				if (hasOption) {
+					select.value = rawValue;
+				}
+			});
+
+			function buildNextParams() {
+				const nextParams = new URLSearchParams(window.location.search);
+
+				filterInputs.forEach(input => {
+					const key = input.dataset.search_target;
+					if (key) nextParams.delete(key);
+				});
+				filterVarietys.forEach(select => {
+					const key = select.dataset.search_target;
+					if (key) nextParams.delete(key);
+				});
+
+				filterInputs.forEach(input => {
+					const key = input.dataset.search_target;
+					if (!key) return;
+					const value = (input.value || '').trim();
+					if (value) nextParams.set(key, value);
+				});
+
+				filterVarietys.forEach(select => {
+					const key = select.dataset.search_target;
+					if (!key) return;
+					const value = (select.value || '').trim();
+					const isAllOption = select.selectedIndex === 0;
+
+					if (key === 'status') {
+						if (isAllOption) {
+							nextParams.set('status', '');
+						} else if (value) {
+							nextParams.set('status', value);
+						}
+						return;
+					}
+
+					if (!isAllOption && value) {
+						nextParams.set(key, value);
+					}
+				});
+
+				return nextParams;
+			}
+
+			function submitFiltersNow() {
+				const nextParams = buildNextParams();
+				const nextQuery = nextParams.toString();
+				const currentQuery = window.location.search.replace(/^\?/, '');
+				if (nextQuery === currentQuery) return;
+				window.location.search = nextQuery;
+			}
+
+			function submitFiltersDebounced() {
+				if (submitTimer) clearTimeout(submitTimer);
+				submitTimer = setTimeout(submitFiltersNow, FILTER_INPUT_DEBOUNCE_MS);
+			}
+
+			filterInputs.forEach(input => {
+				input.addEventListener('input', submitFiltersDebounced);
+				input.addEventListener('blur', function () {
+					if (submitTimer) clearTimeout(submitTimer);
+					submitFiltersNow();
+				});
+				input.addEventListener('keydown', function (e) {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						if (submitTimer) clearTimeout(submitTimer);
+						submitFiltersNow();
+					}
+				});
+			});
+
+			filterVarietys.forEach(select => {
+				select.addEventListener('change', function () {
+					if (submitTimer) clearTimeout(submitTimer);
+					submitFiltersNow();
+				});
+			});
+
+			const filterRow = document.getElementById('order-filter-row');
+			if (filterRow) {
+				filterRow.style.visibility = 'visible';
+			}
+		}
+
 		function applyAllFilters() {
+			updateRowCount();
+			return;
 			const filters = {};
 
 			// 收集下拉筛选器
@@ -694,7 +826,8 @@ table select option {
 			});
 		});
 
-		applyAllFilters();
+		initBackendFilters();
+		updateRowCount();
 
 		const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
 		tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
