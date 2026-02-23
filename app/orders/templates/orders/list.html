@@ -34,14 +34,30 @@ table select option {
 .filter-input {
 	width: 100%;
 }
+.filter-variety {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
 .reference {
+	min-width: 60px;
 	max-width: 60px;
 }
 .postcode {
-	max-width: 65px;
+	min-width: 60px;
+	max-width: 60px;
 }
 .state {
-	max-width: 50px;
+	min-width: 60px;
+	max-width: 60px;
+}
+.woo_status {
+	min-width: 90px;
+	max-width: 90px;
+}
+.status {
+	min-width: 90px;
+	max-width: 90px;
 }
 .cursor-pointer {
 	cursor: pointer;
@@ -142,7 +158,17 @@ table select option {
 						<input data-search_target="postcode" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
 					<th class="p-1 border border-gray-300 state">
-						<input data-search_target="state" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+						<select data-search_target="state" class="filter-variety border border-gray-300 p-1 rounded">
+							<option value="">All</option>
+							<option value="ACT">ACT</option>
+							<option value="NSW">NSW</option>
+							<option value="NT">NT</option>
+							<option value="QLD">QLD</option>
+							<option value="SA">SA</option>
+							<option value="TAS">TAS</option>
+							<option value="VIC">VIC</option>
+							<option value="WA">WA</option>
+						</select>
 					</th>
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="products" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
