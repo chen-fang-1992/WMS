@@ -81,6 +81,18 @@ table select option {
 .top-action-btn {
 	font-size: .875rem;
 }
+.top-toolbar {
+	position: relative;
+	z-index: 30;
+}
+.top-toolbar .btn-group {
+	position: relative;
+}
+.top-toolbar .dropdown-menu {
+	z-index: 2050;
+	min-width: 100%;
+	width: 100%;
+}
 .table-card-shell {
 	box-sizing: border-box;
 	display: inline-block;
@@ -99,7 +111,7 @@ table select option {
 	</h2>
 
 	<!-- 顶部操作栏 -->
-	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left">
+	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left top-toolbar">
 		<div class="d-flex align-items-center gap-2 flex-wrap">
 			<button type="button" class="btn btn-success btn-sm top-action-btn" onclick="addOrder()">
 				<i class="bi bi-plus-lg"></i> 添加订单
