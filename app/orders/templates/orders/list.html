@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% load order_tags %}
 
@@ -27,6 +27,13 @@ td {
 }
 td.break-word {
 	white-space: normal;
+}
+th input[type="checkbox"],
+td input[type="checkbox"] {
+	display: block;
+	margin: 0 auto;
+	width: 14px;
+	height: 14px;
 }
 table select option {
 	text-align-last: center;
@@ -68,35 +75,52 @@ table select option {
 .urgent-row:hover {
 	background-color: #fed7aa;
 }
+.order-row-hover:hover {
+	background-color: #eef1f4;
+}
+.top-action-btn {
+	font-size: .875rem;
+}
+.table-card-shell {
+	box-sizing: border-box;
+	display: inline-block;
+	min-width: 100%;
+	vertical-align: top;
+}
+.page-shift-left {
+	transform: translateX(-6px);
+}
 </style>
 
-<div class="mx-auto p-1">
-	<h2 class="font-semibold text-teal-700 text-lg pb-2">
+<div class="mx-auto pt-1 pe-1 pb-1 ps-0">
+	<h2 class="font-semibold text-teal-700 text-lg pb-2 px-2 page-shift-left">
 		订单列表
 		<span id="row-count" style="display: none; align-items: center; justify-content: center; min-width: 36px; padding: 2px 10px; font-size: 1rem !important; font-weight: 500; color: white; background: darkgrey; border-radius: 9999px; vertical-align: middle; height: 1.5rem; margin-bottom: 0.3rem;"></span>
 	</h2>
 
 	<!-- 顶部操作栏 -->
-	<div class="flex items-center justify-between mt-4">
-		<div class="flex items-center space-x-2">
-			<button type="button" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700" onclick="addOrder()">
+	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left">
+		<div class="d-flex align-items-center gap-2 flex-wrap">
+			<button type="button" class="btn btn-success btn-sm top-action-btn" onclick="addOrder()">
 				<i class="bi bi-plus-lg"></i> 添加订单
 			</button>
-			<button type="button" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-				<i class="bi bi-file-earmark-arrow-down"></i> 导出勾选为
-			</button>
-			<ul class="dropdown-menu">
-				<li><button id="export-orders-delivery-btn" type="button" class="dropdown-item">发货单</button></li>
-				<li><button id="export-orders-selected-btn" type="button" class="dropdown-item">订单表</button></li>
-			</ul>
-			<button id="export-orders-btn" class="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-700">
+			<div class="btn-group">
+				<button type="button" class="btn btn-primary btn-sm dropdown-toggle top-action-btn" data-bs-toggle="dropdown" aria-expanded="false">
+					<i class="bi bi-file-earmark-arrow-down"></i> 导出勾选为
+				</button>
+				<ul class="dropdown-menu">
+					<li><button id="export-orders-delivery-btn" type="button" class="dropdown-item">发货单</button></li>
+					<li><button id="export-orders-selected-btn" type="button" class="dropdown-item">订单表</button></li>
+				</ul>
+			</div>
+			<button id="export-orders-btn" class="btn btn-primary btn-sm top-action-btn">
 				<i class="bi bi-file-earmark-arrow-down"></i> 导出订单
 			</button>
-			<button id="batch-update-btn" type="button" class="px-2 py-1 rounded-md bg-amber-600 hover:bg-amber-700">
+			<button id="batch-update-btn" type="button" class="btn btn-warning btn-sm top-action-btn">
 				<i class="bi bi-check2-square"></i> 批量更新
 			</button>
 			{% if request.user.is_superuser %}
-			<button id="sync-btn" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700">
+			<button id="sync-btn" class="btn btn-success btn-sm top-action-btn">
 				<i class="bi bi-file-earmark-arrow-up"></i> 同步订单
 			</button>
 			{% endif %}
@@ -104,7 +128,7 @@ table select option {
 	</div>
 
 	<!-- 表格区域 -->
-	<div class="mt-4 bg-white shadow-md rounded-lg w-full">
+	<div class="mt-4 bg-white shadow rounded p-2 table-card-shell page-shift-left">
 		<table class="w-full border-collapse text-sm w-100">
 			<thead class="bg-gray-100">
 				<tr>
@@ -208,7 +232,7 @@ table select option {
 			</thead>
 			<tbody>
 				{% for order in orders %}
-				<tr class="{% if order.urgent %}urgent-row{% else %}hover:bg-gray-50{% endif %}">
+				<tr class="{% if order.urgent %}urgent-row{% else %}order-row-hover{% endif %}">
 					<td class="p-1 border border-gray-300"><input type="checkbox" class="order-checkbox" value="{{ order.id }}"></td>
 					<td class="p-1 border border-gray-300 reference" data-search_field="reference">{{ order.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date|date:"d/m/Y" }}<br>{{ order.date|date:"h:i A" }}</td>
@@ -768,6 +792,26 @@ table select option {
 		document.getElementById('select-all').addEventListener('change', function() {
 			document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked);
 		});
+
+		// 点击行切换勾选（点击按钮/输入框等交互元素时不触发）
+		if (productTable) {
+			productTable.addEventListener('click', function(event) {
+				const target = event.target;
+				if (!target) return;
+
+				if (target.closest('button, a, input, select, textarea, label')) {
+					return;
+				}
+
+				const row = target.closest('tr');
+				if (!row) return;
+
+				const checkbox = row.querySelector('.order-checkbox');
+				if (!checkbox) return;
+
+				checkbox.checked = !checkbox.checked;
+			});
+		}
 
 		function getSelectedOrderIds() {
 			return Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);

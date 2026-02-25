@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block content %}
 <style>
@@ -29,22 +29,34 @@ table select option {
 .filter-variety {
 	width: 100%;
 }
+.table-row-hover:hover {
+	background-color: #eef1f4;
+}
+.table-card-shell {
+	box-sizing: border-box;
+	display: inline-block;
+	min-width: 100%;
+	vertical-align: top;
+}
+.page-shift-left {
+	transform: translateX(-6px);
+}
 </style>
 
-<div class="mx-auto p-1">
-	<h2 class="font-semibold text-teal-700 text-lg pb-2">库存列表</h2>
+<div class="mx-auto pt-1 pe-1 pb-1 ps-0">
+	<h2 class="font-semibold text-teal-700 text-lg pb-2 px-2 page-shift-left">库存列表</h2>
 
 	<!-- 顶部操作栏 -->
-	<div class="flex items-center justify-between mt-4">
-		<div class="flex items-center space-x-2">
-			<button type="button" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700" onclick="exportStock()">
+	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left">
+		<div class="d-flex align-items-center gap-2 flex-wrap">
+			<button type="button" class="btn btn-primary btn-sm" onclick="exportStock()">
 				<i class="bi bi-file-earmark-arrow-down"></i> 导出库存
 			</button>
 		</div>
 	</div>
 
 	<!-- 表格区域 -->
-	<div class="mt-4 bg-white shadow-md rounded-lg w-full overflow-x-auto">
+	<div class="mt-4 bg-white shadow rounded p-2 table-card-shell page-shift-left">
 		<table class="w-full border-collapse text-sm w-100">
 			<colgroup>
 				<col style="width: 20%;">
@@ -104,11 +116,12 @@ table select option {
 					<th class="p-1 border border-gray-300">
 						<input data-search_target="quantity_available" data-search_type="number" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
 					</th>
+					<th class="p-1 border border-gray-300"></th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for stock in stocks %}
-				<tr class="hover:bg-gray-50">
+				<tr class="table-row-hover">
 					<td class="p-1 border border-gray-300" data-search_field="warehouse">{{ stock.warehouse | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="category">{{ stock.product.category | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="barcode">{{ stock.product.barcode | default:"" }}</td>
@@ -118,7 +131,7 @@ table select option {
 					<td class="p-1 border border-gray-300" data-search_field="quantity_reserved">{{ stock.quantity_reserved | default:0 }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="quantity_available">{{ stock.quantity_available | default:0 }}</td>
 					<td class="p-1 border border-gray-300">
-						<button class="text-primary hover:underline" onclick="viewStock(`{{ stock.id }}`)">查看</button>
+						<button class="text-primary hover:underline" onclick="viewStock(`{{ stock.id }}`)"><i class="bi bi-eye"></i></button>
 					</td>
 				</tr>
 				{% empty %}

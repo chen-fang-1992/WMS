@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block content %}
 <style>
@@ -66,22 +66,34 @@ table select option {
 .filter-variety {
 	width: 100%;
 }
+.table-row-hover:hover {
+	background-color: #eef1f4;
+}
+.table-card-shell {
+	box-sizing: border-box;
+	display: inline-block;
+	min-width: 100%;
+	vertical-align: top;
+}
+.page-shift-left {
+	transform: translateX(-6px);
+}
 </style>
 
-<div class="mx-auto p-1">
-	<h2 class="font-semibold text-teal-700 text-lg pb-2">入库列表</h2>
+<div class="mx-auto pt-1 pe-1 pb-1 ps-0">
+	<h2 class="font-semibold text-teal-700 text-lg pb-2 px-2 page-shift-left">入库列表</h2>
 
 	<!-- 顶部操作栏 -->
-	<div class="flex items-center justify-between mt-4">
-		<div class="flex items-center space-x-2">
-			<button type="button" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700" onclick="addInbound()">
+	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left">
+		<div class="d-flex align-items-center gap-2 flex-wrap">
+			<button type="button" class="btn btn-success btn-sm" onclick="addInbound()">
 				<i class="bi bi-plus-lg"></i> 添加入库
 			</button>
 		</div>
 	</div>
 
 	<!-- 表格区域 -->
-	<div class="mt-4 bg-white shadow-md rounded-lg w-full overflow-x-auto">
+	<div class="mt-4 bg-white shadow rounded p-2 table-card-shell page-shift-left">
 		<table class="w-full border-collapse text-sm w-100">
 			<colgroup>
 				<col style="width: 20%;">
@@ -116,13 +128,13 @@ table select option {
 			</thead>
 			<tbody>
 				{% for inbound in inbounds %}
-				<tr class="hover:bg-gray-50">
+				<tr class="table-row-hover">
 					<td class="p-1 border border-gray-300" data-search_field="warehouse">{{ inbound.warehouse | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="reference">{{ inbound.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="date">{{ inbound.date | default:"" }}</td>
 					<td class="p-1 border border-gray-300">
-						<button class="text-primary hover:underline" onclick="editInbound(`{{ inbound.id }}`)">编辑</button>
-						<button class="text-danger hover:underline ml-2" onclick="deleteInbound(`{{ inbound.id }}`)">删除</button>
+						<button class="text-primary hover:underline" onclick="editInbound(`{{ inbound.id }}`)"><i class="bi bi-pencil-square"></i></button>
+						<button class="text-danger hover:underline ml-2" onclick="deleteInbound(`{{ inbound.id }}`)"><i class="bi bi-trash"></i></button>
 					</td>
 				</tr>
 				{% empty %}
