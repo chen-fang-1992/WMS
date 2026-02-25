@@ -82,9 +82,13 @@ table select option {
 			<button type="button" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700" onclick="addOrder()">
 				<i class="bi bi-plus-lg"></i> 添加订单
 			</button>
-			<button id="export-orders-delivery-btn" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700">
-				<i class="bi bi-file-earmark-arrow-down"></i> 导出发货单
+			<button type="button" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+				<i class="bi bi-file-earmark-arrow-down"></i> 导出勾选为
 			</button>
+			<ul class="dropdown-menu">
+				<li><button id="export-orders-delivery-btn" type="button" class="dropdown-item">发货单</button></li>
+				<li><button id="export-orders-selected-btn" type="button" class="dropdown-item">订单表</button></li>
+			</ul>
 			<button id="export-orders-btn" class="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-700">
 				<i class="bi bi-file-earmark-arrow-down"></i> 导出订单
 			</button>
@@ -306,6 +310,7 @@ table select option {
 		const productTable = document.querySelector('tbody');
 		const headers = document.querySelectorAll('th[data-sort_field]');
 		const exportBtn = document.getElementById('export-orders-delivery-btn');
+		const exportSelectedOrdersBtn = document.getElementById('export-orders-selected-btn');
 		const exportOrdersBtn = document.getElementById('export-orders-btn');
 		const exportModalEl = document.getElementById('exportOrdersModal');
 		const exportModal = exportModalEl ? new bootstrap.Modal(exportModalEl) : null;
@@ -726,16 +731,31 @@ table select option {
 			document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked);
 		});
 
+		function getSelectedOrderIds() {
+			return Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
+		}
+
+		function validateSelectedOrderIds(ids) {
+			if (ids.length === 0) {
+				alert('请先勾选需要导出的订单！');
+				return false;
+			}
+			return true;
+		}
+
 		if (exportBtn) {
 			exportBtn.addEventListener('click', function() {
-				const ids = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
-
-				if (ids.length === 0) {
-					alert('请先勾选需要导出的订单！');
-					return;
-				}
-
+				const ids = getSelectedOrderIds();
+				if (!validateSelectedOrderIds(ids)) return;
 				window.location.href = `/orders/export/?ids=${ids.join(',')}`;
+			});
+		}
+
+		if (exportSelectedOrdersBtn) {
+			exportSelectedOrdersBtn.addEventListener('click', function() {
+				const ids = getSelectedOrderIds();
+				if (!validateSelectedOrderIds(ids)) return;
+				window.location.href = `/orders/export/?ids=${ids.join(',')}&export_type=orders`;
 			});
 		}
 

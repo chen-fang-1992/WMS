@@ -417,29 +417,7 @@ def update_order(request, id):
 	return JsonResponse({'success': False, 'error': '仅支持 POST 请求'})
 
 @csrf_exempt
-def export_orders(request):
-	ids = (request.GET.get('ids') or '').strip()
-	if ids:
-		return export_orders_delivery(request)
-
-	start_date_raw = (request.GET.get('start_date') or '').strip()
-	end_date_raw = (request.GET.get('end_date') or '').strip()
-	start_date = parse_date(start_date_raw) if start_date_raw else None
-	end_date = parse_date(end_date_raw) if end_date_raw else None
-
-	if not start_date or not end_date:
-		return JsonResponse({'success': False, 'error': '请提供开始日期和结束日期'}, status=400)
-
-	if start_date > end_date:
-		return JsonResponse({'success': False, 'error': '开始日期不能晚于结束日期'}, status=400)
-
-	orders = (
-		Order.objects
-		.filter(date__date__gte=start_date, date__date__lte=end_date)
-		.order_by('date', 'id')
-		.prefetch_related('lines')
-	)
-
+def _export_orders_excel_response(orders, filename):
 	wb = openpyxl.Workbook()
 	ws = wb.active
 	ws.title = 'Order Export'
@@ -530,11 +508,52 @@ def export_orders(request):
 	for i in range(2, ws.max_row + 1):
 		ws.row_dimensions[i].height = 36
 
-	filename = f'orders_{start_date.strftime("%Y%m%d")}_{end_date.strftime("%Y%m%d")}.xlsx'
 	response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 	response['Content-Disposition'] = f'attachment; filename="{filename}"'
 	wb.save(response)
 	return response
+
+
+@csrf_exempt
+def export_orders(request):
+	ids = (request.GET.get('ids') or '').strip()
+	if ids:
+		export_type = (request.GET.get('export_type') or '').strip().lower()
+		if export_type == 'orders':
+			id_list = [int(x) for x in ids.split(',') if x.isdigit()]
+			if not id_list:
+				return JsonResponse({'success': False, 'error': '请先选择要导出的订单'}, status=400)
+
+			orders = (
+				Order.objects
+				.filter(id__in=id_list)
+				.order_by('date', 'id')
+				.prefetch_related('lines')
+			)
+			filename = f'orders_{timezone.localtime().strftime("%Y%m%d_%H%M%S")}.xlsx'
+			return _export_orders_excel_response(orders, filename)
+		return export_orders_delivery(request)
+
+	start_date_raw = (request.GET.get('start_date') or '').strip()
+	end_date_raw = (request.GET.get('end_date') or '').strip()
+	start_date = parse_date(start_date_raw) if start_date_raw else None
+	end_date = parse_date(end_date_raw) if end_date_raw else None
+
+	if not start_date or not end_date:
+		return JsonResponse({'success': False, 'error': '请提供开始日期和结束日期'}, status=400)
+
+	if start_date > end_date:
+		return JsonResponse({'success': False, 'error': '开始日期不能晚于结束日期'}, status=400)
+
+	orders = (
+		Order.objects
+		.filter(date__date__gte=start_date, date__date__lte=end_date)
+		.order_by('date', 'id')
+		.prefetch_related('lines')
+	)
+
+	filename = f'orders_{start_date.strftime("%Y%m%d")}_{end_date.strftime("%Y%m%d")}.xlsx'
+	return _export_orders_excel_response(orders, filename)
 
 @csrf_exempt
 def export_orders_delivery(request):
@@ -656,7 +675,7 @@ def export_orders_delivery(request):
 	ws.page_setup.scale = 55
 	ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
 
-	filename = f'orders_{timezone.localtime().strftime("%Y%m%d_%H%M%S")}.xlsx'
+	filename = f'delivery_{timezone.localtime().strftime("%Y%m%d_%H%M%S")}.xlsx'
 	response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 	response['Content-Disposition'] = f'attachment; filename="{filename}"'
 	wb.save(response)
