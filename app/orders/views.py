@@ -1,4 +1,5 @@
 from django.shortcuts import render
+import builtins
 from ..orders.models import Order, OrderLine
 from ..products.models import Product
 from ..stocks.models import Stock
@@ -415,6 +416,55 @@ def update_order(request, id):
 			return JsonResponse({'success': False, 'error': str(e)})
 
 	return JsonResponse({'success': False, 'error': '仅支持 POST 请求'})
+
+@csrf_exempt
+def batch_update_order(request):
+	if request.method != 'POST':
+		return JsonResponse({'success': False, 'error': '仅支持 POST 请求'})
+
+	try:
+		data = json.loads(request.body or '{}')
+	except json.JSONDecodeError:
+		return JsonResponse({'success': False, 'error': '无效的 JSON 格式'})
+
+	raw_ids = data.get('ids') or []
+	status = (data.get('status') or '').strip()
+
+	if not isinstance(raw_ids, builtins.list):
+		return JsonResponse({'success': False, 'error': '订单ID格式错误'}, status=400)
+
+	id_list = []
+	for item in raw_ids:
+		try:
+			id_list.append(int(item))
+		except (TypeError, ValueError):
+			continue
+	id_list = tuple(dict.fromkeys(id_list))
+
+	if not id_list:
+		return JsonResponse({'success': False, 'error': '请先勾选要更新的订单'}, status=400)
+
+	valid_status_values = {value for value, _ in ORDER_STATUS}
+	if status not in valid_status_values:
+		return JsonResponse({'success': False, 'error': '请选择有效的订单状态'}, status=400)
+
+	orders = Order.objects.filter(id__in=id_list)
+	if not orders:
+		return JsonResponse({'success': False, 'error': '未找到可更新的订单'}, status=404)
+
+	updated_count = 0
+	for order in orders:
+		if order.status == status:
+			continue
+		order.status = status
+		order.save(update_fields=['status'])
+		updated_count += 1
+
+	return JsonResponse({
+		'success': True,
+		'updated_count': updated_count,
+		'matched_count': len(orders),
+	})
 
 @csrf_exempt
 def _export_orders_excel_response(orders, filename):

@@ -92,6 +92,9 @@ table select option {
 			<button id="export-orders-btn" class="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-700">
 				<i class="bi bi-file-earmark-arrow-down"></i> 导出订单
 			</button>
+			<button id="batch-update-btn" type="button" class="px-2 py-1 rounded-md bg-amber-600 hover:bg-amber-700">
+				<i class="bi bi-check2-square"></i> 批量更新
+			</button>
 			{% if request.user.is_superuser %}
 			<button id="sync-btn" class="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700">
 				<i class="bi bi-file-earmark-arrow-up"></i> 同步订单
@@ -303,6 +306,35 @@ table select option {
 	</div>
 </div>
 
+<div class="modal fade" id="batchUpdateModal" tabindex="-1" aria-labelledby="batchUpdateModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="batchUpdateModalLabel">批量更新订单</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="mb-2 text-muted text-sm" id="batch-update-selected-count-text">已勾选 0 个订单</div>
+				<div class="mb-2">
+					<label for="batch-status-select" class="form-label">选择状态</label>
+					<select id="batch-status-select" class="form-select">
+						<option value="">请选择状态</option>
+						{% for value, label in statuses %}
+						<option value="{{ value }}">{{ label }}</option>
+						{% endfor %}
+					</select>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+				<button type="button" class="btn btn-warning" id="batch-update-confirm-btn">
+					<i class="bi bi-check2-square"></i> 更新
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
@@ -311,6 +343,12 @@ table select option {
 		const headers = document.querySelectorAll('th[data-sort_field]');
 		const exportBtn = document.getElementById('export-orders-delivery-btn');
 		const exportSelectedOrdersBtn = document.getElementById('export-orders-selected-btn');
+		const batchUpdateBtn = document.getElementById('batch-update-btn');
+		const batchUpdateModalEl = document.getElementById('batchUpdateModal');
+		const batchUpdateModal = batchUpdateModalEl ? new bootstrap.Modal(batchUpdateModalEl) : null;
+		const batchStatusSelect = document.getElementById('batch-status-select');
+		const batchUpdateSelectedCountText = document.getElementById('batch-update-selected-count-text');
+		const batchUpdateConfirmBtn = document.getElementById('batch-update-confirm-btn');
 		const exportOrdersBtn = document.getElementById('export-orders-btn');
 		const exportModalEl = document.getElementById('exportOrdersModal');
 		const exportModal = exportModalEl ? new bootstrap.Modal(exportModalEl) : null;
@@ -756,6 +794,64 @@ table select option {
 				const ids = getSelectedOrderIds();
 				if (!validateSelectedOrderIds(ids)) return;
 				window.location.href = `/orders/export/?ids=${ids.join(',')}&export_type=orders`;
+			});
+		}
+
+		if (batchUpdateBtn) {
+			batchUpdateBtn.addEventListener('click', function() {
+				const ids = getSelectedOrderIds();
+				if (ids.length === 0) {
+					alert('请先勾选要更新的订单！');
+					return;
+				}
+
+				if (batchUpdateSelectedCountText) {
+					batchUpdateSelectedCountText.textContent = `已勾选 ${ids.length} 个订单`;
+				}
+				if (batchStatusSelect) batchStatusSelect.value = '';
+				if (batchUpdateModal) batchUpdateModal.show();
+			});
+		}
+
+		if (batchUpdateConfirmBtn) {
+			batchUpdateConfirmBtn.addEventListener('click', async function() {
+				const ids = getSelectedOrderIds();
+				if (ids.length === 0) {
+					alert('请先勾选要更新状态的订单！');
+					if (batchUpdateModal) batchUpdateModal.hide();
+					return;
+				}
+
+				const nextStatus = (batchStatusSelect?.value || '').trim();
+				if (!nextStatus) {
+					alert('请先选择要批量更新的状态！');
+					return;
+				}
+
+				if (!confirm(`确认将 ${ids.length} 个勾选订单状态更新为「${nextStatus}」吗？`)) return;
+
+				try {
+					const res = await fetch('/orders/batch-update/', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json;charset=UTF-8',
+						},
+						body: JSON.stringify({
+							ids,
+							status: nextStatus,
+						}),
+					});
+					const data = await res.json().catch(() => ({}));
+					if (!res.ok || !data.success) {
+						alert('批量更新状态失败：' + (data.error || res.status));
+						return;
+					}
+					if (batchUpdateModal) batchUpdateModal.hide();
+					alert(`批量更新完成：匹配 ${data.matched_count ?? ids.length} 条，实际更新 ${data.updated_count ?? 0} 条`);
+					location.reload();
+				} catch (error) {
+					alert('批量更新状态请求失败');
+				}
 			});
 		}
 
