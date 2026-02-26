@@ -24,7 +24,7 @@ from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
 
 from ..orders.cron import push_order_to_wc, sync_woo_order_completed
-from ..services.shippit_client import get_shipping_quote
+from ..services.shippit_client import get_shipping_quote, build_parcel_attributes, normalize_parcel_attributes
 from ..orders.cron import sync_wc_orders
 
 def parse_bool(value):
@@ -255,12 +255,16 @@ def create_order(request):
 		date = data.get('date')
 		tracking_number = data.get('tracking_number', '')
 		delivery_date = data.get('delivery_date', '')
+		parcel_attributes = normalize_parcel_attributes(data.get('parcel_attributes'))
 		if delivery_date == '':
 			delivery_date = '1970-01-01'
 		products = data.get('products', [])
 
+		meta = {}
+		if parcel_attributes:
+			meta['parcel_attributes'] = parcel_attributes
 		order = Order.objects.create(reference=reference, date=date, contact_name=contact_name, phone=phone, email=email, 
-			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status, urgent=urgent, tracking_number=tracking_number, delivery_date=delivery_date)
+			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status, urgent=urgent, tracking_number=tracking_number, delivery_date=delivery_date, meta=meta or None)
 
 		for item in products:
 			product = Product.objects.filter(id=item.get('product_id')).first()
@@ -323,6 +327,7 @@ def order_detail(request, id):
 				'urgent': order.urgent,
 				'tracking_number': order.tracking_number,
 				'delivery_date': order.delivery_date,
+				'parcel_attributes': normalize_parcel_attributes((order.meta or {}).get('parcel_attributes')) or build_parcel_attributes(order),
 				'products': [
 					{
 						'product_id': line.product.id if line.product else '',
@@ -361,6 +366,7 @@ def update_order(request, id):
 			urgent = parse_bool(data.get('urgent', False))
 			tracking_number = data.get('tracking_number', '')
 			delivery_date = data.get('delivery_date', '')
+			parcel_attributes = normalize_parcel_attributes(data.get('parcel_attributes'))
 			if delivery_date == '':
 				delivery_date = '1970-01-01'
 			products = data.get('products', [])
@@ -382,6 +388,12 @@ def update_order(request, id):
 			order.urgent = urgent
 			order.tracking_number = tracking_number
 			order.delivery_date = delivery_date
+			meta = order.meta if isinstance(order.meta, dict) else {}
+			if parcel_attributes:
+				meta['parcel_attributes'] = parcel_attributes
+			else:
+				meta.pop('parcel_attributes', None)
+			order.meta = meta or None
 			order.save()
 
 			# 删除旧的明细行

@@ -1342,6 +1342,7 @@ table select option {
 		// 清空旧行
 		const tbody = document.getElementById('product-table-body');
 		tbody.innerHTML = '';
+		if (typeof window.setParcelRows === 'function') window.setParcelRows([]);
 		document.getElementById('orderModalLabel').textContent = '新增订单';
 	}
 
@@ -1383,6 +1384,9 @@ table select option {
 			document.getElementById('delivery_date').value = order.delivery_date
 				? toDateLocal(new Date(order.delivery_date))
 				: '';
+			if (typeof window.setParcelRows === 'function') {
+				window.setParcelRows(order.parcel_attributes || []);
+			}
 
 			// 清空旧行
 			const tbody = document.getElementById('product-table-body');

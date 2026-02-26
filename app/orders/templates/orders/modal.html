@@ -59,6 +59,10 @@
 #order-form .compact-section-gap {
 	margin-bottom: 0.6rem !important;
 }
+
+#parcel-table input[type="number"] {
+	min-width: 72px;
+}
 </style>
 
 <!-- 弹窗 -->
@@ -182,6 +186,29 @@
 						</tbody>
 					</table>
 					<button type="button" class="btn btn-sm btn-secondary" onclick="addRow()">+ 添加行</button>
+					<div class="compact-section-gap mt-3">
+						<div class="d-flex align-items-center justify-content-between mb-2">
+							<h6 class="mb-0">包裹信息（报价用）</h6>
+							<div class="d-flex gap-2">
+								<button type="button" class="btn btn-sm btn-outline-secondary" onclick="recalcParcelRowsFromOrder()">重新计算</button>
+								<button type="button" class="btn btn-sm btn-secondary" onclick="addParcelRow()">+ 添加包裹</button>
+							</div>
+						</div>
+						<table class="table table-bordered table-sm text-center align-middle mb-1" id="parcel-table">
+							<thead>
+								<tr>
+									<th>件数</th>
+									<th>重量(kg)</th>
+									<th>长(m)</th>
+									<th>宽(m)</th>
+									<th>高(m)</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody id="parcel-table-body"></tbody>
+						</table>
+						<div class="text-muted small">可手动调整。保存订单后，Shippit 报价将使用这里的包裹信息。</div>
+					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="submit" class="btn btn-primary" id="create-order-btn">保存</button>
@@ -220,6 +247,7 @@
 			const barcodes = Array.from(document.querySelectorAll('input[name="barcode[]"]')).map(input => input.value.trim());
 			const skus = Array.from(document.querySelectorAll('input[name="sku[]"]')).map(input => input.value.trim());
 			const quantities = Array.from(document.querySelectorAll('input[name="quantity[]"]')).map(input => parseInt(input.value));
+			const parcel_attributes = getParcelRows();
 
 			const products = product_ids.map((product_id, index) => ({
 				product_id,
@@ -267,6 +295,7 @@
 					customer_notes: customer_notes,
 					tracking_number: tracking_number,
 					delivery_date: delivery_date,
+					parcel_attributes: parcel_attributes,
 					products: products,
 				})
 			})
@@ -307,6 +336,77 @@
 		`;
 		tbody.appendChild(newRow);
 		enableProductSearch(newRow.querySelector('.product-search'));
+	}
+
+	function addParcelRow(parcel = null) {
+		const tbody = document.getElementById('parcel-table-body');
+		if (!tbody) return;
+		const row = document.createElement('tr');
+		const qty = parcel?.qty ?? 1;
+		const weight = parcel?.weight ?? 1;
+		const length = parcel?.length ?? 0.1;
+		const width = parcel?.width ?? 0.1;
+		const height = parcel?.height ?? 0.1;
+		row.innerHTML = `
+			<td><input type="number" min="1" step="1" class="form-control form-control-sm text-center" data-parcel-field="qty" value="${qty}"></td>
+			<td><input type="number" min="0" step="0.001" class="form-control form-control-sm text-center" data-parcel-field="weight" value="${weight}"></td>
+			<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-center" data-parcel-field="length" value="${length}"></td>
+			<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-center" data-parcel-field="width" value="${width}"></td>
+			<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-center" data-parcel-field="height" value="${height}"></td>
+			<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeParcelRow(this)">删除</button></td>
+		`;
+		tbody.appendChild(row);
+	}
+
+	function removeParcelRow(button) {
+		const row = button.closest('tr');
+		if (row) row.remove();
+	}
+
+	function setParcelRows(parcels) {
+		const tbody = document.getElementById('parcel-table-body');
+		if (!tbody) return;
+		tbody.innerHTML = '';
+		(parcels || []).forEach(addParcelRow);
+		if (!tbody.children.length) addParcelRow();
+	}
+
+	function getParcelRows() {
+		const tbody = document.getElementById('parcel-table-body');
+		if (!tbody) return [];
+		return Array.from(tbody.querySelectorAll('tr')).map(row => {
+			const getNum = (field, fallback = 0) => {
+				const el = row.querySelector(`[data-parcel-field="${field}"]`);
+				const n = Number(el?.value);
+				return Number.isFinite(n) ? n : fallback;
+			};
+			return {
+				qty: Math.max(1, Math.trunc(getNum('qty', 1))),
+				weight: getNum('weight', 0),
+				length: getNum('length', 0),
+				width: getNum('width', 0),
+				height: getNum('height', 0),
+			};
+		}).filter(p => p.qty > 0);
+	}
+
+	async function recalcParcelRowsFromOrder() {
+		const orderId = document.getElementById('order-form')?.dataset.editingId;
+		if (!orderId) {
+			alert('请先保存订单后再使用自动计算，或手动添加包裹。');
+			return;
+		}
+		try {
+			const res = await fetch(`/orders/detail/${orderId}/`);
+			const data = await res.json();
+			if (!res.ok || !data.success) {
+				alert('重新计算包裹信息失败');
+				return;
+			}
+			setParcelRows(data.order?.parcel_attributes || []);
+		} catch (e) {
+			alert('重新计算包裹信息失败');
+		}
 	}
 
 	function removeRow(button) {
