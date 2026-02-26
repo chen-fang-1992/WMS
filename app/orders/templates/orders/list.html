@@ -93,6 +93,106 @@ table select option {
 	min-width: 100%;
 	width: 100%;
 }
+.order-workspace-tabs .nav-link {
+	font-size: .9rem;
+	color: #374151 !important;
+	background: #f8fafc;
+	border: 1px solid #d1d5db;
+	border-bottom-color: transparent;
+	border-radius: .5rem .5rem 0 0;
+	padding: .5rem .85rem;
+	width: auto;
+	text-align: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: .4rem;
+	max-width: 240px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transform: none;
+}
+.order-workspace-tabs .tab-label {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1;
+	height: auto;
+}
+.order-workspace-tabs .nav-link.active {
+	font-weight: 600;
+	color: #fff !important;
+	background: var(--brand-navy);
+	border-color: var(--brand-navy) var(--brand-navy) #fff;
+}
+.order-workspace-tabs .nav-link.active .tab-close {
+	color: rgba(255, 255, 255, .85);
+}
+.order-workspace-tabs .nav-link.active .tab-close:hover {
+	color: #fff;
+}
+.order-workspace-tabs .tab-close {
+	border: 0;
+	background: transparent;
+	color: #6b7280;
+	padding: 0 .05rem;
+	margin-left: 0;
+	line-height: 1;
+	font-size: 1.35rem;
+	font-weight: 700;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: auto;
+	min-width: auto;
+	vertical-align: middle;
+	transform: translateY(-0.8px);
+	cursor: pointer;
+}
+.order-workspace-tabs .tab-close:hover {
+	color: #111827;
+}
+.order-form-pane-shell {
+	background: transparent;
+	border-radius: 0;
+	box-shadow: none;
+	width: 100%;
+	max-width: 100%;
+	margin-left: .5rem;
+	overflow-x: hidden;
+}
+.order-form-pane-shell .modal-content {
+	border: 0;
+	box-shadow: none;
+	width: 100%;
+	max-width: 100%;
+}
+.order-form-pane-shell .modal-header {
+	display: none;
+}
+.order-form-pane-shell .modal-body {
+	overflow-x: hidden;
+	padding-right: .25rem;
+}
+.order-form-pane-shell #product-table {
+	width: 100%;
+	table-layout: fixed;
+}
+.order-form-pane-shell #product-table colgroup col:nth-child(1) {
+	width: 28% !important;
+}
+.order-form-pane-shell #product-table colgroup col:nth-child(2) {
+	width: 28% !important;
+}
+.order-form-pane-shell #product-table colgroup col:nth-child(3) {
+	width: 28% !important;
+}
+.order-form-pane-shell #product-table colgroup col:nth-child(4) {
+	width: 8% !important;
+}
+.order-form-pane-shell #product-table colgroup col:nth-child(5) {
+	width: 8% !important;
+}
 .table-card-shell {
 	box-sizing: border-box;
 	display: inline-block;
@@ -110,10 +210,18 @@ table select option {
 		<span id="row-count" style="display: none; align-items: center; justify-content: center; min-width: 36px; padding: 2px 10px; font-size: 1rem !important; font-weight: 500; color: white; background: darkgrey; border-radius: 9999px; vertical-align: middle; height: 1.5rem; margin-bottom: 0.3rem;"></span>
 	</h2>
 
+	<ul class="nav nav-tabs px-2 page-shift-left order-workspace-tabs" id="order-workspace-tabs" role="tablist">
+		<li class="nav-item" role="presentation">
+			<button class="nav-link active" id="order-list-tab" data-bs-toggle="tab" data-bs-target="#order-list-pane" type="button" role="tab" aria-controls="order-list-pane" aria-selected="true">订单列表</button>
+		</li>
+	</ul>
+
+	<div class="tab-content">
+	<div class="tab-pane fade show active" id="order-list-pane" role="tabpanel" aria-labelledby="order-list-tab" tabindex="0">
 	<!-- 顶部操作栏 -->
 	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left top-toolbar">
 		<div class="d-flex align-items-center gap-2 flex-wrap">
-			<button type="button" class="btn btn-success btn-sm top-action-btn" onclick="addOrder()">
+			<button type="button" class="btn btn-success btn-sm top-action-btn" onclick="openAddOrderTab()">
 				<i class="bi bi-plus-lg"></i> 添加订单
 			</button>
 			<div class="btn-group">
@@ -242,7 +350,7 @@ table select option {
 					<th class="p-1 border border-gray-300"></th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody id="orders-main-tbody">
 				{% for order in orders %}
 				<tr class="{% if order.urgent %}urgent-row{% else %}order-row-hover{% endif %}">
 					<td class="p-1 border border-gray-300"><input type="checkbox" class="order-checkbox" value="{{ order.id }}"></td>
@@ -293,7 +401,7 @@ table select option {
 						{% endif %}
 					</td>
 					<td class="p-1 border border-gray-300">
-						<button class="text-primary hover:underline" onclick="editOrder(`{{ order.id }}`)"><i class="bi bi-pencil-square"></i></button>
+						<button class="text-primary hover:underline" onclick="openEditOrderTab(`{{ order.id }}`)"><i class="bi bi-pencil-square"></i></button>
 						<button class="text-danger hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)"><i class="bi bi-trash"></i></button>
 						<button class="text-success hover:underline ml-2" onclick="getShippingQuotes(`{{ order.id }}`)">
 							<i class="bi bi-truck"></i>
@@ -307,6 +415,14 @@ table select option {
 				{% endfor %}
 			</tbody>
 		</table>
+	</div>
+	</div>
+
+	<div class="tab-pane fade mt-3" id="order-form-pane" role="tabpanel" tabindex="0">
+		<div id="order-form-pane-host" class="order-form-pane-shell page-shift-left">
+			<div class="p-4 text-muted">请点击“添加订单”或表格中的编辑按钮打开订单表单。</div>
+		</div>
+	</div>
 	</div>
 </div>
 
@@ -372,6 +488,10 @@ table select option {
 </div>
 
 <script>
+	let orderEditorTabs = new Map();
+	let activeOrderEditorKey = null;
+	let ordersListRefreshRequestSeq = 0;
+
 	document.addEventListener('DOMContentLoaded', function () {
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
 		const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
@@ -569,7 +689,7 @@ table select option {
 		function updateRowCount() {
 			const counter = document.getElementById('row-count');
 			if (!counter) return;
-			const count = document.querySelectorAll('.order-checkbox').length;
+			const count = document.querySelectorAll('#orders-main-tbody .order-checkbox').length;
 			counter.textContent = count;
 			counter.style.display = count > 0 ? 'inline-flex' : 'none';
 		}
@@ -655,12 +775,19 @@ table select option {
 				return nextParams;
 			}
 
-			function submitFiltersNow() {
+			async function submitFiltersNow() {
 				const nextParams = buildNextParams();
 				const nextQuery = nextParams.toString();
 				const currentQuery = window.location.search.replace(/^\?/, '');
 				if (nextQuery === currentQuery) return;
-				window.location.search = nextQuery;
+
+				const nextUrl = nextQuery ? `${window.location.pathname}?${nextQuery}` : window.location.pathname;
+				window.history.replaceState({}, '', nextUrl);
+
+				const refreshed = await refreshOrdersListTabData(nextUrl);
+				if (!refreshed) {
+					window.location.search = nextQuery;
+				}
 			}
 
 			function submitFiltersDebounced() {
@@ -697,7 +824,6 @@ table select option {
 		}
 
 		function applyAllFilters() {
-			updateRowCount();
 			return;
 			const filters = {};
 
@@ -1026,12 +1152,189 @@ table select option {
 
 		initBackendFilters();
 		updateRowCount();
+		prepareOrderFormPane();
 
 		const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
 		tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
 	});
 
-	function addOrder() {
+	function activateOrderWorkspaceTab(tabNameOrTriggerId) {
+		const triggerId = tabNameOrTriggerId === 'list' ? 'order-list-tab' : tabNameOrTriggerId;
+		const triggerEl = document.getElementById(triggerId);
+		if (!triggerEl) return;
+		const tab = bootstrap.Tab.getOrCreateInstance(triggerEl);
+		tab.show();
+	}
+
+	function makeEditorTabTriggerId(key) {
+		return `order-editor-tab-${String(key).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+	}
+
+	function setEditorTabLabel(key, label) {
+		const meta = orderEditorTabs.get(key);
+		if (!meta) return;
+		meta.label = label || meta.label || '订单表单';
+		const textEl = document.querySelector(`#${meta.triggerId} .tab-label`);
+		if (textEl) textEl.textContent = meta.label;
+	}
+
+	function ensureEditorTab(config) {
+		const { key, label, mode, orderId } = config;
+		let meta = orderEditorTabs.get(key);
+		if (meta) {
+			setEditorTabLabel(key, label);
+			return meta;
+		}
+
+		const tabsRoot = document.getElementById('order-workspace-tabs');
+		if (!tabsRoot) return null;
+
+		const triggerId = makeEditorTabTriggerId(key);
+		const li = document.createElement('li');
+		li.className = 'nav-item';
+		li.setAttribute('role', 'presentation');
+		li.dataset.editorTabKey = key;
+
+		const btn = document.createElement('button');
+		btn.className = 'nav-link';
+		btn.id = triggerId;
+		btn.type = 'button';
+		btn.setAttribute('role', 'tab');
+		btn.setAttribute('data-bs-toggle', 'tab');
+		btn.setAttribute('data-bs-target', '#order-form-pane');
+		btn.setAttribute('aria-controls', 'order-form-pane');
+		btn.setAttribute('aria-selected', 'false');
+		btn.innerHTML = `<span class="tab-label">${label || '订单表单'}</span><span class="tab-close" role="button" aria-label="关闭页签" tabindex="-1">&times;</span>`;
+
+		li.appendChild(btn);
+		tabsRoot.appendChild(li);
+
+		meta = { key, label: label || '订单表单', mode, orderId, triggerId, li };
+		orderEditorTabs.set(key, meta);
+
+		btn.addEventListener('shown.bs.tab', function () {
+			activeOrderEditorKey = key;
+			syncEditorTabContent(key);
+		});
+
+		btn.addEventListener('click', function (e) {
+			const closeBtn = e.target.closest('.tab-close');
+			if (closeBtn) {
+				e.preventDefault();
+				e.stopPropagation();
+				closeEditorTab(key);
+				return;
+			}
+		});
+
+		return meta;
+	}
+
+	function activateEditorTab(key) {
+		const meta = orderEditorTabs.get(key);
+		if (!meta) return;
+		activeOrderEditorKey = key;
+		activateOrderWorkspaceTab(meta.triggerId);
+	}
+
+	function closeEditorTab(key) {
+		const meta = orderEditorTabs.get(key);
+		if (!meta) return;
+		const wasActive = activeOrderEditorKey === key;
+		if (meta.li && meta.li.parentNode) meta.li.parentNode.removeChild(meta.li);
+		orderEditorTabs.delete(key);
+		if (wasActive) {
+			activeOrderEditorKey = null;
+			activateOrderWorkspaceTab('list');
+		}
+	}
+
+	async function refreshOrdersListTabData(urlOverride = null) {
+		const tbody = document.getElementById('orders-main-tbody');
+		if (!tbody) return false;
+		const requestSeq = ++ordersListRefreshRequestSeq;
+
+		try {
+			const targetUrl = urlOverride || window.location.href;
+			const res = await fetch(targetUrl, { headers: { 'X-Requested-With': 'fetch' } });
+			if (!res.ok) return false;
+			const html = await res.text();
+
+			// Ignore stale responses when users change filters quickly.
+			if (requestSeq !== ordersListRefreshRequestSeq) return true;
+
+			const doc = new DOMParser().parseFromString(html, 'text/html');
+			const nextTbody = doc.getElementById('orders-main-tbody');
+			if (!nextTbody) return false;
+			const nextCount = nextTbody.querySelectorAll('.order-checkbox').length;
+
+			tbody.innerHTML = nextTbody.innerHTML;
+			const counter = document.getElementById('row-count');
+			if (counter) {
+				counter.textContent = nextCount;
+				counter.style.display = nextCount > 0 ? 'inline-flex' : 'none';
+			} else if (typeof updateRowCount === 'function') {
+				updateRowCount();
+			}
+
+			const selectAll = document.getElementById('select-all');
+			if (selectAll) selectAll.checked = false;
+
+			const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+			tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+			return true;
+		} catch (error) {
+			console.error('刷新订单列表失败:', error);
+			return false;
+		}
+	}
+
+	async function handleOrderSaveSuccess(data) {
+		const currentKey = activeOrderEditorKey;
+		if (currentKey) {
+			closeEditorTab(currentKey);
+		} else {
+			activateOrderWorkspaceTab('list');
+		}
+
+		const refreshed = await refreshOrdersListTabData();
+		if (!refreshed) {
+			location.reload();
+		}
+	}
+
+	function prepareOrderFormPane() {
+		const host = document.getElementById('order-form-pane-host');
+		const modalRoot = document.getElementById('orderModal');
+		if (!host || !modalRoot || host.dataset.prepared === '1') return;
+
+		const modalContent = modalRoot.querySelector('.modal-content');
+		if (!modalContent) return;
+
+		host.innerHTML = '';
+		host.appendChild(modalContent);
+		host.dataset.prepared = '1';
+
+		const closeBtn = host.querySelector('.btn-close[data-bs-dismiss="modal"]');
+		if (closeBtn) {
+			closeBtn.removeAttribute('data-bs-dismiss');
+			closeBtn.addEventListener('click', function (e) {
+				e.preventDefault();
+				activateOrderWorkspaceTab('list');
+			});
+		}
+
+		const modalShell = host.querySelector('.modal-dialog');
+		if (modalShell) {
+			modalShell.classList.remove('modal-dialog', 'modal-xl');
+		}
+	}
+
+	function resetCreateOrderFormForTab(tabKey) {
+		prepareOrderFormPane();
+		ensureEditorTab({ key: tabKey, label: '新增订单', mode: 'create', orderId: null });
+		setEditorTabLabel(tabKey, '新增订单');
+
 		// 清空表单
 		document.getElementById('order-form').reset();
 		document.getElementById('order-form').dataset.editingId = '';  // 清除编辑状态
@@ -1039,48 +1342,15 @@ table select option {
 		// 清空旧行
 		const tbody = document.getElementById('product-table-body');
 		tbody.innerHTML = '';
-
-		// 打开 modal
 		document.getElementById('orderModalLabel').textContent = '添加订单';
-		const modal = new bootstrap.Modal(document.getElementById('orderModal'));
-		modal.show();
 	}
 
-	function deleteOrder(id) {
-		if (confirm(`确认删除订单`)) {
-			// 调用后端删除接口
-			fetch(`/orders/delete/${id}/`, {
-				method: 'POST',
-			}).then(res => {
-				if (res.ok) location.reload();
-				else alert('删除失败');
-			});
-		}
-	}
+	function loadEditOrderFormForTab(id, tabKey) {
+		const key = tabKey || `edit-${id}`;
+		prepareOrderFormPane();
+		ensureEditorTab({ key, label: `编辑订单 #${id}`, mode: 'edit', orderId: id });
+		setEditorTabLabel(key, `编辑订单 #${id}`);
 
-	function toDatetimeLocal(date) {
-		if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-			return '';
-		}
-		const pad = n => String(n).padStart(2, '0');
-		return date.getFullYear() + '-' +
-			pad(date.getMonth() + 1) + '-' +
-			pad(date.getDate()) + 'T' +
-			pad(date.getHours()) + ':' +
-			pad(date.getMinutes());
-	}
-
-	function toDateLocal(date) {
-		if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-			return '';
-		}
-		const pad = n => String(n).padStart(2, '0');
-		return date.getFullYear() + '-' +
-			pad(date.getMonth() + 1) + '-' +
-			pad(date.getDate());
-	}
-
-	function editOrder(id) {
 		fetch(`/orders/detail/${id}/`)
 		.then(res => res.json())
 		.then(data => {
@@ -1090,6 +1360,8 @@ table select option {
 			}
 
 			const order = data.order;
+			const orderRef = (order.reference || '').trim();
+			setEditorTabLabel(key, orderRef ? `编辑订单 ${orderRef}` : `编辑订单 #${id}`);
 
 			// 填充基本信息
 			const date = new Date(order.date);
@@ -1145,15 +1417,93 @@ table select option {
 			// 标记当前是编辑状态
 			document.getElementById('order-form').dataset.editingId = id;
 
-			// 打开 modal
 			document.getElementById('orderModalLabel').textContent = '编辑订单';
-			const modal = new bootstrap.Modal(document.getElementById('orderModal'));
-			modal.show();
 		})
 		.catch(error => {
 			console.error('获取订单出错:', error);
 			alert('无法获取订单数据');
 		});
+	}
+
+	function syncEditorTabContent(key) {
+		const meta = orderEditorTabs.get(key);
+		if (!meta) return;
+
+		if (meta.mode === 'create') {
+			resetCreateOrderFormForTab(key);
+			return;
+		}
+		if (meta.mode === 'edit' && meta.orderId) {
+			loadEditOrderFormForTab(meta.orderId, key);
+		}
+	}
+
+	function openAddOrderTab() {
+		const key = `create`;
+		ensureEditorTab({ key, label: '新增订单', mode: 'create', orderId: null });
+		addOrder(key);
+	}
+
+	function addOrder(tabKey = 'create') {
+		prepareOrderFormPane();
+		ensureEditorTab({ key: tabKey, label: '新增订单', mode: 'create', orderId: null });
+		activateEditorTab(tabKey);
+		resetCreateOrderFormForTab(tabKey);
+	}
+
+	function deleteOrder(id) {
+		if (confirm(`确认删除订单`)) {
+			// 调用后端删除接口
+			fetch(`/orders/delete/${id}/`, {
+				method: 'POST',
+			}).then(res => {
+				if (res.ok) location.reload();
+				else alert('删除失败');
+			});
+		}
+	}
+
+	function toDatetimeLocal(date) {
+		if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+			return '';
+		}
+		const pad = n => String(n).padStart(2, '0');
+		return date.getFullYear() + '-' +
+			pad(date.getMonth() + 1) + '-' +
+			pad(date.getDate()) + 'T' +
+			pad(date.getHours()) + ':' +
+			pad(date.getMinutes());
+	}
+
+	function toDateLocal(date) {
+		if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+			return '';
+		}
+		const pad = n => String(n).padStart(2, '0');
+		return date.getFullYear() + '-' +
+			pad(date.getMonth() + 1) + '-' +
+			pad(date.getDate());
+	}
+
+	function editOrder(id, tabKey = null) {
+		const key = tabKey || `edit-${id}`;
+		prepareOrderFormPane();
+		ensureEditorTab({ key, label: `编辑订单 #${id}`, mode: 'edit', orderId: id });
+		activateEditorTab(key);
+		loadEditOrderFormForTab(id, key);
+	}
+
+	function openEditOrderTab(id) {
+		if (!id) return;
+		const key = `edit-${id}`;
+		const existed = orderEditorTabs.has(key);
+		ensureEditorTab({ key, label: `编辑订单 #${id}`, mode: 'edit', orderId: id });
+		if (existed) {
+			activateEditorTab(key);
+			editOrder(id, key);
+			return;
+		}
+		editOrder(id, key);
 	}
 
 	function getShippingQuotes(id) {

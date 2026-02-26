@@ -258,10 +258,14 @@
 				})
 			})
 			.then(response => response.json())
-			.then(data => {
+			.then(async data => {
 				if (data.success) {
 					alert('订单已保存成功');
-					location.reload();  // 刷新页面显示新数据
+					if (typeof window.handleOrderSaveSuccess === 'function') {
+						await window.handleOrderSaveSuccess(data);
+						return;
+					}
+					location.reload();  // fallback
 				} else {
 					alert('添加失败: ' + (data.error || '未知错误'));
 				}
@@ -272,8 +276,9 @@
 			});
 
 			// 隐藏弹窗
-			const modal = bootstrap.Modal.getInstance(document.getElementById('orderModal'));
-			modal.hide();
+			const orderModalEl = document.getElementById('orderModal');
+			const modal = orderModalEl ? bootstrap.Modal.getInstance(orderModalEl) : null;
+			if (modal) modal.hide();
 		});
 	});
 
