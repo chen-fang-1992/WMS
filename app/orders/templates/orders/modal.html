@@ -54,7 +54,7 @@
 		<div class="modal-content">
 			<form id="order-form">
 				<div class="modal-header">
-					<h5 class="modal-title" id="orderModalLabel">添加订单</h5>
+					<h5 class="modal-title" id="orderModalLabel">新增订单</h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
@@ -267,7 +267,7 @@
 					}
 					location.reload();  // fallback
 				} else {
-					alert('添加失败: ' + (data.error || '未知错误'));
+					alert('保存失败: ' + (data.error || '未知错误'));
 				}
 			})
 			.catch(error => {

@@ -87,7 +87,7 @@ table select option {
 	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left">
 		<div class="d-flex align-items-center gap-2 flex-wrap">
 			<button type="button" class="btn btn-success btn-sm" onclick="addInbound()">
-				<i class="bi bi-plus-lg"></i> 添加入库
+				<i class="bi bi-plus-lg"></i> 新增入库
 			</button>
 		</div>
 	</div>
@@ -153,7 +153,7 @@ table select option {
 		<div class="modal-content">
 			<form id="inbound-form">
 				<div class="modal-header">
-					<h5 class="modal-title" id="inboundModalLabel">添加入库</h5>
+					<h5 class="modal-title" id="inboundModalLabel">新增入库</h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
@@ -486,7 +486,7 @@ table select option {
 					alert('入库已保存成功');
 					location.reload();  // 刷新页面显示新数据
 				} else {
-					alert('添加失败: ' + (data.error || '未知错误'));
+					alert('保存失败: ' + (data.error || '未知错误'));
 				}
 			})
 			.catch(error => {
@@ -510,7 +510,7 @@ table select option {
 		tbody.innerHTML = '';
 
 		// 打开 modal
-		document.getElementById('inboundModalLabel').textContent = '添加入库';
+		document.getElementById('inboundModalLabel').textContent = '新增入库';
 		const modal = new bootstrap.Modal(document.getElementById('inboundModal'));
 		modal.show();
 	}

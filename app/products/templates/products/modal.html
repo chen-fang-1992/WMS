@@ -51,7 +51,7 @@
 		<div class="modal-content">
 			<form id="product-form">
 				<div class="modal-header">
-					<h5 class="modal-title" id="productModalLabel">添加产品</h5>
+					<h5 class="modal-title" id="productModalLabel">新增产品</h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
@@ -277,7 +277,7 @@
 					alert('产品已保存成功');
 					location.reload();  // 刷新页面显示新数据
 				} else {
-					alert('添加失败: ' + (data.error || '未知错误'));
+					alert('保存失败: ' + (data.error || '未知错误'));
 				}
 			})
 			.catch(error => {
@@ -306,7 +306,7 @@
 		document.getElementById('product-form').dataset.editingId = '';  // 清除编辑状态
 
 		// 打开 modal
-		document.getElementById('productModalLabel').textContent = '添加产品';
+		document.getElementById('productModalLabel').textContent = '新增产品';
 		const modal = new bootstrap.Modal(document.getElementById('productModal'));
 		modal.show();
 	}

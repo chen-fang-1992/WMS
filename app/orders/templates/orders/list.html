@@ -222,7 +222,7 @@ table select option {
 	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left top-toolbar">
 		<div class="d-flex align-items-center gap-2 flex-wrap">
 			<button type="button" class="btn btn-success btn-sm top-action-btn" onclick="openAddOrderTab()">
-				<i class="bi bi-plus-lg"></i> 添加订单
+				<i class="bi bi-plus-lg"></i> 新增订单
 			</button>
 			<div class="btn-group">
 				<button type="button" class="btn btn-primary btn-sm dropdown-toggle top-action-btn" data-bs-toggle="dropdown" aria-expanded="false">
@@ -420,7 +420,7 @@ table select option {
 
 	<div class="tab-pane fade mt-3" id="order-form-pane" role="tabpanel" tabindex="0">
 		<div id="order-form-pane-host" class="order-form-pane-shell page-shift-left">
-			<div class="p-4 text-muted">请点击“添加订单”或表格中的编辑按钮打开订单表单。</div>
+			<div class="p-4 text-muted">请点击“新增订单”或表格中的编辑按钮打开订单表单。</div>
 		</div>
 	</div>
 	</div>
@@ -1342,7 +1342,7 @@ table select option {
 		// 清空旧行
 		const tbody = document.getElementById('product-table-body');
 		tbody.innerHTML = '';
-		document.getElementById('orderModalLabel').textContent = '添加订单';
+		document.getElementById('orderModalLabel').textContent = '新增订单';
 	}
 
 	function loadEditOrderFormForTab(id, tabKey) {
