@@ -1161,9 +1161,31 @@ table select option {
 	function activateOrderWorkspaceTab(tabNameOrTriggerId) {
 		const triggerId = tabNameOrTriggerId === 'list' ? 'order-list-tab' : tabNameOrTriggerId;
 		const triggerEl = document.getElementById(triggerId);
-		if (!triggerEl) return;
+		if (!triggerEl) {
+			if (tabNameOrTriggerId === 'list') forceShowOrderListPane();
+			return;
+		}
 		const tab = bootstrap.Tab.getOrCreateInstance(triggerEl);
 		tab.show();
+		if (tabNameOrTriggerId === 'list') {
+			forceShowOrderListPane();
+		}
+	}
+
+	function forceShowOrderListPane() {
+		const listPane = document.getElementById('order-list-pane');
+		const formPane = document.getElementById('order-form-pane');
+		const listTab = document.getElementById('order-list-tab');
+		if (listPane) {
+			listPane.classList.add('show', 'active');
+		}
+		if (formPane) {
+			formPane.classList.remove('show', 'active');
+		}
+		if (listTab) {
+			listTab.classList.add('active');
+			listTab.setAttribute('aria-selected', 'true');
+		}
 	}
 
 	function makeEditorTabTriggerId(key) {
@@ -1246,6 +1268,9 @@ table select option {
 		if (wasActive) {
 			activeOrderEditorKey = null;
 			activateOrderWorkspaceTab('list');
+			forceShowOrderListPane();
+		} else if (orderEditorTabs.size === 0) {
+			forceShowOrderListPane();
 		}
 	}
 
