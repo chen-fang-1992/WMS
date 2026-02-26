@@ -46,6 +46,19 @@
 	cursor: not-allowed;
 	pointer-events: none;
 }
+
+#order-form .form-label {
+	margin-bottom: 0.2rem;
+}
+
+#order-form .row.compact-row {
+	--bs-gutter-x: 0.75rem;
+	--bs-gutter-y: 0.25rem;
+}
+
+#order-form .compact-section-gap {
+	margin-bottom: 0.6rem !important;
+}
 </style>
 
 <!-- 弹窗 -->
@@ -58,7 +71,7 @@
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-3">
 							<label for="reference" class="form-label">订单号码</label>
 							<input type="text" class="form-control" id="reference" required>
@@ -84,7 +97,7 @@
 							</select>
 						</div>
 					</div>
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-4">
 							<label for="contact_name" class="form-label">联系人</label>
 							<input type="text" class="form-control" id="contact_name" required>
@@ -98,13 +111,13 @@
 							<input type="text" class="form-control" id="email" required>
 						</div>
 					</div>
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-12">
 							<label for="address" class="form-label">地址</label>
 							<input type="text" class="form-control" id="address" required>
 						</div>
 					</div>
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-4">
 							<label for="suburb" class="form-label">Suburb</label>
 							<input type="text" class="form-control" id="suburb" required>
@@ -118,17 +131,17 @@
 							<input type="text" class="form-control" id="state" required>
 						</div>
 					</div>
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-6">
 							<label for="customer_notes" class="form-label">客户备注</label>
-							<textarea class="form-control" id="customer_notes"></textarea>
+							<textarea class="form-control" id="customer_notes" rows="2"></textarea>
 						</div>
 						<div class="col-md-6">
 							<label for="notes" class="form-label">备注</label>
-							<textarea class="form-control" id="notes"></textarea>
+							<textarea class="form-control" id="notes" rows="2"></textarea>
 						</div>
 					</div>
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-4">
 							<label for="route_record" class="form-label">路线记录</label>
 							<select class="form-control" id="route_record">
