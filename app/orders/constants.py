@@ -2,6 +2,7 @@ ORDER_STATUS = [
 	('New', 'New'),
 	('Pending', 'Pending'),
 	('Pre-ordered', 'Pre-ordered'),
+	('Backorder', 'Backorder'),
 	('Hold', 'Hold'),
 	('WIP', 'WIP'),
 	('Shipping', 'Shipping'),

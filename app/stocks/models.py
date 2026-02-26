@@ -69,7 +69,7 @@ class Stock(models.Model):
 			order_status = (getattr(line.order, 'status', '') or '').strip().lower()
 			if order_status == 'completed':
 				stock_data[key]['quantity'] -= line.quantity
-			elif order_status not in {'cancelled', 'shipping'}:
+			elif order_status not in {'cancelled', 'shipping', 'backorder'}:
 				stock_data[key]['quantity_reserved'] += line.quantity
 
 		# 写入 Stock
