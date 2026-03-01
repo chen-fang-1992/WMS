@@ -1,0 +1,470 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Invoice {{ order.reference }}</title>
+	<style>
+		:root {
+			--ink: #111111;
+			--line: #d7d7d7;
+			--paper: #ffffff;
+			--page-bg: #efefef;
+			--sheet-width: 173mm;
+			--right-col: 74mm;
+			--qty-col: 30mm;
+			--price-col: calc(var(--right-col) - var(--qty-col));
+			--left-col: calc(var(--sheet-width) - var(--right-col));
+			--col-text-inset: 2.2mm;
+		}
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			background: var(--page-bg);
+			color: var(--ink);
+			font-family: Arial, Helvetica, sans-serif;
+			-webkit-font-smoothing: antialiased;
+			-webkit-print-color-adjust: exact;
+			print-color-adjust: exact;
+		}
+		.page {
+			width: 210mm;
+			min-height: 210mm;
+			margin: 0 auto;
+			background: var(--paper);
+			padding: 5.5mm 0 10mm;
+			box-shadow: 0 1.5mm 4mm rgba(0,0,0,.05);
+		}
+		.sheet {
+			width: var(--sheet-width);
+			margin: 0 auto;
+		}
+		.toolbar {
+			display: flex;
+			justify-content: flex-end;
+			gap: 8px;
+			margin: 0 8.5mm 2.5mm;
+		}
+		.btn {
+			border: 1px solid #cfd3d8;
+			background: #fff;
+			color: #111;
+			text-decoration: none;
+			font-size: 9pt;
+			padding: 2mm 3mm;
+			border-radius: 5px;
+		}
+		.btn.primary {
+			background: #1f2937;
+			border-color: #1f2937;
+			color: #fff;
+		}
+		table.layout-3 {
+			width: var(--sheet-width);
+			border-collapse: collapse;
+			table-layout: fixed;
+		}
+		table.layout-3 col.col-left { width: var(--left-col); }
+		table.layout-3 col.col-qty { width: var(--qty-col); }
+		table.layout-3 col.col-price { width: var(--price-col); }
+		table.layout-3 td {
+			vertical-align: top;
+			padding: 0;
+		}
+		.top-table {
+			margin-bottom: 12mm;
+		}
+		.top-table td.company-cell {
+			padding-top: 1.5mm;
+			padding-left: var(--col-text-inset);
+		}
+		.logo-wrap img {
+			width: 64mm;
+			max-width: 100%;
+			display: block;
+		}
+		.company {
+			font-size: 9.6pt;
+			line-height: 1.32;
+			color: #222;
+			padding-top: 1.5mm;
+		}
+		.company > div {
+			white-space: nowrap;
+		}
+		.company .name {
+			font-weight: 700;
+			letter-spacing: 0;
+			margin-bottom: .6mm;
+		}
+		.invoice-title {
+			margin: 0 0 7.5mm;
+			font-size: 19pt;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.info-table {
+			margin-bottom: 11mm;
+		}
+		.billto {
+			font-size: 9.6pt;
+			line-height: 1.34;
+			padding-top: 2.2mm;
+		}
+		.billto .line-strong {
+			font-weight: 400;
+			margin-bottom: 1mm;
+		}
+		.billto .addr-line {
+			margin-bottom: 1mm;
+		}
+		.billto .addr-line:last-child {
+			margin-bottom: 0;
+		}
+		.order-meta {
+			font-size: 9.6pt;
+			padding-top: 2.2mm;
+		}
+		.order-meta .row {
+			margin: 0 0 1.4mm;
+			line-height: 1.25;
+		}
+		.order-meta .row:last-child {
+			margin-bottom: 0;
+		}
+		.order-meta.labels {
+			padding-left: var(--col-text-inset);
+			padding-right: 0;
+		}
+		.order-meta.labels .row {
+			font-weight: 400;
+			white-space: nowrap;
+		}
+		.order-meta.values {
+			padding-left: var(--col-text-inset);
+			text-align: left;
+		}
+		.order-meta.values .row:nth-child(1),
+		.order-meta.values .row:nth-child(2) {
+			white-space: nowrap;
+		}
+		.order-meta.values .row:nth-child(3) {
+			white-space: normal;
+			overflow-wrap: anywhere;
+		}
+		table.items {
+			width: var(--sheet-width);
+			border-collapse: collapse;
+			margin-top: 0;
+			table-layout: fixed;
+		}
+		table.items thead th.product,
+		table.items tbody td.product-cell {
+			width: var(--left-col);
+		}
+		table.items thead th {
+			background: #000;
+			color: #fff;
+			text-align: left;
+			font-size: 9.8pt;
+			font-weight: 700;
+			padding: 2.4mm 2.2mm 2.1mm;
+			letter-spacing: 0;
+		}
+		table.items thead th.qty,
+		table.items tbody td.qty-cell {
+			width: var(--qty-col);
+			padding-left: var(--col-text-inset);
+			padding-right: 0;
+		}
+		table.items thead th.price,
+		table.items tbody td.price-cell {
+			width: var(--price-col);
+			padding-left: var(--col-text-inset);
+			padding-right: 0;
+		}
+		table.items tbody td {
+			font-size: 9.8pt;
+			vertical-align: top;
+			padding: 2.2mm 1.8mm 2.2mm;
+			border-bottom: 0;
+		}
+		.num { text-align: left; white-space: nowrap; }
+		.product-name {
+			font-size: 9.8pt;
+			line-height: 1.35;
+			margin-bottom: 3mm;
+		}
+		.product-extra {
+			font-size: 8pt;
+			line-height: 1.5;
+			color: #111;
+		}
+		.product-extra div { margin: 0 0 1.1mm; }
+		.product-extra .meta-label { font-weight: 700; }
+		.product-extra .meta-value { font-weight: 400; }
+		.items-sep {
+			border-top: 0.25mm solid var(--line);
+			margin-top: .8mm;
+		}
+		.lower-table {
+			margin-top: 1.2mm;
+		}
+		.notes-block {
+			min-height: 23mm;
+			font-size: 9.4pt;
+			line-height: 1.4;
+			padding-top: 3.2mm;
+			border-top: 0;
+		}
+		.notes-block .title {
+			font-weight: 700;
+			margin-bottom: 1mm;
+			font-size: 9.8pt;
+		}
+		.totals {
+			margin-top: 0;
+			padding-top: 0.4mm;
+		}
+		table.totals-table {
+			width: var(--right-col);
+			border-collapse: collapse;
+			table-layout: fixed;
+		}
+		table.totals-table col.col-qty { width: var(--qty-col); }
+		table.totals-table col.col-price { width: var(--price-col); }
+		table.totals-table td {
+			font-size: 9.8pt;
+			padding: 1.8mm 0 1.6mm;
+			vertical-align: baseline;
+		}
+		table.totals-table td.label {
+			font-weight: 700;
+			padding-left: var(--col-text-inset);
+		}
+		table.totals-table td.value {
+			text-align: left;
+			white-space: normal;
+			overflow-wrap: anywhere;
+			padding-left: var(--col-text-inset);
+		}
+		table.totals-table tr {
+			border-bottom: 0.25mm solid var(--line);
+		}
+		table.totals-table tr.total {
+			border-top: 0.7mm solid #111;
+			border-bottom: 0.7mm solid #111;
+			margin-top: .6mm;
+			font-weight: 700;
+		}
+		table.totals-table tr.total td {
+			padding-top: 2.1mm;
+			padding-bottom: 1.8mm;
+		}
+		.totals .tax-note {
+			font-size: 8pt;
+			font-weight: 700;
+			line-height: 1.25;
+			margin-top: .6mm;
+			max-width: 100%;
+		}
+		.totals .fee {
+			font-size: 11px;
+			color: #333;
+			margin-top: 6px;
+		}
+		.fallback-empty {
+			color: #777;
+		}
+		@media print {
+			body { background: #fff; }
+			table.items thead th {
+				background: #000 !important;
+				color: #fff !important;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+			.page {
+				width: 210mm;
+				margin: 0;
+				box-shadow: none;
+				padding: 5.5mm 0 8mm;
+			}
+			.sheet {
+				width: var(--sheet-width);
+			}
+			.toolbar { display: none; }
+			@page { size: A4; margin: 0; }
+		}
+	</style>
+</head>
+<body{% if print_mode %} onload="window.print()"{% endif %}>
+	<div class="page">
+		<div class="toolbar">
+			<a class="btn" href="/orders/" onclick="window.close(); setTimeout(function(){ window.location.href='/orders/'; }, 80); return false;">返回订单</a>
+			<a class="btn primary" href="?print=1" target="_blank">打印 / 保存PDF</a>
+		</div>
+		<div class="sheet">
+			<table class="layout-3 top-table">
+				<colgroup>
+					<col class="col-left">
+					<col class="col-qty">
+					<col class="col-price">
+				</colgroup>
+				<tbody>
+					<tr>
+						<td>
+							<div class="logo-wrap">
+								<img src="{% static 'images/logo_rectangle.png' %}" alt="Topone Mall">
+							</div>
+						</td>
+						<td colspan="2" class="company-cell">
+							<div class="company">
+								<div class="name">{{ invoice_company.name }}</div>
+								<div>ABN {{ invoice_company.abn }}</div>
+								<div>Address: {{ invoice_company.address_1 }}</div>
+								<div>{{ invoice_company.address_2 }}</div>
+								<div>Phone Number: {{ invoice_company.phone }}</div>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="invoice-title">INVOICE</div>
+
+			<table class="layout-3 info-table">
+				<colgroup>
+					<col class="col-left">
+					<col class="col-qty">
+					<col class="col-price">
+				</colgroup>
+				<tbody>
+					<tr>
+						<td>
+							<div class="billto">
+								<div class="line-strong">{{ bill_name|default:"" }}</div>
+								<div class="addr-line">{{ bill_address|default:"" }}</div>
+								<div class="addr-line">{{ bill_city_state_postcode|default:"" }}</div>
+							</div>
+						</td>
+						<td>
+							<div class="order-meta labels">
+								<div class="row">Order Number:</div>
+								<div class="row">Order Date:</div>
+								<div class="row">Payment Method:</div>
+							</div>
+						</td>
+						<td>
+							<div class="order-meta values">
+								<div class="row">{{ woo_order_number|default:order.reference }}</div>
+								<div class="row">{{ order_date_display|default:"" }}</div>
+								<div class="row">{{ payment_method_label|default:"-" }}</div>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<table class="items">
+			<thead>
+				<tr>
+					<th class="product">Product</th>
+					<th class="qty">Quantity</th>
+					<th class="price">Price</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in line_rows %}
+				<tr>
+					<td class="product-cell">
+						<div class="product-name">{{ row.name }}</div>
+						{% if row.sku or row.weight or row.meta_details %}
+						<div class="product-extra">
+							{% if row.sku %}<div><span class="meta-label">SKU:</span> <span class="meta-value">{{ row.sku }}</span></div>{% endif %}
+							{% if row.weight %}<div><span class="meta-label">Weight:</span> <span class="meta-value">{{ row.weight }}</span></div>{% endif %}
+							{% for md in row.meta_details %}
+							<div><span class="meta-label">{{ md.label }}:</span> <span class="meta-value">{{ md.value }}</span></div>
+							{% endfor %}
+						</div>
+						{% endif %}
+					</td>
+					<td class="num qty-cell">{{ row.qty }}</td>
+					<td class="num price-cell">{% if row.line_total %}${{ row.line_total }}{% else %}{% if forloop.first and total_amount %}${{ total_amount }}{% else %}-{% endif %}{% endif %}</td>
+				</tr>
+				{% empty %}
+				<tr>
+					<td class="fallback-empty product-cell">No items</td>
+					<td class="num qty-cell">-</td>
+					<td class="num price-cell">-</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+			</table>
+			<div class="items-sep"></div>
+
+			<table class="layout-3 lower-table">
+				<colgroup>
+					<col class="col-left">
+					<col class="col-qty">
+					<col class="col-price">
+				</colgroup>
+				<tbody>
+					<tr>
+						<td>
+							<div class="notes-block">
+								{% if order.customer_notes or order.notes %}
+								<div class="title">Customer Notes:</div>
+								<div>{% if order.customer_notes %}{{ order.customer_notes }}{% else %}{{ order.notes }}{% endif %}</div>
+								{% else %}
+								<div>&nbsp;</div>
+								{% endif %}
+							</div>
+						</td>
+						<td colspan="2">
+							<div class="totals">
+								<table class="totals-table">
+									<colgroup>
+										<col class="col-qty">
+										<col class="col-price">
+									</colgroup>
+									<tbody>
+										<tr>
+											<td class="label">Subtotal</td>
+											<td class="value">${{ subtotal_amount }}</td>
+										</tr>
+										{% if has_discount_amount %}
+										<tr>
+											<td class="label">Discount</td>
+											<td class="value">-${{ discount_amount }}</td>
+										</tr>
+										{% endif %}
+										<tr>
+											<td class="label">Shipping</td>
+											<td class="value">{{ shipping_display }}</td>
+										</tr>
+										{% for fee in special_fee_lines %}
+										<tr>
+											<td class="label">{{ fee.name }}</td>
+											<td class="value">{{ fee.value }}</td>
+										</tr>
+										{% endfor %}
+										<tr class="total">
+											<td class="label">Total</td>
+											<td class="value">
+												<div>${{ total_amount }}</div>
+												{% if has_gst_amount %}<div class="tax-note">(includes ${{ gst_amount }} GST)</div>{% endif %}
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+</html>

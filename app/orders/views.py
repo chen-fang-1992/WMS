@@ -18,6 +18,8 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
+from html import unescape
+import re as py_re
 
 import openpyxl
 from openpyxl.styles import Alignment, Font
@@ -743,6 +745,209 @@ def export_orders_delivery(request):
 	wb.save(response)
 
 	return response
+
+def invoice_page(request, id):
+	order = Order.objects.prefetch_related('lines__product').filter(id=id).first()
+	if not order:
+		return render(request, 'errors/404.html', status=404)
+
+	meta = order.meta if isinstance(order.meta, dict) else {}
+	meta_line_items = []
+	if meta:
+		meta_line_items = meta.get('line_items', []) or []
+
+	meta_line_map = {}
+	for item in meta_line_items:
+		if not isinstance(item, dict):
+			continue
+		for key in [str(item.get('sku') or '').strip(), str(item.get('name') or '').strip()]:
+			if key and key not in meta_line_map:
+				meta_line_map[key] = item
+
+	def _to_decimal(raw, default=Decimal('0')):
+		try:
+			if raw in [None, '']:
+				return default
+			return Decimal(str(raw))
+		except (InvalidOperation, TypeError, ValueError):
+			return default
+
+	def _format_compact_number(raw):
+		if raw in [None, '']:
+			return ''
+		try:
+			d = Decimal(str(raw))
+		except (InvalidOperation, TypeError, ValueError):
+			return str(raw)
+		if d == d.to_integral():
+			return str(d.quantize(Decimal('1')))
+		return format(d.normalize(), 'f').rstrip('0').rstrip('.')
+
+	def _clean_display_text(value):
+		if isinstance(value, (dict, builtins.list)):
+			return ''
+		text = str(value or '').strip()
+		text = unescape(text)
+		text = py_re.sub(r'<[^>]+>', '', text)
+		return text.strip()
+
+	def _extract_line_meta_details(meta_item):
+		rows = []
+		for md in (meta_item.get('meta_data') or []):
+			if not isinstance(md, dict):
+				continue
+			key = str(md.get('key') or '').strip()
+			if not key or key.startswith('_') or key in ['_reduced_stock']:
+				continue
+			label = _clean_display_text(md.get('display_key') or key)
+			value = _clean_display_text(md.get('display_value') or md.get('value'))
+			if not label or not value:
+				continue
+			rows.append({'label': label, 'value': value})
+		return rows
+
+	AU_STATE_NAMES = {
+		'NSW': 'New South Wales',
+		'VIC': 'Victoria',
+		'QLD': 'Queensland',
+		'SA': 'South Australia',
+		'WA': 'Western Australia',
+		'TAS': 'Tasmania',
+		'ACT': 'Australian Capital Territory',
+		'NT': 'Northern Territory',
+	}
+
+	line_rows = []
+	prices_include_tax = bool(meta.get('prices_include_tax')) if meta else False
+	for line in order.lines.all():
+		display_name = line.display_name_en() if hasattr(line, 'display_name_en') else (line.raw_sku or '')
+		sku = (line.product.sku if line.product else line.raw_sku) or ''
+		meta_item = meta_line_map.get(str(sku).strip()) or meta_line_map.get(display_name.strip()) or {}
+		line_subtotal = _to_decimal(meta_item.get('subtotal'), default=None)
+		line_subtotal_tax = _to_decimal(meta_item.get('subtotal_tax'), default=Decimal('0')) if line_subtotal is not None else Decimal('0')
+		line_total_value = ''
+		if line_subtotal is not None:
+			line_total_value = line_subtotal + (line_subtotal_tax if prices_include_tax else Decimal('0'))
+		elif meta_item.get('total') not in [None, '']:
+			line_total_base = _to_decimal(meta_item.get('total'))
+			line_total_tax = _to_decimal(meta_item.get('total_tax'))
+			line_total_value = line_total_base + (line_total_tax if prices_include_tax else Decimal('0'))
+		product = line.product
+		weight = ''
+		size = ''
+		if product:
+			if product.weight is not None:
+				weight = f"{_format_compact_number(product.weight)}kg"
+			length = (product.package_length or '').strip()
+			width = (product.package_width or '').strip()
+			height = (product.package_height or '').strip()
+			dims = [_format_compact_number(v) for v in [length, width, height] if v]
+			if dims:
+				size = ' x '.join(dims)
+		line_rows.append({
+			'name': display_name,
+			'sku': sku,
+			'qty': line.quantity,
+			'line_total': line_total_value,
+			'weight': weight,
+			'size': size,
+			'meta_details': _extract_line_meta_details(meta_item),
+		})
+
+	special_fee_lines = []
+	for raw in (order.special_fees or '').splitlines():
+		raw = (raw or '').strip()
+		if not raw:
+			continue
+		if ':' in raw:
+			name, value = raw.split(':', 1)
+			special_fee_lines.append({'name': name.strip(), 'value': value.strip()})
+		else:
+			special_fee_lines.append({'name': raw, 'value': ''})
+
+	shipping_method = ''
+	for shipping_line in (meta.get('shipping_lines') or []):
+		if isinstance(shipping_line, dict):
+			shipping_method = (shipping_line.get('method_title') or '').strip()
+			if shipping_method:
+				break
+
+	payment_method_label = (meta.get('payment_method_title') or meta.get('payment_method') or '') if meta else ''
+	woo_order_number = str(meta.get('number') or order.reference or '') if meta else str(order.reference or '')
+	order_date_display = ''
+	if order.date:
+		try:
+			order_date_display = timezone.localtime(order.date).strftime('%B %d, %Y').replace(' 0', ' ')
+		except Exception:
+			order_date_display = order.date.strftime('%B %d, %Y').replace(' 0', ' ')
+
+	total_amount = _to_decimal(meta.get('total')) if meta else _to_decimal(order.total)
+	shipping_amount = _to_decimal(meta.get('shipping_total')) if meta else _to_decimal(order.shipping)
+	if not meta:
+		shipping_amount = _to_decimal(order.shipping)
+	shipping_tax_amount = _to_decimal(meta.get('shipping_tax')) if meta else Decimal('0')
+	discount_amount = (_to_decimal(meta.get('discount_total')) + _to_decimal(meta.get('discount_tax'))) if meta else Decimal('0')
+	shipping_display_amount = shipping_amount + (shipping_tax_amount if prices_include_tax else Decimal('0'))
+	subtotal_amount = total_amount + discount_amount - shipping_display_amount
+	if subtotal_amount < 0:
+		subtotal_amount = Decimal('0')
+
+	shipping_display = ''
+	if shipping_display_amount == 0 and shipping_method:
+		shipping_display = shipping_method
+	else:
+		shipping_display = f'${shipping_display_amount}'
+		if shipping_method:
+			shipping_display = f'{shipping_display} via {shipping_method}'
+
+	gst_amount = None
+	if meta:
+		try:
+			raw_tax = meta.get('total_tax')
+			if raw_tax not in [None, '']:
+				gst_amount = Decimal(str(raw_tax))
+		except (InvalidOperation, TypeError, ValueError):
+			gst_amount = None
+
+	billing = meta.get('billing') if isinstance(meta.get('billing'), dict) else {}
+	bill_name = ' '.join([str(billing.get('first_name') or '').strip(), str(billing.get('last_name') or '').strip()]).strip() or (order.contact_name or '')
+	bill_addr_parts = [str(billing.get('address_1') or '').strip(), str(billing.get('address_2') or '').strip()]
+	bill_address = ', '.join([p for p in bill_addr_parts if p]) or (order.address or '')
+	bill_city = str(billing.get('city') or order.suburb or '').strip()
+	bill_state_raw = str(billing.get('state') or order.state or '').strip().upper()
+	bill_state = AU_STATE_NAMES.get(bill_state_raw, bill_state_raw)
+	bill_postcode = str(billing.get('postcode') or order.postcode or '').strip()
+	bill_city_state_postcode = ' '.join([p for p in [bill_city, bill_state, bill_postcode] if p]).strip()
+
+	return render(request, 'orders/invoice.html', {
+		'order': order,
+		'meta': meta,
+		'line_rows': line_rows,
+		'special_fee_lines': special_fee_lines,
+		'invoice_company': {
+			'name': 'TOPONE SPORTS PTY LTD',
+			'abn': '84 679 476 478',
+			'address_1': '181-185 Parramatta Road Granville',
+			'address_2': 'NSW 2142',
+			'phone': '(02) 6188 5799',
+		},
+		'woo_order_number': woo_order_number,
+		'order_date_display': order_date_display,
+		'payment_method_label': payment_method_label,
+		'shipping_method_label': shipping_method,
+		'shipping_display': shipping_display,
+		'subtotal_amount': subtotal_amount,
+		'shipping_amount': shipping_amount,
+		'discount_amount': discount_amount,
+		'has_discount_amount': discount_amount > 0,
+		'total_amount': total_amount,
+		'gst_amount': gst_amount,
+		'has_gst_amount': gst_amount is not None,
+		'bill_name': bill_name,
+		'bill_address': bill_address,
+		'bill_city_state_postcode': bill_city_state_postcode,
+		'print_mode': request.GET.get('print') == '1',
+	})
 
 @csrf_exempt
 def shipping_quotes(request, id):

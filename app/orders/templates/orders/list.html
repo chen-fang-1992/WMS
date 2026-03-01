@@ -403,6 +403,9 @@ table select option {
 					<td class="p-1 border border-gray-300">
 						<button class="text-primary hover:underline" onclick="openEditOrderTab(`{{ order.id }}`)"><i class="bi bi-pencil-square"></i></button>
 						<button class="text-danger hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)"><i class="bi bi-trash"></i></button>
+						<button class="text-dark hover:underline ml-2" onclick="openOrderInvoice(`{{ order.id }}`)" title="发票">
+							<i class="bi bi-receipt"></i>
+						</button>
 						<button class="text-success hover:underline ml-2" onclick="getShippingQuotes(`{{ order.id }}`)">
 							<i class="bi bi-truck"></i>
 						</button>
@@ -1533,6 +1536,11 @@ table select option {
 			return;
 		}
 		editOrder(id, key);
+	}
+
+	function openOrderInvoice(id) {
+		if (!id) return;
+		window.open(`/orders/invoice/${id}/`, '_blank', 'noopener');
 	}
 
 	function getShippingQuotes(id) {
