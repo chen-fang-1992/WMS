@@ -1,0 +1,338 @@
+﻿{% extends 'base.html' %}
+
+{% block content %}
+<style>
+	table {
+		width: 100%;
+		table-layout: auto;
+		border-collapse: collapse;
+		max-width: 100%;
+	}
+	th {
+		vertical-align: middle;
+		line-height: 1;
+		font-weight: 600;
+		font-size: 0.75rem;
+		text-align: center;
+		white-space: normal;
+		word-break: keep-all;
+	}
+	td {
+		font-size: 0.75rem;
+		text-align: center;
+		vertical-align: middle;
+		white-space: nowrap;
+	}
+	.table-row-hover:hover {
+		background-color: #eef1f4;
+	}
+	.table-card-shell {
+		box-sizing: border-box;
+		display: inline-block;
+		min-width: 100%;
+		vertical-align: top;
+	}
+	.page-shift-left {
+		transform: translateX(-6px);
+	}
+	.top-action-btn {
+		font-size: .875rem;
+	}
+	.filter-input,
+	.filter-variety {
+		width: 100%;
+	}
+</style>
+
+<div class="mx-auto pt-1 pe-1 pb-1 ps-0">
+	<h2 class="font-semibold text-teal-700 text-lg pb-2 px-2 page-shift-left">退款列表</h2>
+
+	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left">
+		<div class="d-flex align-items-center gap-2 flex-wrap">
+			<button class="btn btn-success btn-sm top-action-btn" type="button" data-bs-toggle="modal" data-bs-target="#createRefundModal">
+				<i class="bi bi-plus-lg"></i> 新增退款
+			</button>
+		</div>
+	</div>
+
+	<div class="mt-4 bg-white shadow rounded p-2 table-card-shell page-shift-left">
+		<table class="w-full border-collapse text-sm w-100" id="refund-table">
+			<thead class="bg-gray-100">
+				<tr>
+					<th class="p-1 border border-gray-300">退款单号</th>
+					<th class="p-1 border border-gray-300">订单号</th>
+					<th class="p-1 border border-gray-300">状态</th>
+					<th class="p-1 border border-gray-300">金额</th>
+					<th class="p-1 border border-gray-300">操作</th>
+				</tr>
+				<tr>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="refund_no" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="order_ref" data-search_type="text" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300">
+						<select data-search_target="status" class="filter-variety border border-gray-300 p-1 rounded text-sm text-center">
+							<option value="">所有</option>
+							{% for value, label in status_options %}
+							<option value="{{ label }}">{{ label }}</option>
+							{% endfor %}
+						</select>
+					</th>
+					<th class="p-1 border border-gray-300">
+						<input data-search_target="amount" data-search_type="number" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+					</th>
+					<th class="p-1 border border-gray-300"></th>
+				</tr>
+			</thead>
+			<tbody id="refund-table-body">
+				{% for item in refunds %}
+				<tr class="table-row-hover">
+					<td class="p-1 border border-gray-300" data-search_field="refund_no">{{ item.refund_no }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="order_ref">{{ item.order.reference }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="status">{{ item.status }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="amount">{{ item.amount }}</td>
+					<td class="p-1 border border-gray-300">
+						<button type="button" class="text-primary js-open-refund-detail" data-refund_id="{{ item.id }}" title="查看">
+							<i class="bi bi-pencil-square"></i>
+						</button>
+					</td>
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="5" class="p-2 text-center text-gray-500">暂无退款数据。</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+{% include 'refund/modal.html' %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	const detailModalEl = document.getElementById('refundDetailModal');
+	const detailModal = detailModalEl ? new bootstrap.Modal(detailModalEl) : null;
+	const detailForm = document.getElementById('detail-edit-form');
+	const detailError = document.getElementById('refund-detail-error');
+	const detailMsg = document.getElementById('refund-detail-msg');
+	const detailStatusSelect = document.getElementById('detail-status-select');
+	let currentDetailId = null;
+
+	const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
+	const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
+	const refundTableBody = document.getElementById('refund-table-body');
+
+	function normalizeNumber(text) {
+		if (text == null) return null;
+		const clean = String(text).replace(/[, ]+/g, '');
+		const n = Number(clean);
+		return Number.isFinite(n) ? n : null;
+	}
+
+	function buildPredicate(query, type) {
+		const raw = (query || '').trim();
+		if (!raw) return () => true;
+
+		if (type === 'number') {
+			const opMatch = raw.match(/^(<=|>=|<|>|=|!=)\s*(.+)$/);
+			if (opMatch) {
+				const op = opMatch[1];
+				const rhs = normalizeNumber(opMatch[2]);
+				if (rhs == null) return () => false;
+				return (cellText) => {
+					const v = normalizeNumber(String(cellText || '').trim());
+					if (v == null) return false;
+					switch (op) {
+						case '<=': return v <= rhs;
+						case '>=': return v >= rhs;
+						case '<': return v < rhs;
+						case '>': return v > rhs;
+						case '=': return v === rhs;
+						case '!=': return v !== rhs;
+						default: return false;
+					}
+				};
+			}
+			const v = normalizeNumber(raw);
+			if (v != null) {
+				return (cellText) => normalizeNumber(String(cellText || '').trim()) === v;
+			}
+		}
+
+		const rx = new RegExp(raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+		return (cellText) => rx.test(String(cellText || '').trim());
+	}
+
+	function applyAllFilters() {
+		const filters = {};
+
+		filterVarietys.forEach(select => {
+			const field = select.dataset.search_target;
+			const val = (select.value || '').trim();
+			if (val) {
+				filters[field] = { type: 'select', value: val };
+			}
+		});
+
+		filterInputs.forEach(input => {
+			const field = input.dataset.search_target;
+			const ftype = (input.dataset.search_type || 'text').toLowerCase();
+			const query = (input.value || '').trim();
+			if (query) {
+				filters[field] = { type: 'predicate', predicate: buildPredicate(query, ftype) };
+			}
+		});
+
+		const rows = refundTableBody.querySelectorAll('tr');
+		rows.forEach(row => {
+			const emptyCell = row.querySelector('td[colspan]');
+			if (emptyCell) return;
+
+			let visible = true;
+			for (const [field, filter] of Object.entries(filters)) {
+				const cell = row.querySelector(`td[data-search_field="${field}"]`);
+				if (!cell) continue;
+				const text = cell.textContent.trim();
+
+				if (filter.type === 'select') {
+					if (text !== filter.value) {
+						visible = false;
+						break;
+					}
+				} else if (filter.type === 'predicate') {
+					if (!filter.predicate(text)) {
+						visible = false;
+						break;
+					}
+				}
+			}
+
+			row.style.display = visible ? '' : 'none';
+		});
+	}
+
+	filterInputs.forEach(input => input.addEventListener('input', applyAllFilters));
+	filterVarietys.forEach(select => select.addEventListener('change', applyAllFilters));
+
+	document.querySelectorAll('.js-open-refund-detail').forEach(function(btn) {
+		btn.addEventListener('click', async function() {
+			const refundId = btn.dataset.refund_id;
+			if (!refundId || !detailModal) return;
+			currentDetailId = refundId;
+			detailError.classList.add('d-none');
+			detailError.textContent = '';
+			detailMsg.classList.add('d-none');
+			detailMsg.textContent = '';
+
+			try {
+				const resp = await fetch(`/refunds/detail-json/${refundId}/`);
+				const data = await resp.json();
+				if (!resp.ok || !data.success) {
+					detailError.textContent = data.error || '获取详情失败';
+					detailError.classList.remove('d-none');
+					detailModal.show();
+					return;
+				}
+
+				const r = data.refund;
+				document.getElementById('detail-refund-no').value = r.refund_no || '';
+				document.getElementById('detail-order-ref').value = r.order_ref || '';
+				document.getElementById('detail-amount').value = r.amount || '0.00';
+				document.getElementById('detail-reason').value = r.reason_detail || '';
+				document.getElementById('detail-remark').value = r.remark || '';
+				document.getElementById('detail-cancel-reason').value = r.cancel_reason || '';
+
+				detailStatusSelect.innerHTML = '';
+				(data.status_options || []).forEach(function(opt) {
+					const option = document.createElement('option');
+					option.value = opt.value;
+					option.textContent = opt.label;
+					detailStatusSelect.appendChild(option);
+				});
+				detailStatusSelect.value = r.status || '';
+				detailModal.show();
+			} catch (e) {
+				detailError.textContent = '获取详情失败';
+				detailError.classList.remove('d-none');
+				detailModal.show();
+			}
+		});
+	});
+
+	const createForm = document.getElementById('create-refund-form');
+	const createErrorBox = document.getElementById('create-refund-error');
+	if (createForm) {
+		createForm.addEventListener('submit', async function(e) {
+			e.preventDefault();
+			createErrorBox.classList.add('d-none');
+			createErrorBox.textContent = '';
+
+			const formData = new FormData(createForm);
+			const csrf = createForm.querySelector('[name=csrfmiddlewaretoken]').value;
+
+			try {
+				const resp = await fetch('/refunds/create/', {
+					method: 'POST',
+					body: formData,
+					headers: {
+						'X-CSRFToken': csrf,
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				});
+				const data = await resp.json();
+				if (resp.ok && data.success) {
+					window.location.href = data.redirect_url || '/refunds/';
+					return;
+				}
+				createErrorBox.textContent = data.error || '创建失败';
+				createErrorBox.classList.remove('d-none');
+			} catch (err) {
+				createErrorBox.textContent = '创建失败，请稍后重试';
+				createErrorBox.classList.remove('d-none');
+			}
+		});
+	}
+
+	if (detailForm) {
+		detailForm.addEventListener('submit', async function(e) {
+			e.preventDefault();
+			if (!currentDetailId) return;
+
+			detailError.classList.add('d-none');
+			detailError.textContent = '';
+			detailMsg.classList.add('d-none');
+			detailMsg.textContent = '';
+
+			const formData = new FormData(detailForm);
+			const csrf = detailForm.querySelector('[name=csrfmiddlewaretoken]').value;
+
+			try {
+				const resp = await fetch(`/refunds/update/${currentDetailId}/`, {
+					method: 'POST',
+					body: formData,
+					headers: {
+						'X-CSRFToken': csrf,
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				});
+				const data = await resp.json();
+				if (resp.ok && data.success) {
+					detailMsg.textContent = '保存成功，正在刷新...';
+					detailMsg.classList.remove('d-none');
+					setTimeout(function(){ window.location.reload(); }, 600);
+					return;
+				}
+				detailError.textContent = data.error || '保存失败';
+				detailError.classList.remove('d-none');
+			} catch (err) {
+				detailError.textContent = '保存失败';
+				detailError.classList.remove('d-none');
+			}
+		});
+	}
+});
+</script>
+{% endblock %}
