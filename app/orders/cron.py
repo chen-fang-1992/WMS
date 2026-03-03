@@ -107,8 +107,8 @@ def update_order_if_missing(order_data):
 		changed = True
 
 	if changed:
-		obj.save(update_fields=['source', 'meta', 'special_fees', 'status', 'woo_status'])
-		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta/special_fees/status/woo_status 补全")
+		obj.save(update_fields=['source', 'meta', 'special_fees', 'status', 'woo_status', 'contact_name', 'phone', 'email', 'address', 'suburb', 'postcode', 'state'])
+		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta/special_fees/status/woo_status/contact_name/phone/email/address/suburb/postcode/state 补全")
 	else:
 		print(f"⏩ 已存在订单 WC#{obj.reference}，无需更新")
 

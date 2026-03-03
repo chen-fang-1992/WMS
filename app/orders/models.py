@@ -12,7 +12,7 @@ class Order(models.Model):
 	contact_name = models.CharField(max_length=100, null=True, blank=True)
 
 	# 联系电话
-	phone = models.CharField(max_length=20, null=True, blank=True)
+	phone = models.CharField(max_length=100, null=True, blank=True)
 
 	# 联系邮箱
 	email = models.CharField(max_length=100, null=True, blank=True)
