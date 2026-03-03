@@ -78,6 +78,34 @@ def update_order_if_missing(order_data):
 		obj.status = 'Pre-ordered'
 		changed = True
 
+	if obj.contact_name != f"{order_data['shipping']['first_name']} {order_data['shipping']['last_name']}".strip():
+		obj.contact_name = f"{order_data['shipping']['first_name']} {order_data['shipping']['last_name']}".strip()
+		changed = True
+
+	if obj.phone != (order_data.get('shipping', {}).get('phone', '') or order_data.get('billing', {}).get('phone', '')):
+		obj.phone = order_data.get('shipping', {}).get('phone', '') or order_data.get('billing', {}).get('phone', '')
+		changed = True
+
+	if obj.email != (order_data.get('shipping', {}).get('email', '') or order_data.get('billing', {}).get('email', '')):
+		obj.email = order_data.get('shipping', {}).get('email', '') or order_data.get('billing', {}).get('email', '')
+		changed = True
+
+	if obj.address != f"{order_data['shipping'].get('address_1', '')} {order_data['shipping'].get('address_2', '')}".strip():
+		obj.address = f"{order_data['shipping'].get('address_1', '')} {order_data['shipping'].get('address_2', '')}".strip()
+		changed = True
+
+	if obj.suburb != order_data["shipping"].get("city", ""):
+		obj.suburb = order_data["shipping"].get("city", "")
+		changed = True
+
+	if obj.postcode != order_data["shipping"].get("postcode", ""):
+		obj.postcode = order_data["shipping"].get("postcode", "")
+		changed = True
+
+	if obj.state != order_data["shipping"].get("state", ""):
+		obj.state = order_data["shipping"].get("state", "")
+		changed = True
+
 	if changed:
 		obj.save(update_fields=['source', 'meta', 'special_fees', 'status', 'woo_status'])
 		print(f"🔄 已更新订单 WC#{obj.reference}: source/meta/special_fees/status/woo_status 补全")
@@ -115,13 +143,13 @@ def sync_wc_orders():
 				status="New",
 				total=order["total"],
 				shipping=order["shipping_total"],
-				contact_name=f"{order['billing']['first_name']} {order['billing']['last_name']}".strip(),
-				phone=order["billing"].get("phone", ""),
-				email=order["billing"].get("email", ""),
-				address=f"{order['billing'].get('address_1', '')} {order['billing'].get('address_2', '')}".strip(),
-				suburb=order["billing"].get("city", ""),
-				postcode=order["billing"].get("postcode", ""),
-				state=order["billing"].get("state", ""),
+				contact_name=f"{order['shipping']['first_name']} {order['shipping']['last_name']}".strip(),
+				phone=order["shipping"].get("phone", "") or order["billing"].get("phone", ""),
+				email=order["shipping"].get("email", "") or order["billing"].get("email", ""),
+				address=f"{order['shipping'].get('address_1', '')} {order['shipping'].get('address_2', '')}".strip(),
+				suburb=order["shipping"].get("city", ""),
+				postcode=order["shipping"].get("postcode", ""),
+				state=order["shipping"].get("state", ""),
 				customer_notes=order.get("customer_note", ""),
 				date=parse_wc_datetime(order["date_created"]),
 				source=source,
