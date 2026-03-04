@@ -473,6 +473,10 @@ def batch_update_order(request):
 		order.status = status
 		order.save(update_fields=['status'])
 		updated_count += 1
+		if order.status == "Completed":
+			sync_woo_order_completed(order)
+
+	Stock.recalculate_all()
 
 	return JsonResponse({
 		'success': True,
