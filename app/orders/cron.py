@@ -334,10 +334,10 @@ def sync_woo_order_completed(order):
 		print(f"❌ 获取 WooCommerce 订单失败: {e}\n{traceback.format_exc()}")
 		return False
 
-	current_status = woo_order.get("status", "")
-	if current_status != "processing":
-		print(f"⚠️ 订单 {order.id} 当前状态为 {current_status}，无法同步完成状态")
-		return False
+	# current_status = woo_order.get("status", "")
+	# if current_status != "processing":
+	# 	print(f"⚠️ 订单 {order.id} 当前状态为 {current_status}，无法同步完成状态")
+	# 	return False
 
 	try:
 		resp = wc_put(
