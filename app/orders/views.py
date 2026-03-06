@@ -9,8 +9,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, CharField
 from django.db.models.functions import Cast
+from django.conf import settings
 import json
 import re
+import logging
 
 import csv
 from django.http import HttpResponse
@@ -28,6 +30,8 @@ from openpyxl.utils import get_column_letter
 from ..orders.cron import push_order_to_wc, sync_woo_order_completed
 from ..services.shippit_client import get_shipping_quote, build_parcel_attributes, normalize_parcel_attributes
 from ..orders.cron import sync_wc_orders
+
+logger = logging.getLogger(__name__)
 
 def parse_bool(value):
 	if isinstance(value, bool):
@@ -239,8 +243,16 @@ def list(request):
 
 @csrf_exempt
 def create_order(request):
-	if request.method == 'POST':
+	if request.method != 'POST':
+		return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+	try:
 		data = json.loads(request.body)
+	except json.JSONDecodeError:
+		logger.warning('create_order failed: invalid JSON payload')
+		return JsonResponse({'success': False, 'error': 'Invalid JSON payload'})
+
+	try:
 		reference = data.get('reference')
 		contact_name = data.get('contact_name')
 		phone = data.get('phone')
@@ -277,10 +289,18 @@ def create_order(request):
 			)
 
 		Stock.recalculate_all()
-		push_order_to_wc(order.id)
+		if order.reference == '':
+			push_order_to_wc(order.id)
 		return JsonResponse({'success': True})
-
-	return JsonResponse({'success': False, 'error': 'Invalid method'})
+	except Exception as e:
+		safe_payload = data.copy() if isinstance(data, dict) else {}
+		if isinstance(safe_payload, dict):
+			for key in ['phone', 'email', 'address']:
+				if key in safe_payload and safe_payload.get(key):
+					safe_payload[key] = '***'
+		logger.exception('create_order failed. payload=%s', safe_payload)
+		error_message = str(e) if settings.DEBUG else 'Create order failed'
+		return JsonResponse({'success': False, 'error': error_message}, status=500)
 
 @csrf_exempt
 def delete_order(request, id):
