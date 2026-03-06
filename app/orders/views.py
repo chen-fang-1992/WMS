@@ -285,6 +285,7 @@ def create_order(request):
 			OrderLine.objects.create(
 				order=order,
 				product=product,
+				raw_sku=item.get('sku', ''),
 				quantity=item.get('quantity', 0)
 			)
 
