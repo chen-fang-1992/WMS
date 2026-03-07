@@ -132,12 +132,15 @@ table select option {
 	min-width: 100%;
 	width: 100%;
 }
+.order-workspace-tabs {
+	border-bottom: 1px solid #d1d5db;
+}
 .order-workspace-tabs .nav-link {
 	font-size: .9rem;
 	color: #374151 !important;
 	background: #f8fafc;
 	border: 1px solid #d1d5db;
-	border-bottom-color: transparent;
+	border-bottom: 0;
 	border-radius: .5rem .5rem 0 0;
 	padding: .5rem .85rem;
 	width: auto;
@@ -151,6 +154,9 @@ table select option {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	transform: none;
+	margin-bottom: -2px;
+	position: relative;
+	z-index: 1;
 }
 .order-workspace-tabs .tab-label {
 	display: inline-flex;
@@ -162,7 +168,8 @@ table select option {
 	font-weight: 600;
 	color: #fff !important;
 	background: var(--brand-navy);
-	border-color: var(--brand-navy) var(--brand-navy) #fff;
+	border-color: var(--brand-navy);
+	z-index: 2;
 }
 .order-workspace-tabs .nav-link.active .tab-close {
 	color: rgba(255, 255, 255, .85);
