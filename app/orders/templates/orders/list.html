@@ -75,6 +75,12 @@ table select option {
 .urgent-row:hover {
 	background-color: #fed7aa;
 }
+.duplicate-contact-row td {
+	background-color: #e0f2fe;
+}
+.duplicate-contact-row:hover td {
+	background-color: #bae6fd;
+}
 .order-row-hover:hover {
 	background-color: #eef1f4;
 }
@@ -352,7 +358,7 @@ table select option {
 			</thead>
 			<tbody id="orders-main-tbody">
 				{% for order in orders %}
-				<tr class="{% if order.urgent %}urgent-row{% else %}order-row-hover{% endif %}">
+				<tr class="{% if order.urgent %}urgent-row{% elif order.has_same_contact_phone_orders %}duplicate-contact-row{% else %}order-row-hover{% endif %}">
 					<td class="p-1 border border-gray-300"><input type="checkbox" class="order-checkbox" value="{{ order.id }}"></td>
 					<td class="p-1 border border-gray-300 reference" data-search_field="reference">{{ order.reference | default:"" }}</td>
 					<td class="p-1 border border-gray-300" data-search_field="date">{{ order.date|date:"d/m/Y" }}<br>{{ order.date|date:"h:i A" }}</td>

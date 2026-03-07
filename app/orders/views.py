@@ -7,7 +7,7 @@ from .constants import ORDER_STATUS, ORDER_ROUTE_RECORD, ORDER_WOO_STATUS
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q, CharField
+from django.db.models import Q, CharField, Count
 from django.db.models.functions import Cast
 from django.conf import settings
 import json
@@ -233,6 +233,35 @@ def list(request):
 		orders = orders.distinct()
 
 	orders = orders.prefetch_related('lines').order_by('-date')
+
+	def _normalize_duplicate_key(contact_name, phone):
+		name = ' '.join((contact_name or '').strip().lower().split())
+		phone_digits = ''.join(ch for ch in str(phone or '') if ch.isdigit())
+		phone_value = phone_digits[-9:] if len(phone_digits) >= 9 else phone_digits
+		return name, phone_value
+
+	duplicate_counter = {}
+	for contact_name, phone in (
+		Order.objects
+		.exclude(status='Cancelled')
+		.exclude(contact_name__isnull=True)
+		.exclude(phone__isnull=True)
+		.exclude(contact_name='')
+		.exclude(phone='')
+		.values_list('contact_name', 'phone')
+	):
+		key = _normalize_duplicate_key(contact_name, phone)
+		if not key[0] or not key[1]:
+			continue
+		duplicate_counter[key] = duplicate_counter.get(key, 0) + 1
+
+	duplicate_keys = {key for key, count in duplicate_counter.items() if count > 1}
+	orders = builtins.list(orders)
+	for order in orders:
+		if order.status == 'Cancelled':
+			order.has_same_contact_phone_orders = False
+			continue
+		order.has_same_contact_phone_orders = _normalize_duplicate_key(order.contact_name, order.phone) in duplicate_keys
 
 	return render(request, 'orders/list.html', {
 		'orders': orders,
