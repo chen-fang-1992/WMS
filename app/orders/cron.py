@@ -33,6 +33,72 @@ def get_order_source(order):
 		return clean_text(f"{source}")
 	else:
 		return 'Unknown'
+
+def extract_fee_price(raw_price):
+	if raw_price in (None, '', 0, '0', '0.00'):
+		return None
+
+	if isinstance(raw_price, (int, float, Decimal)):
+		return str(raw_price)
+
+	if isinstance(raw_price, str):
+		return raw_price
+
+	if isinstance(raw_price, list):
+		for value in raw_price:
+			price = extract_fee_price(value)
+			if price not in (None, '', '0', '0.00', '0.0'):
+				return price
+		return None
+
+	if isinstance(raw_price, dict):
+		for key in ('price', 'value', 'amount'):
+			if key in raw_price:
+				price = extract_fee_price(raw_price.get(key))
+				if price not in (None, '', '0', '0.00', '0.0'):
+					return price
+		for value in raw_price.values():
+			price = extract_fee_price(value)
+			if price not in (None, '', '0', '0.00', '0.0'):
+				return price
+		return None
+
+	return str(raw_price)
+
+def build_special_fees(order_data):
+	special_fees = ''
+
+	if order_data.get('fee_lines'):
+		for item in order_data['fee_lines']:
+			if item.get('total', '0.00') == '0.00':
+				continue
+			special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
+	else:
+		for item in order_data.get('line_items', []):
+			for meta in item.get('meta_data', []):
+				if meta.get('key') != '_WCPA_order_meta_data':
+					continue
+				meta_value = meta.get('value', {})
+				if not isinstance(meta_value, dict):
+					continue
+				for section_key, section_value in meta_value.items():
+					if not str(section_key).startswith('sec_'):
+						continue
+					fields = section_value.get('fields', {}) if isinstance(section_value, dict) else {}
+					if not fields:
+						continue
+					for subfields in fields:
+						if not isinstance(subfields, list):
+							continue
+						for subfield in subfields:
+							if not isinstance(subfield, dict):
+								continue
+							price = extract_fee_price(subfield.get('price'))
+							if price in (None, '', '0', '0.00', '0.0'):
+								continue
+							special_fees += f"{subfield.get('label', 'Fee')}: ${price}\n"
+
+	return special_fees.strip()
 	
 def update_order_if_missing(order_data):
 	try:
@@ -55,16 +121,10 @@ def update_order_if_missing(order_data):
 		obj.woo_status = order_data.get('status', '')
 		changed = True
 
-	if order_data.get('fee_lines'):
-		special_fees = ''
-		for item in order_data['fee_lines']:
-			if item.get('total', '0.00') == '0.00':
-				continue
-			special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
-		special_fees = special_fees.strip()
-		if obj.special_fees != special_fees:
-			obj.special_fees = special_fees
-			changed = True
+	special_fees = build_special_fees(order_data)
+	if obj.special_fees != special_fees:
+		obj.special_fees = special_fees
+		changed = True
 
 	if order_data.get('status') == 'completed' and obj.status != 'Completed':
 		obj.status = 'Completed'
@@ -186,13 +246,8 @@ def sync_wc_orders():
 					)
 					print(f"❌ SKU {sku} 不存在，已保存为原始 SKU 行")
 
-			if order.get('fee_lines'):
-				obj.special_fees = ''
-				for item in order.get('fee_lines', []):
-					if item.get('total', '0.00') == '0.00':
-						continue
-					obj.special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
-				obj.special_fees = obj.special_fees.strip()
+			obj.special_fees = build_special_fees(order)
+			if obj.special_fees:
 				obj.save(update_fields=['special_fees'])
 
 			print(f"✅ 新订单同步: WC#{obj.reference}")

@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from app.orders.cron import sync_wc_orders
+import traceback
 
 
 class Command(BaseCommand):
@@ -10,4 +11,4 @@ class Command(BaseCommand):
 			sync_wc_orders()
 			self.stdout.write(self.style.SUCCESS("WooCommerce orders synced successfully"))
 		except Exception as e:
-			self.stderr.write(self.style.ERROR(f"Error syncing orders: {e}"))
+			self.stderr.write(self.style.ERROR(f"Error syncing orders: {e}\n{traceback.format_exc()}"))
