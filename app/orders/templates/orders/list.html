@@ -446,7 +446,7 @@ table select option {
 						{% endif %}
 					</td>
 					<td class="p-1 border border-gray-300">
-						<button class="text-primary hover:underline" onclick="openEditOrderTab(`{{ order.id }}`)"><i class="bi bi-pencil-square"></i></button>
+						<button class="text-primary hover:underline" onclick="openEditOrderTab(`{{ order.id }}`, `{{ order.reference|default:''|escapejs }}`)"><i class="bi bi-pencil-square"></i></button>
 						<button class="text-danger hover:underline ml-2" onclick="deleteOrder(`{{ order.id }}`)"><i class="bi bi-trash"></i></button>
 						<button class="text-dark hover:underline ml-2" onclick="openOrderInvoice(`{{ order.id }}`)" title="发票">
 							<i class="bi bi-receipt"></i>
@@ -1248,6 +1248,11 @@ table select option {
 		if (textEl) textEl.textContent = meta.label;
 	}
 
+	function buildEditOrderTabLabel(id, reference = '') {
+		const orderRef = String(reference || '').trim();
+		return orderRef ? `编辑订单 ${orderRef}` : `编辑订单 #${id}`;
+	}
+
 	function ensureEditorTab(config) {
 		const { key, label, mode, orderId } = config;
 		let meta = orderEditorTabs.get(key);
@@ -1419,11 +1424,15 @@ table select option {
 		document.getElementById('orderModalLabel').textContent = '新增订单';
 	}
 
-	function loadEditOrderFormForTab(id, tabKey) {
+	function loadEditOrderFormForTab(id, tabKey, preferredReference = '') {
 		const key = tabKey || `edit-${id}`;
 		prepareOrderFormPane();
-		ensureEditorTab({ key, label: `编辑订单 #${id}`, mode: 'edit', orderId: id });
-		setEditorTabLabel(key, `编辑订单 #${id}`);
+		const existingMeta = orderEditorTabs.get(key);
+		const initialLabel = preferredReference
+			? buildEditOrderTabLabel(id, preferredReference)
+			: (existingMeta && existingMeta.label ? existingMeta.label : buildEditOrderTabLabel(id));
+		ensureEditorTab({ key, label: initialLabel, mode: 'edit', orderId: id });
+		setEditorTabLabel(key, initialLabel);
 
 		fetch(`/orders/detail/${id}/`)
 		.then(res => res.json())
@@ -1435,7 +1444,7 @@ table select option {
 
 			const order = data.order;
 			const orderRef = (order.reference || '').trim();
-			setEditorTabLabel(key, orderRef ? `编辑订单 ${orderRef}` : `编辑订单 #${id}`);
+			setEditorTabLabel(key, buildEditOrderTabLabel(id, orderRef));
 
 			// 填充基本信息
 			const date = new Date(order.date);
@@ -1562,25 +1571,27 @@ table select option {
 			pad(date.getDate());
 	}
 
-	function editOrder(id, tabKey = null) {
+	function editOrder(id, tabKey = null, reference = '') {
 		const key = tabKey || `edit-${id}`;
 		prepareOrderFormPane();
-		ensureEditorTab({ key, label: `编辑订单 #${id}`, mode: 'edit', orderId: id });
+		const initialLabel = buildEditOrderTabLabel(id, reference);
+		ensureEditorTab({ key, label: initialLabel, mode: 'edit', orderId: id });
 		activateEditorTab(key);
-		loadEditOrderFormForTab(id, key);
+		loadEditOrderFormForTab(id, key, reference);
 	}
 
-	function openEditOrderTab(id) {
+	function openEditOrderTab(id, reference = '') {
 		if (!id) return;
 		const key = `edit-${id}`;
 		const existed = orderEditorTabs.has(key);
-		ensureEditorTab({ key, label: `编辑订单 #${id}`, mode: 'edit', orderId: id });
+		const initialLabel = buildEditOrderTabLabel(id, reference);
+		ensureEditorTab({ key, label: initialLabel, mode: 'edit', orderId: id });
 		if (existed) {
 			activateEditorTab(key);
-			editOrder(id, key);
+			editOrder(id, key, reference);
 			return;
 		}
-		editOrder(id, key);
+		editOrder(id, key, reference);
 	}
 
 	function openOrderInvoice(id) {
