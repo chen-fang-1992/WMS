@@ -7,6 +7,8 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from decimal import Decimal, InvalidOperation
 from django.db.models import Q
+import openpyxl
+import numbers
 
 def list(request):
 	products = Product.objects.all()
@@ -20,6 +22,166 @@ def parse_decimal(value):
 		return Decimal(str(value).replace(',', '').strip())
 	except (InvalidOperation, ValueError, TypeError):
 		return Decimal('0')
+
+def clean_cell_text(value):
+	if value is None:
+		return ''
+	if isinstance(value, numbers.Integral):
+		return str(value)
+	if isinstance(value, numbers.Real) and not isinstance(value, bool):
+		if float(value).is_integer():
+			return str(int(value))
+		return format(value, 'f').rstrip('0').rstrip('.')
+	return str(value).strip()
+
+def upsert_product_by_sku(sku, defaults):
+	product = Product.objects.filter(sku=sku).first()
+	if not product:
+		return Product.objects.create(sku=sku, **defaults), True
+
+	for field, value in defaults.items():
+		if value in ['', None] and getattr(product, field) not in ['', None]:
+			continue
+		setattr(product, field, value)
+	product.save()
+	return product, False
+
+@csrf_exempt
+def import_products(request):
+	if not request.user.is_superuser:
+		return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+	if request.method != 'POST':
+		return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+	upload = request.FILES.get('file')
+	if not upload:
+		return JsonResponse({'success': False, 'error': 'Please upload an Excel file'})
+
+	try:
+		workbook = openpyxl.load_workbook(upload, data_only=True)
+		sheet = workbook.active
+
+		parent_rows = {}
+		for row in sheet.iter_rows(min_row=3, values_only=True):
+			sku = clean_cell_text(row[1] if len(row) > 1 else '')
+			parent_barcode = clean_cell_text(row[2] if len(row) > 2 else '')
+			bom_sku = clean_cell_text(row[3] if len(row) > 3 else '')
+			bom_barcode = clean_cell_text(row[4] if len(row) > 4 else '')
+			length = clean_cell_text(row[5] if len(row) > 5 else '')
+			width = clean_cell_text(row[6] if len(row) > 6 else '')
+			height = clean_cell_text(row[7] if len(row) > 7 else '')
+			cbn = clean_cell_text(row[8] if len(row) > 8 else '')
+			weight = clean_cell_text(row[9] if len(row) > 9 else '')
+
+			if not sku and not bom_sku:
+				continue
+
+			parent_sku = sku or bom_sku
+			entry = parent_rows.setdefault(parent_sku, {
+				'sku': parent_sku,
+				'barcode': parent_barcode,
+				'rows': [],
+			})
+			if parent_barcode and not entry['barcode']:
+				entry['barcode'] = parent_barcode
+			entry['rows'].append({
+				'bom_sku': bom_sku or parent_sku,
+				'bom_barcode': bom_barcode,
+				'length': length,
+				'width': width,
+				'height': height,
+				'cbn': cbn,
+				'weight': weight,
+			})
+
+		created_count = 0
+		updated_count = 0
+		bom_relation_count = 0
+
+		for parent_sku, entry in parent_rows.items():
+			rows = entry['rows']
+			with_bom = any(item['bom_sku'] and item['bom_sku'] != parent_sku for item in rows)
+			parent_barcode = entry['barcode']
+
+			parent_row = None
+			for item in rows:
+				if item['bom_sku'] == parent_sku:
+					parent_row = item
+					break
+			if parent_row is None and rows:
+				parent_row = rows[0]
+
+			parent_defaults = {
+				'name_cn': '',
+				'name_en': '',
+				'type': '成品(有BOM)' if with_bom else '成品(无BOM)',
+				'category': '',
+				'manufacturer': '',
+				'barcode': parent_barcode,
+				'package_length': parent_row['length'] if parent_row and not with_bom else '',
+				'package_width': parent_row['width'] if parent_row and not with_bom else '',
+				'package_height': parent_row['height'] if parent_row and not with_bom else '',
+				'shipping_volume': parent_row['cbn'] if parent_row and not with_bom else '',
+				'weight': parse_decimal(parent_row['weight']) if parent_row and not with_bom else Decimal('0'),
+			}
+			parent_product, created = upsert_product_by_sku(parent_sku, parent_defaults)
+			if created:
+				created_count += 1
+			else:
+				updated_count += 1
+
+			ProductBOM.objects.filter(product=parent_product).delete()
+
+			if not with_bom:
+				continue
+
+			component_counter = {}
+			component_rows = {}
+			for item in rows:
+				component_sku = item['bom_sku']
+				if not component_sku or component_sku == parent_sku:
+					continue
+				component_counter[component_sku] = component_counter.get(component_sku, 0) + 1
+				component_rows.setdefault(component_sku, item)
+
+			for component_sku, quantity in component_counter.items():
+				component_row = component_rows[component_sku]
+				component_defaults = {
+					'name_cn': '',
+					'name_en': '',
+					'type': '组件',
+					'category': '',
+					'manufacturer': '',
+					'barcode': component_row['bom_barcode'],
+					'package_length': component_row['length'],
+					'package_width': component_row['width'],
+					'package_height': component_row['height'],
+					'shipping_volume': component_row['cbn'],
+					'weight': parse_decimal(component_row['weight']),
+				}
+				component_product, created = upsert_product_by_sku(component_sku, component_defaults)
+				if created:
+					created_count += 1
+				else:
+					updated_count += 1
+
+				ProductBOM.objects.create(
+					product=parent_product,
+					component=component_product,
+					quantity=quantity,
+				)
+				bom_relation_count += 1
+
+		return JsonResponse({
+			'success': True,
+			'created_count': created_count,
+			'updated_count': updated_count,
+			'bom_relation_count': bom_relation_count,
+			'product_count': len(parent_rows),
+		})
+	except Exception as e:
+		return JsonResponse({'success': False, 'error': str(e)})
 
 @csrf_exempt
 def create_product(request):

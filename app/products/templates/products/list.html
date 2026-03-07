@@ -50,6 +50,11 @@ table select option {
 			<button type="button" class="btn btn-success btn-sm" onclick="addProduct()">
 				<i class="bi bi-plus-lg"></i> 新增产品
 			</button>
+			{% if request.user.is_superuser %}
+			<button type="button" class="btn btn-primary btn-sm" id="import-products-btn">
+				<i class="bi bi-file-earmark-arrow-up"></i> 导入产品
+			</button>
+			{% endif %}
 		</div>
 	</div>
 
@@ -124,10 +129,123 @@ table select option {
 	</div>
 </div>
 
+{% if request.user.is_superuser %}
+<div class="modal fade" id="importProductsModal" tabindex="-1" aria-labelledby="importProductsModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="importProductsModalLabel">导入产品</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="mb-3">
+					<label for="import-products-input" class="form-label">选择 Excel 文件</label>
+					<input type="file" id="import-products-input" class="form-control" accept=".xlsx,.xlsm,.xltx,.xltm">
+				</div>
+				<div class="small text-muted mb-3">仅支持固定模板格式的 Excel 文件。</div>
+				<div id="import-products-progress-wrapper" style="display:none;">
+					<div class="d-flex justify-content-between align-items-center mb-1">
+						<span class="small text-muted">上传进度</span>
+						<span id="import-products-progress-text" class="small text-muted">0%</span>
+					</div>
+					<div class="progress" role="progressbar" aria-label="Import upload progress" aria-valuemin="0" aria-valuemax="100">
+						<div id="import-products-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%;"></div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="import-products-cancel-btn">取消</button>
+				<button type="button" class="btn btn-primary" id="import-products-confirm-btn">
+					<i class="bi bi-upload"></i> 上传并导入
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endif %}
+
 {% include 'products/modal.html' %}
 
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
+		const importProductsBtn = document.getElementById('import-products-btn');
+		const importProductsInput = document.getElementById('import-products-input');
+		const importProductsModalEl = document.getElementById('importProductsModal');
+		const importProductsConfirmBtn = document.getElementById('import-products-confirm-btn');
+		const importProductsCancelBtn = document.getElementById('import-products-cancel-btn');
+		const importProductsProgressWrapper = document.getElementById('import-products-progress-wrapper');
+		const importProductsProgressBar = document.getElementById('import-products-progress-bar');
+		const importProductsProgressText = document.getElementById('import-products-progress-text');
+		const importProductsModal = importProductsModalEl ? new bootstrap.Modal(importProductsModalEl) : null;
+
+		if (importProductsBtn && importProductsInput) {
+			importProductsBtn.addEventListener('click', function () {
+				importProductsInput.value = '';
+				if (importProductsProgressWrapper) importProductsProgressWrapper.style.display = 'none';
+				if (importProductsProgressBar) importProductsProgressBar.style.width = '0%';
+				if (importProductsProgressText) importProductsProgressText.textContent = '0%';
+				if (importProductsModal) importProductsModal.show();
+			});
+
+			importProductsConfirmBtn.addEventListener('click', function () {
+				const file = importProductsInput.files && importProductsInput.files[0];
+				if (!file) {
+					alert('请先选择 Excel 文件');
+					return;
+				}
+
+				const formData = new FormData();
+				formData.append('file', file);
+
+				if (importProductsProgressWrapper) importProductsProgressWrapper.style.display = '';
+				if (importProductsConfirmBtn) importProductsConfirmBtn.disabled = true;
+				if (importProductsCancelBtn) importProductsCancelBtn.disabled = true;
+
+				const xhr = new XMLHttpRequest();
+				xhr.open('POST', '/products/import/', true);
+
+				xhr.upload.onprogress = function (event) {
+					if (!event.lengthComputable) return;
+					const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+					if (importProductsProgressBar) importProductsProgressBar.style.width = `${percent}%`;
+					if (importProductsProgressBar) importProductsProgressBar.setAttribute('aria-valuenow', String(percent));
+					if (importProductsProgressText) importProductsProgressText.textContent = `${percent}%`;
+				};
+
+				xhr.onload = function () {
+					let data = {};
+					try {
+						data = JSON.parse(xhr.responseText || '{}');
+					} catch (e) {}
+
+					if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+						if (importProductsProgressBar) importProductsProgressBar.style.width = '100%';
+						if (importProductsProgressText) importProductsProgressText.textContent = '100%';
+						if (importProductsModal) importProductsModal.hide();
+						alert(`导入完成：创建 ${data.created_count || 0} 个，更新 ${data.updated_count || 0} 个，BOM关系 ${data.bom_relation_count || 0} 条`);
+						location.reload();
+						return;
+					}
+
+					alert('导入失败：' + (data.error || xhr.status));
+					if (importProductsConfirmBtn) importProductsConfirmBtn.disabled = false;
+					if (importProductsCancelBtn) importProductsCancelBtn.disabled = false;
+				};
+
+				xhr.onerror = function () {
+					alert('导入请求失败');
+					if (importProductsConfirmBtn) importProductsConfirmBtn.disabled = false;
+					if (importProductsCancelBtn) importProductsCancelBtn.disabled = false;
+				};
+
+				xhr.onloadend = function () {
+					importProductsInput.value = '';
+				};
+
+				xhr.send(formData);
+			});
+		}
+
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
 		const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
 		const productTable = document.querySelector('tbody');
