@@ -132,6 +132,9 @@ table select option {
 	min-width: 100%;
 	width: 100%;
 }
+.order-workspace-shell.workspace-ready {
+	visibility: visible !important;
+}
 .order-workspace-tabs {
 	border-bottom: 1px solid #d1d5db;
 }
@@ -250,7 +253,7 @@ table select option {
 }
 </style>
 
-<div class="mx-auto pt-1 pe-1 pb-1 ps-0">
+<div class="mx-auto pt-1 pe-1 pb-1 ps-0 order-workspace-shell" id="order-workspace-shell" style="visibility: hidden;">
 	<h2 class="font-semibold text-teal-700 text-lg pb-2 px-2 page-shift-left">
 		订单列表
 		<span id="row-count" style="display: none; align-items: center; justify-content: center; min-width: 36px; padding: 2px 10px; font-size: 1rem !important; font-weight: 500; color: white; background: darkgrey; border-radius: 9999px; vertical-align: middle; height: 1.5rem; margin-bottom: 0.3rem;"></span>
@@ -258,12 +261,12 @@ table select option {
 
 	<ul class="nav nav-tabs px-2 page-shift-left order-workspace-tabs" id="order-workspace-tabs" role="tablist">
 		<li class="nav-item" role="presentation">
-			<button class="nav-link active" id="order-list-tab" data-bs-toggle="tab" data-bs-target="#order-list-pane" type="button" role="tab" aria-controls="order-list-pane" aria-selected="true">订单列表</button>
+			<button class="nav-link" id="order-list-tab" data-bs-toggle="tab" data-bs-target="#order-list-pane" type="button" role="tab" aria-controls="order-list-pane" aria-selected="false">订单列表</button>
 		</li>
 	</ul>
 
 	<div class="tab-content">
-	<div class="tab-pane fade show active" id="order-list-pane" role="tabpanel" aria-labelledby="order-list-tab" tabindex="0">
+	<div class="tab-pane fade" id="order-list-pane" role="tabpanel" aria-labelledby="order-list-tab" tabindex="0">
 	<!-- 顶部操作栏 -->
 	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left top-toolbar">
 		<div class="d-flex align-items-center gap-2 flex-wrap">
@@ -546,6 +549,65 @@ table select option {
 	let orderEditorTabs = new Map();
 	let activeOrderEditorKey = null;
 	let ordersListRefreshRequestSeq = 0;
+	const ORDER_WORKSPACE_STORAGE_KEY = 'orders.workspace.tabs.v1';
+
+	function persistOrderWorkspaceTabs() {
+		try {
+			const payload = {
+				activeKey: activeOrderEditorKey,
+				tabs: Array.from(orderEditorTabs.values()).map(meta => ({
+					key: meta.key,
+					label: meta.label,
+					mode: meta.mode,
+					orderId: meta.orderId || null,
+				})),
+			};
+			sessionStorage.setItem(ORDER_WORKSPACE_STORAGE_KEY, JSON.stringify(payload));
+		} catch (error) {
+			console.warn('保存订单页签状态失败:', error);
+		}
+	}
+
+	function restoreOrderWorkspaceTabs() {
+		try {
+			const raw = sessionStorage.getItem(ORDER_WORKSPACE_STORAGE_KEY);
+			if (!raw) return false;
+			const payload = JSON.parse(raw);
+			const tabs = Array.isArray(payload && payload.tabs) ? payload.tabs : [];
+			if (!tabs.length) return false;
+
+			tabs.forEach(tab => {
+				if (!tab || !tab.key || !tab.mode) return;
+				ensureEditorTab({
+					key: tab.key,
+					label: tab.label || (tab.mode === 'create' ? '新增订单' : buildEditOrderTabLabel(tab.orderId || '')),
+					mode: tab.mode,
+					orderId: tab.orderId || null,
+				});
+			});
+
+			const restoreKey = payload && payload.activeKey && orderEditorTabs.has(payload.activeKey)
+				? payload.activeKey
+				: null;
+
+			if (restoreKey) {
+				activateEditorTab(restoreKey);
+				return true;
+			}
+			return false;
+		} catch (error) {
+			console.warn('恢复订单页签状态失败:', error);
+			return false;
+		}
+	}
+
+	function markOrderWorkspaceReady() {
+		const shell = document.getElementById('order-workspace-shell');
+		if (shell) {
+			shell.style.visibility = 'visible';
+			shell.classList.add('workspace-ready');
+		}
+	}
 
 	document.addEventListener('DOMContentLoaded', function () {
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
@@ -1208,9 +1270,23 @@ table select option {
 		initBackendFilters();
 		updateRowCount();
 		prepareOrderFormPane();
+		const restoredEditorTab = restoreOrderWorkspaceTabs();
+		if (!restoredEditorTab) {
+			activateOrderWorkspaceTab('list');
+			forceShowOrderListPane();
+		}
+
+		const listTab = document.getElementById('order-list-tab');
+		if (listTab) {
+			listTab.addEventListener('shown.bs.tab', function () {
+				activeOrderEditorKey = null;
+				persistOrderWorkspaceTabs();
+			});
+		}
 
 		const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
 		tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+		markOrderWorkspaceReady();
 	});
 
 	function activateOrderWorkspaceTab(tabNameOrTriggerId) {
@@ -1253,6 +1329,7 @@ table select option {
 		meta.label = label || meta.label || '订单表单';
 		const textEl = document.querySelector(`#${meta.triggerId} .tab-label`);
 		if (textEl) textEl.textContent = meta.label;
+		persistOrderWorkspaceTabs();
 	}
 
 	function buildEditOrderTabLabel(id, reference = '') {
@@ -1293,9 +1370,11 @@ table select option {
 
 		meta = { key, label: label || '订单表单', mode, orderId, triggerId, li };
 		orderEditorTabs.set(key, meta);
+		persistOrderWorkspaceTabs();
 
 		btn.addEventListener('shown.bs.tab', function () {
 			activeOrderEditorKey = key;
+			persistOrderWorkspaceTabs();
 			syncEditorTabContent(key);
 		});
 
@@ -1316,6 +1395,7 @@ table select option {
 		const meta = orderEditorTabs.get(key);
 		if (!meta) return;
 		activeOrderEditorKey = key;
+		persistOrderWorkspaceTabs();
 		activateOrderWorkspaceTab(meta.triggerId);
 	}
 
@@ -1332,6 +1412,7 @@ table select option {
 		} else if (orderEditorTabs.size === 0) {
 			forceShowOrderListPane();
 		}
+		persistOrderWorkspaceTabs();
 	}
 
 	async function refreshOrdersListTabData(urlOverride = null) {
