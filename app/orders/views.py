@@ -331,7 +331,10 @@ def create_order(request):
 			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status, urgent=urgent, tracking_number=tracking_number, delivery_date=delivery_date, meta=meta or None)
 
 		for item in products:
-			product = Product.objects.filter(id=item.get('product_id')).first()
+			product = None
+			product_id = item.get('product_id')
+			if product_id:
+				product = Product.objects.filter(id=product_id).first()
 			OrderLine.objects.create(
 				order=order,
 				product=product,
