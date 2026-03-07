@@ -192,6 +192,8 @@ def _apply_date_filter(queryset, field, raw):
 def list(request):
 	orders = Order.objects.all()
 	needs_distinct = False
+	urgent_only = _clean_param(request, 'urgent_only') == '1'
+	duplicate_only = _clean_param(request, 'duplicate_only') == '1'
 
 	for field in ['reference', 'contact_name', 'phone', 'suburb', 'postcode', 'state', 'special_fees', 'customer_notes', 'notes']:
 		orders = _apply_text_filter(orders, field, _clean_param(request, field))
@@ -232,6 +234,9 @@ def list(request):
 	if needs_distinct:
 		orders = orders.distinct()
 
+	if urgent_only:
+		orders = orders.filter(urgent=True)
+
 	orders = orders.prefetch_related('lines').order_by('-date')
 
 	def _normalize_duplicate_key(contact_name, phone):
@@ -263,11 +268,27 @@ def list(request):
 			continue
 		order.has_same_contact_phone_orders = _normalize_duplicate_key(order.contact_name, order.phone) in duplicate_keys
 
+	if duplicate_only:
+		orders = [order for order in orders if order.has_same_contact_phone_orders]
+
+	def _build_toggle_url(param_name, enabled):
+		params = request.GET.copy()
+		if enabled:
+			params[param_name] = '1'
+		else:
+			params.pop(param_name, None)
+		query = params.urlencode()
+		return f'{request.path}?{query}' if query else request.path
+
 	return render(request, 'orders/list.html', {
 		'orders': orders,
 		'woo_statuses': ORDER_WOO_STATUS,
 		'statuses': ORDER_STATUS,
 		'route_records': ORDER_ROUTE_RECORD,
+		'urgent_only': urgent_only,
+		'duplicate_only': duplicate_only,
+		'urgent_toggle_url': _build_toggle_url('urgent_only', not urgent_only),
+		'duplicate_toggle_url': _build_toggle_url('duplicate_only', not duplicate_only),
 	})
 
 @csrf_exempt

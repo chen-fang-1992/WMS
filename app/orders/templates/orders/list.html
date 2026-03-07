@@ -87,6 +87,39 @@ table select option {
 .top-action-btn {
 	font-size: .875rem;
 }
+.quick-filter-btn {
+	font-size: .875rem;
+}
+.quick-filter-urgent {
+	color: #9a3412;
+	border-color: #fdba74;
+	background-color: #fff7ed;
+}
+.quick-filter-urgent:hover {
+	color: #7c2d12;
+	border-color: #fb923c;
+	background-color: #ffedd5;
+}
+.quick-filter-urgent.active {
+	color: #7c2d12;
+	border-color: #fb923c;
+	background-color: #fed7aa;
+}
+.quick-filter-duplicate {
+	color: #1d4ed8;
+	border-color: #93c5fd;
+	background-color: #eff6ff;
+}
+.quick-filter-duplicate:hover {
+	color: #1e40af;
+	border-color: #60a5fa;
+	background-color: #dbeafe;
+}
+.quick-filter-duplicate.active {
+	color: #1e3a8a;
+	border-color: #60a5fa;
+	background-color: #bfdbfe;
+}
 .top-toolbar {
 	position: relative;
 	z-index: 30;
@@ -245,6 +278,12 @@ table select option {
 			<button id="batch-update-btn" type="button" class="btn btn-warning btn-sm top-action-btn">
 				<i class="bi bi-check2-square"></i> 批量更新
 			</button>
+			<a href="{{ urgent_toggle_url }}" class="btn btn-sm quick-filter-btn quick-filter-urgent {% if urgent_only %}active{% endif %}">
+				<i class="bi bi-exclamation-diamond"></i> 加急单
+			</a>
+			<a href="{{ duplicate_toggle_url }}" class="btn btn-sm quick-filter-btn quick-filter-duplicate {% if duplicate_only %}active{% endif %}">
+				<i class="bi bi-files"></i> 重复订单
+			</a>
 			{% if request.user.is_superuser %}
 			<button id="sync-btn" class="btn btn-success btn-sm top-action-btn">
 				<i class="bi bi-file-earmark-arrow-up"></i> 同步订单
