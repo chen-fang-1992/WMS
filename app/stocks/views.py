@@ -42,11 +42,12 @@ def stock_detail(request, id):
 			order_data = [
 				{
 					'type': '出库',
-					'date': str(line.order.date),
+					'date': str(line.order.delivery_date),
 					'reference': line.order.reference,
 					'quantity': -line.quantity
 				}
 				for line in order_lines
+				if Stock.completed_order_counts_toward_quantity(line.order)
 			]
 
 			# 合并并按日期排序

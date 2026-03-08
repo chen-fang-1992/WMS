@@ -1,4 +1,6 @@
 from django.db import models
+from datetime import date
+from django.conf import settings
 from ..products.models import Product
 from ..inbounds.models import InboundLine
 from ..orders.models import OrderLine
@@ -24,6 +26,30 @@ class Stock(models.Model):
 
 	def __str__(self):
 		return f"{self.product.name_cn or self.product.name_en or self.product.sku} x {self.quantity}"
+
+	@staticmethod
+	def get_completed_delivery_date_cutoff():
+		raw_value = (getattr(settings, 'STOCK_COMPLETED_DELIVERY_DATE_AFTER', '') or '').strip()
+		if not raw_value:
+			return None
+
+		try:
+			return date.fromisoformat(raw_value)
+		except ValueError:
+			return None
+
+	@classmethod
+	def completed_order_counts_toward_quantity(cls, order):
+		order_status = (getattr(order, 'status', '') or '').strip().lower()
+		if order_status != 'completed':
+			return False
+
+		cutoff = cls.get_completed_delivery_date_cutoff()
+		if cutoff is None:
+			return True
+
+		delivery_date = getattr(order, 'delivery_date', None)
+		return bool(delivery_date and delivery_date >= cutoff)
 
 	@staticmethod
 	def route_to_warehouse(route: str):
@@ -67,7 +93,7 @@ class Stock(models.Model):
 
 			key = (product_id, warehouse)
 			order_status = (getattr(line.order, 'status', '') or '').strip().lower()
-			if order_status == 'completed':
+			if cls.completed_order_counts_toward_quantity(line.order):
 				stock_data[key]['quantity'] -= line.quantity
 			elif order_status not in {'cancelled', 'shipping', 'backorder'}:
 				stock_data[key]['quantity_reserved'] += line.quantity

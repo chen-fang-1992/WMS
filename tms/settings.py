@@ -177,6 +177,7 @@ SHIPPIT = {
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+STOCK_COMPLETED_DELIVERY_DATE_AFTER = os.getenv("STOCK_COMPLETED_DELIVERY_DATE_AFTER", "1970-01-01").strip()
 
 LOGGING = {
 	'version': 1,
