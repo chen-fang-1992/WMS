@@ -1128,6 +1128,8 @@ table select option {
 				}
 
 				if (!confirm(`确认将 ${ids.length} 个勾选订单状态更新为「${nextStatus}」吗？`)) return;
+				showOrderSaveOverlay('正在批量更新订单，请稍候...');
+				batchUpdateConfirmBtn.disabled = true;
 
 				try {
 					const res = await fetch('/orders/batch-update/', {
@@ -1142,14 +1144,18 @@ table select option {
 					});
 					const data = await res.json().catch(() => ({}));
 					if (!res.ok || !data.success) {
-						alert('批量更新状态失败：' + (data.error || res.status));
+						showOrderSaveOverlay('批量更新状态失败：' + (data.error || res.status));
+						setTimeout(hideOrderSaveOverlay, 1000);
 						return;
 					}
-					if (batchUpdateModal) batchUpdateModal.hide();
-					alert(`批量更新完成：匹配 ${data.matched_count ?? ids.length} 条，实际更新 ${data.updated_count ?? 0} 条`);
-					location.reload();
+					// if (batchUpdateModal) batchUpdateModal.hide();
+					showOrderSaveOverlay(`批量更新完成：匹配 ${data.matched_count ?? ids.length} 条，实际更新 ${data.updated_count ?? 0} 条，正在刷新列表...`);
+					setTimeout(() => location.reload(), 1000);
 				} catch (error) {
-					alert('批量更新状态请求失败');
+					showOrderSaveOverlay('批量更新状态请求失败');
+					setTimeout(hideOrderSaveOverlay, 1000);
+				} finally {
+					batchUpdateConfirmBtn.disabled = false;
 				}
 			});
 		}
