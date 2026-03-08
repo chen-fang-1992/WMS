@@ -1464,6 +1464,7 @@ table select option {
 		}
 
 		const refreshed = await refreshOrdersListTabData();
+		window.scrollTo(0, 0);
 		if (!refreshed) {
 			location.reload();
 		}
