@@ -275,6 +275,10 @@ def list(request):
 		params = request.GET.copy()
 		if enabled:
 			params[param_name] = '1'
+			if param_name == 'urgent_only':
+				params.pop('duplicate_only', None)
+			elif param_name == 'duplicate_only':
+				params.pop('urgent_only', None)
 		else:
 			params.pop(param_name, None)
 		query = params.urlencode()
