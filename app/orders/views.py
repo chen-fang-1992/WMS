@@ -194,6 +194,7 @@ def list(request):
 	needs_distinct = False
 	urgent_only = _clean_param(request, 'urgent_only') == '1'
 	duplicate_only = _clean_param(request, 'duplicate_only') == '1'
+	special_fees_only = _clean_param(request, 'special_fees_only') == '1'
 
 	for field in ['reference', 'contact_name', 'phone', 'suburb', 'postcode', 'state', 'special_fees', 'customer_notes', 'notes']:
 		orders = _apply_text_filter(orders, field, _clean_param(request, field))
@@ -271,14 +272,22 @@ def list(request):
 	if duplicate_only:
 		orders = [order for order in orders if order.has_same_contact_phone_orders]
 
+	if special_fees_only:
+		orders = [order for order in orders if (order.special_fees or '').strip()]
+
 	def _build_toggle_url(param_name, enabled):
 		params = request.GET.copy()
 		if enabled:
 			params[param_name] = '1'
 			if param_name == 'urgent_only':
 				params.pop('duplicate_only', None)
+				params.pop('special_fees_only', None)
 			elif param_name == 'duplicate_only':
 				params.pop('urgent_only', None)
+				params.pop('special_fees_only', None)
+			elif param_name == 'special_fees_only':
+				params.pop('urgent_only', None)
+				params.pop('duplicate_only', None)
 		else:
 			params.pop(param_name, None)
 		query = params.urlencode()
@@ -291,8 +300,10 @@ def list(request):
 		'route_records': ORDER_ROUTE_RECORD,
 		'urgent_only': urgent_only,
 		'duplicate_only': duplicate_only,
+		'special_fees_only': special_fees_only,
 		'urgent_toggle_url': _build_toggle_url('urgent_only', not urgent_only),
 		'duplicate_toggle_url': _build_toggle_url('duplicate_only', not duplicate_only),
+		'special_fees_toggle_url': _build_toggle_url('special_fees_only', not special_fees_only),
 	})
 
 @csrf_exempt

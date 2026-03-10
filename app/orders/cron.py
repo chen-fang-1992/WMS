@@ -73,7 +73,8 @@ def build_special_fees(order_data):
 			if item.get('total', '0.00') == '0.00':
 				continue
 			special_fees += f"{item.get('name', 'Fee')}: ${item.get('total', '0.00')}\n"
-	else:
+
+	if special_fees == '':
 		for item in order_data.get('line_items', []):
 			for meta in item.get('meta_data', []):
 				if meta.get('key') != '_WCPA_order_meta_data':
