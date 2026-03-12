@@ -34,6 +34,12 @@ def clean_cell_text(value):
 		return format(value, 'f').rstrip('0').rstrip('.')
 	return str(value).strip()
 
+def normalize_sku(value):
+	text = clean_cell_text(value)
+	if not text:
+		return ''
+	return ''.join(text.split())
+
 def upsert_product_by_sku(sku, defaults):
 	product = Product.objects.filter(sku=sku).first()
 	if not product:
@@ -63,10 +69,12 @@ def import_products(request):
 		sheet = workbook.active
 
 		parent_rows = {}
+		current_parent_sku = ''
+		current_parent_barcode = ''
 		for row in sheet.iter_rows(min_row=3, values_only=True):
-			sku = clean_cell_text(row[1] if len(row) > 1 else '')
+			sku = normalize_sku(row[1] if len(row) > 1 else '')
 			parent_barcode = clean_cell_text(row[2] if len(row) > 2 else '')
-			bom_sku = clean_cell_text(row[3] if len(row) > 3 else '')
+			bom_sku = normalize_sku(row[3] if len(row) > 3 else '')
 			bom_barcode = clean_cell_text(row[4] if len(row) > 4 else '')
 			length = clean_cell_text(row[5] if len(row) > 5 else '')
 			width = clean_cell_text(row[6] if len(row) > 6 else '')
@@ -77,7 +85,16 @@ def import_products(request):
 			if not sku and not bom_sku:
 				continue
 
-			parent_sku = sku or bom_sku
+			if sku:
+				parent_sku = sku
+				current_parent_sku = sku
+				current_parent_barcode = parent_barcode
+			else:
+				if not current_parent_sku:
+					continue
+				parent_sku = current_parent_sku
+				parent_barcode = parent_barcode or current_parent_barcode
+
 			entry = parent_rows.setdefault(parent_sku, {
 				'sku': parent_sku,
 				'barcode': parent_barcode,
