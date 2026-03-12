@@ -40,6 +40,11 @@ def parse_bool(value):
 		return False
 	return str(value).strip().lower() in ['1', 'true', 'yes', 'on']
 
+def _is_empty_delivery_date(value):
+	if not value:
+		return True
+	return str(value).strip() == '1970-01-01'
+
 def _clean_param(request, key):
 	return (request.GET.get(key) or '').strip()
 
@@ -460,6 +465,8 @@ def update_order(request, id):
 			parcel_attributes = normalize_parcel_attributes(data.get('parcel_attributes'))
 			if delivery_date == '':
 				delivery_date = '1970-01-01'
+			if (status or '').strip().lower() == 'completed' and _is_empty_delivery_date(delivery_date):
+				delivery_date = timezone.localdate().isoformat()
 			products = data.get('products', [])
 
 			order = Order.objects.get(id=id)
@@ -507,7 +514,7 @@ def update_order(request, id):
 				)
 
 			Stock.recalculate_all()
-			if order.status == "Completed":
+			if (order.status or '').strip().lower() == 'completed':
 				sync_woo_order_completed(order)
 			return JsonResponse({'success': True})
 
@@ -560,9 +567,13 @@ def batch_update_order(request):
 		if order.status == status:
 			continue
 		order.status = status
-		order.save(update_fields=['status'])
+		update_fields = ['status']
+		if (status or '').strip().lower() == 'completed' and _is_empty_delivery_date(order.delivery_date):
+			order.delivery_date = timezone.localdate()
+			update_fields.append('delivery_date')
+		order.save(update_fields=update_fields)
 		updated_count += 1
-		if order.status == "Completed":
+		if (order.status or '').strip().lower() == 'completed':
 			sync_woo_order_completed(order)
 
 	Stock.recalculate_all()
