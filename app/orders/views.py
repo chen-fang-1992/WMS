@@ -7,6 +7,7 @@ from .constants import ORDER_STATUS, ORDER_ROUTE_RECORD, ORDER_WOO_STATUS
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
 from django.db.models import Q, CharField, Count
 from django.db.models.functions import Cast
 from django.conf import settings
@@ -18,7 +19,7 @@ import csv
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from datetime import timedelta
+from datetime import timedelta, datetime, date
 from decimal import Decimal, InvalidOperation
 from html import unescape
 import re as py_re
@@ -55,6 +56,62 @@ def _parse_decimal_value(value):
 		return Decimal(str(value).replace(',', '').strip())
 	except (InvalidOperation, ValueError, TypeError):
 		return None
+
+def _clean_excel_text(value):
+	if value is None:
+		return ''
+	return str(value).strip()
+
+def _parse_excel_datetime(value):
+	if value in [None, '']:
+		return None
+	if isinstance(value, datetime):
+		return value
+	if isinstance(value, date):
+		return datetime.combine(value, datetime.min.time())
+
+	text = _clean_excel_text(value)
+	if not text:
+		return None
+
+	for fmt in [
+		'%Y-%m-%d %H:%M:%S',
+		'%Y-%m-%d %H:%M',
+		'%d/%m/%Y %H:%M:%S',
+		'%d/%m/%Y %H:%M',
+		'%Y-%m-%d',
+		'%d/%m/%Y',
+	]:
+		try:
+			return datetime.strptime(text, fmt)
+		except ValueError:
+			continue
+	return None
+
+def _normalize_import_header(value):
+	text = _clean_excel_text(value).lower()
+	return text.replace('_', '').replace(' ', '')
+
+def _split_import_products(raw):
+	text = _clean_excel_text(raw)
+	if not text:
+		return []
+
+	items = []
+	for chunk in re.split(r'[\n;,]+', text):
+		entry = chunk.strip()
+		if not entry:
+			continue
+		match = re.match(r'^(.*?)\s*(?:x|\*|:|：)\s*(\d+)\s*$', entry, flags=re.IGNORECASE)
+		if match:
+			raw_sku = match.group(1).strip()
+			quantity = int(match.group(2))
+		else:
+			raw_sku = entry
+			quantity = 1
+		if raw_sku and quantity > 0:
+			items.append({'raw_sku': raw_sku, 'quantity': quantity})
+	return items
 
 def _apply_text_filter(queryset, field, raw):
 	if not raw:
@@ -597,32 +654,134 @@ def batch_update_order(request):
 	})
 
 @csrf_exempt
+def import_orders(request):
+	if not request.user.is_superuser:
+		return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+	if request.method != 'POST':
+		return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+	upload = request.FILES.get('file')
+	if not upload:
+		return JsonResponse({'success': False, 'error': 'Please upload an Excel file'})
+
+	try:
+		workbook = openpyxl.load_workbook(upload, data_only=True)
+		sheet = workbook.active
+		rows = builtins.list(sheet.iter_rows(values_only=True))
+		if not rows:
+			return JsonResponse({'success': False, 'error': 'Excel is empty'}, status=400)
+
+		headers = [_normalize_import_header(cell) for cell in rows[0]]
+		header_map = {name: idx for idx, name in enumerate(headers) if name}
+
+		def get_value(row, *aliases):
+			for alias in aliases:
+				idx = header_map.get(_normalize_import_header(alias))
+				if idx is not None and idx < len(row):
+					return row[idx]
+			return None
+
+		if get_value(rows[0], '\u8ba2\u5355\u53f7', 'reference', 'Order No', 'Order Number') is None:
+			return JsonResponse({'success': False, 'error': 'Excel \u5fc5\u987b\u5305\u542b\u201c\u8ba2\u5355\u53f7\u201d\u5217'}, status=400)
+
+		created_count = 0
+		duplicate_count = 0
+		skipped_count = 0
+		line_count = 0
+		seen_references = set()
+
+		with transaction.atomic():
+			for row in rows[1:]:
+				reference = _clean_excel_text(get_value(row, '\u8ba2\u5355\u53f7', '\u8ba2\u5355\u53f7\u7801', 'reference', 'Order No', 'Order Number'))
+				if not reference:
+					skipped_count += 1
+					continue
+
+				reference_key = reference.lower()
+				if reference_key in seen_references or Order.objects.filter(reference=reference).exists():
+					duplicate_count += 1
+					continue
+				seen_references.add(reference_key)
+
+				order = Order.objects.create(
+					reference=reference,
+					date=_parse_excel_datetime(get_value(row, '\u8ba2\u5355\u65e5\u671f', '\u65e5\u671f', 'date', 'datetime', 'Order Date')) or timezone.now(),
+					contact_name=_clean_excel_text(get_value(row, '\u8054\u7cfb\u4eba', '\u5ba2\u6237', 'contact_name', 'customer', 'Customer')),
+					phone=_clean_excel_text(get_value(row, '\u7535\u8bdd', 'phone', 'Phone')),
+					email=_clean_excel_text(get_value(row, '\u90ae\u7bb1', 'email', 'Email')),
+					address=_clean_excel_text(get_value(row, '\u5730\u5740', 'address', 'Address')),
+					suburb=_clean_excel_text(get_value(row, 'suburb', 'Suburb', 'city', 'City')),
+					postcode=_clean_excel_text(get_value(row, '\u90ae\u7f16', 'postcode', 'Postcode')),
+					state=_clean_excel_text(get_value(row, '\u5dde', 'state', 'State')),
+					route_record=_clean_excel_text(get_value(row, '\u8def\u7ebf\u8bb0\u5f55', 'route_record', 'Route Record')) or None,
+					customer_notes=_clean_excel_text(get_value(row, '\u5ba2\u6237\u5907\u6ce8', 'customer_notes', 'Customer Notes')) or None,
+					notes=_clean_excel_text(get_value(row, '\u5907\u6ce8', 'notes', 'Notes')) or None,
+					status=_clean_excel_text(get_value(row, '\u8fdb\u5ea6', 'status', 'Status')) or 'Pending',
+					woo_status=_clean_excel_text(get_value(row, 'Woo\u72b6\u6001', 'Woo Status', 'woo_status')) or None,
+					total=_parse_decimal_value(get_value(row, '\u603b\u91d1\u989d', 'total', 'total_amount', 'Total')),
+					shipping=_parse_decimal_value(get_value(row, '\u8fd0\u8d39', 'shipping', 'shipping_fee', 'Shipping')),
+					special_fees=_clean_excel_text(get_value(row, '\u7279\u6b8a\u8d39\u7528', 'special_fees', 'Special Fee')) or None,
+					tracking_number=_clean_excel_text(get_value(row, '\u5feb\u9012\u5355\u53f7', 'tracking_number', 'Tracking No')) or None,
+					delivery_date=parse_date(_clean_excel_text(get_value(row, '\u9001\u8d27\u65e5\u671f', 'delivery_date', 'Delivery Date'))) or None,
+					urgent=parse_bool(get_value(row, '\u52a0\u6025\u5355', 'urgent', 'Urgent')),
+					source='Import',
+				)
+
+				for item in _split_import_products(get_value(row, '\u4ea7\u54c1', 'products', 'items', 'Products')):
+					product = Product.objects.filter(
+						Q(sku__iexact=item['raw_sku']) | Q(barcode__iexact=item['raw_sku'])
+					).first()
+					OrderLine.objects.create(
+						order=order,
+						product=product,
+						raw_sku=product.sku if product else item['raw_sku'],
+						quantity=item['quantity'],
+					)
+					line_count += 1
+
+				created_count += 1
+
+		Stock.recalculate_all()
+		return JsonResponse({
+			'success': True,
+			'created_count': created_count,
+			'duplicate_count': duplicate_count,
+			'skipped_count': skipped_count,
+			'line_count': line_count,
+		})
+	except Exception as e:
+		logger.exception('import_orders failed')
+		error_message = str(e) if settings.DEBUG else 'Import orders failed'
+		return JsonResponse({'success': False, 'error': error_message}, status=500)
+
+@csrf_exempt
 def _export_orders_excel_response(orders, filename):
 	wb = openpyxl.Workbook()
 	ws = wb.active
 	ws.title = 'Order Export'
 
 	headers = [
-		'Order No',
-		'Order Date',
-		'Status',
-		'Woo Status',
-		'Customer',
-		'Phone',
-		'Email',
-		'Address',
+		'\u8ba2\u5355\u53f7',
+		'\u8ba2\u5355\u65e5\u671f',
+		'\u8fdb\u5ea6',
+		'Woo\u72b6\u6001',
+		'\u8054\u7cfb\u4eba',
+		'\u7535\u8bdd',
+		'\u90ae\u7bb1',
+		'\u5730\u5740',
 		'Suburb',
-		'Postcode',
-		'State',
-		'Products',
-		'Total',
-		'Shipping',
-		'Special Fee',
-		'Tracking No',
-		'Delivery Date',
-		'Route Record',
-		'Customer Notes',
-		'Notes',
+		'\u90ae\u7f16',
+		'\u5dde',
+		'\u4ea7\u54c1',
+		'\u603b\u91d1\u989d',
+		'\u8fd0\u8d39',
+		'\u7279\u6b8a\u8d39\u7528',
+		'\u5feb\u9012\u5355\u53f7',
+		'\u9001\u8d27\u65e5\u671f',
+		'\u8def\u7ebf\u8bb0\u5f55',
+		'\u5ba2\u6237\u5907\u6ce8',
+		'\u5907\u6ce8',
 	]
 	ws.append(headers)
 	woo_status_map = dict(ORDER_WOO_STATUS)

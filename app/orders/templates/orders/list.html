@@ -288,6 +288,11 @@ table select option {
 			<button type="button" class="btn btn-success btn-sm top-action-btn" onclick="openAddOrderTab()">
 				<i class="bi bi-plus-lg"></i> 新增订单
 			</button>
+			{% if request.user.is_superuser %}
+			<button id="import-orders-btn" type="button" class="btn btn-success btn-sm top-action-btn">
+				<i class="bi bi-upload"></i> 导入订单
+			</button>
+			{% endif %}
 			<div class="btn-group">
 				<button type="button" class="btn btn-primary btn-sm dropdown-toggle top-action-btn" data-bs-toggle="dropdown" aria-expanded="false">
 					<i class="bi bi-file-earmark-arrow-down"></i> 导出勾选为
@@ -506,6 +511,41 @@ table select option {
 
 {% include 'orders/shipping_quotes.html' %}
 
+{% if request.user.is_superuser %}
+<div class="modal fade" id="importOrdersModal" tabindex="-1" aria-labelledby="importOrdersModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="importOrdersModalLabel">导入订单</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="mb-3">
+					<label for="import-orders-input" class="form-label">选择 Excel 文件</label>
+					<input type="file" id="import-orders-input" class="form-control" accept=".xlsx,.xlsm,.xltx,.xltm">
+				</div>
+				<div class="small text-muted mb-3">首行需包含“订单号”列。已存在的同名订单号不会重复导入。导入模板字段请与导出订单表保持一致：订单号、订单日期、进度、Woo状态、联系人、电话、邮箱、地址、Suburb、邮编、州、产品、总金额、运费、特殊费用、快递单号、送货日期、路线记录、客户备注、备注。</div>
+				<div id="import-orders-progress-wrapper" style="display:none;">
+					<div class="d-flex justify-content-between align-items-center mb-1">
+						<span class="small text-muted">上传进度</span>
+						<span id="import-orders-progress-text" class="small text-muted">0%</span>
+					</div>
+					<div class="progress" role="progressbar" aria-label="Import upload progress" aria-valuemin="0" aria-valuemax="100">
+						<div id="import-orders-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%;"></div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="import-orders-cancel-btn">取消</button>
+				<button type="button" class="btn btn-primary" id="import-orders-confirm-btn">
+					<i class="bi bi-upload"></i> 上传并导入
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endif %}
+
 <div class="modal fade" id="exportOrdersModal" tabindex="-1" aria-labelledby="exportOrdersModalLabel" aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -628,6 +668,15 @@ table select option {
 	}
 
 	document.addEventListener('DOMContentLoaded', function () {
+		const importOrdersBtn = document.getElementById('import-orders-btn');
+		const importOrdersInput = document.getElementById('import-orders-input');
+		const importOrdersModalEl = document.getElementById('importOrdersModal');
+		const importOrdersConfirmBtn = document.getElementById('import-orders-confirm-btn');
+		const importOrdersCancelBtn = document.getElementById('import-orders-cancel-btn');
+		const importOrdersProgressWrapper = document.getElementById('import-orders-progress-wrapper');
+		const importOrdersProgressBar = document.getElementById('import-orders-progress-bar');
+		const importOrdersProgressText = document.getElementById('import-orders-progress-text');
+		const importOrdersModal = importOrdersModalEl ? new bootstrap.Modal(importOrdersModalEl) : null;
 		const filterVarietys = Array.from(document.getElementsByClassName('filter-variety'));
 		const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
 		const productTable = document.querySelector('tbody');
@@ -647,6 +696,74 @@ table select option {
 		const exportModalStartInput = document.getElementById('export-modal-start-date');
 		const exportModalEndInput = document.getElementById('export-modal-end-date');
 		let sortState = {};
+
+		if (importOrdersBtn && importOrdersInput) {
+			importOrdersBtn.addEventListener('click', function () {
+				importOrdersInput.value = '';
+				if (importOrdersProgressWrapper) importOrdersProgressWrapper.style.display = 'none';
+				if (importOrdersProgressBar) importOrdersProgressBar.style.width = '0%';
+				if (importOrdersProgressText) importOrdersProgressText.textContent = '0%';
+				if (importOrdersModal) importOrdersModal.show();
+			});
+
+			importOrdersConfirmBtn.addEventListener('click', function () {
+				const file = importOrdersInput.files && importOrdersInput.files[0];
+				if (!file) {
+					alert('请先选择 Excel 文件');
+					return;
+				}
+
+				const formData = new FormData();
+				formData.append('file', file);
+
+				if (importOrdersProgressWrapper) importOrdersProgressWrapper.style.display = '';
+				if (importOrdersConfirmBtn) importOrdersConfirmBtn.disabled = true;
+				if (importOrdersCancelBtn) importOrdersCancelBtn.disabled = true;
+
+				const xhr = new XMLHttpRequest();
+				xhr.open('POST', '/orders/import/', true);
+
+				xhr.upload.onprogress = function (event) {
+					if (!event.lengthComputable) return;
+					const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+					if (importOrdersProgressBar) importOrdersProgressBar.style.width = `${percent}%`;
+					if (importOrdersProgressBar) importOrdersProgressBar.setAttribute('aria-valuenow', String(percent));
+					if (importOrdersProgressText) importOrdersProgressText.textContent = `${percent}%`;
+				};
+
+				xhr.onload = function () {
+					let data = {};
+					try {
+						data = JSON.parse(xhr.responseText || '{}');
+					} catch (e) {}
+
+					if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+						if (importOrdersProgressBar) importOrdersProgressBar.style.width = '100%';
+						if (importOrdersProgressText) importOrdersProgressText.textContent = '100%';
+						if (importOrdersModal) importOrdersModal.hide();
+						alert(`导入完成：新增 ${data.created_count || 0} 个，重复 reference 跳过 ${data.duplicate_count || 0} 个，空白/无效行跳过 ${data.skipped_count || 0} 个，明细 ${data.line_count || 0} 条`);
+						location.reload();
+						return;
+					}
+
+					alert('导入失败：' + (data.error || xhr.status));
+					if (importOrdersConfirmBtn) importOrdersConfirmBtn.disabled = false;
+					if (importOrdersCancelBtn) importOrdersCancelBtn.disabled = false;
+				};
+
+				xhr.onerror = function () {
+					alert('导入请求失败');
+					if (importOrdersConfirmBtn) importOrdersConfirmBtn.disabled = false;
+					if (importOrdersCancelBtn) importOrdersCancelBtn.disabled = false;
+				};
+
+				xhr.onloadend = function () {
+					importOrdersInput.value = '';
+				};
+
+				xhr.send(formData);
+			});
+		}
 
 		function normalizeNumber(text) {
 			if (text == null) return null;
