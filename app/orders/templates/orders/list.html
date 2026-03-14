@@ -288,11 +288,9 @@ table select option {
 			<button type="button" class="btn btn-success btn-sm top-action-btn" onclick="openAddOrderTab()">
 				<i class="bi bi-plus-lg"></i> 新增订单
 			</button>
-			{% if request.user.is_superuser %}
 			<button id="import-orders-btn" type="button" class="btn btn-success btn-sm top-action-btn">
 				<i class="bi bi-upload"></i> 导入订单
 			</button>
-			{% endif %}
 			<div class="btn-group">
 				<button type="button" class="btn btn-primary btn-sm dropdown-toggle top-action-btn" data-bs-toggle="dropdown" aria-expanded="false">
 					<i class="bi bi-file-earmark-arrow-down"></i> 导出勾选为
@@ -511,7 +509,6 @@ table select option {
 
 {% include 'orders/shipping_quotes.html' %}
 
-{% if request.user.is_superuser %}
 <div class="modal fade" id="importOrdersModal" tabindex="-1" aria-labelledby="importOrdersModalLabel" aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -544,7 +541,6 @@ table select option {
 		</div>
 	</div>
 </div>
-{% endif %}
 
 <div class="modal fade" id="exportOrdersModal" tabindex="-1" aria-labelledby="exportOrdersModalLabel" aria-hidden="true">
 	<div class="modal-dialog">

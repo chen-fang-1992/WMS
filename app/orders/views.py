@@ -655,9 +655,6 @@ def batch_update_order(request):
 
 @csrf_exempt
 def import_orders(request):
-	if not request.user.is_superuser:
-		return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
-
 	if request.method != 'POST':
 		return JsonResponse({'success': False, 'error': 'Invalid method'})
 
