@@ -209,6 +209,20 @@
 					</div>
 					<div class="row compact-row compact-section-gap">
 						<div class="col-md-4">
+							<label for="total" class="form-label">总金额</label>
+							<input type="number" min="0" step="0.01" class="form-control" id="total">
+						</div>
+						<div class="col-md-4">
+							<label for="shipping" class="form-label">运费</label>
+							<input type="number" min="0" step="0.01" class="form-control" id="shipping">
+						</div>
+						<div class="col-md-4">
+							<label for="special_fees" class="form-label">特殊费用</label>
+							<textarea class="form-control" id="special_fees" rows="2" placeholder="支持多行录入"></textarea>
+						</div>
+					</div>
+					<div class="row compact-row compact-section-gap">
+						<div class="col-md-4">
 							<label for="route_record" class="form-label">路线记录</label>
 							<select class="form-control" id="route_record">
 								<option value="">请选择</option>
@@ -567,6 +581,9 @@
 			urgent: document.getElementById('urgent').value === 'true',
 			notes: document.getElementById('notes').value,
 			customer_notes: document.getElementById('customer_notes').value,
+			total: document.getElementById('total').value,
+			shipping: document.getElementById('shipping').value,
+			special_fees: document.getElementById('special_fees').value,
 			tracking_number: document.getElementById('tracking_number').value,
 			delivery_date: document.getElementById('delivery_date').value,
 			parcel_attributes: typeof getParcelRows === 'function' ? getParcelRows() : [],
@@ -582,6 +599,13 @@
 	document.addEventListener('DOMContentLoaded', function () {
 		const orderForm = document.getElementById('order-form');
 		const submitBtn = document.getElementById('create-order-btn');
+		const totalField = document.getElementById('total');
+		const customerNotesField = document.getElementById('customer_notes');
+		const amountRow = totalField ? totalField.closest('.row.compact-row') : null;
+		const notesRow = customerNotesField ? customerNotesField.closest('.row.compact-row') : null;
+		if (amountRow && notesRow && amountRow.compareDocumentPosition(notesRow) & Node.DOCUMENT_POSITION_PRECEDING) {
+			notesRow.parentNode.insertBefore(amountRow, notesRow);
+		}
 		if (!orderForm || orderForm.dataset.overlayBound === '1') return;
 		orderForm.dataset.overlayBound = '1';
 

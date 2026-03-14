@@ -1609,6 +1609,9 @@ table select option {
 			document.getElementById('urgent').value = order.urgent ? 'true' : 'false';
 			document.getElementById('notes').value = order.notes || '';
 			document.getElementById('customer_notes').value = order.customer_notes || '';
+			document.getElementById('total').value = order.total || '';
+			document.getElementById('shipping').value = order.shipping || '';
+			document.getElementById('special_fees').value = order.special_fees || '';
 			document.getElementById('tracking_number').value = order.tracking_number || '';
 			document.getElementById('delivery_date').value = order.delivery_date
 				? toDateLocal(new Date(order.delivery_date))

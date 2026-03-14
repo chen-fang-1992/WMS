@@ -334,6 +334,9 @@ def create_order(request):
 		route_record = data.get('route_record')
 		notes = data.get('notes')
 		customer_notes = data.get('customer_notes', '')
+		total = _parse_decimal_value(data.get('total'))
+		shipping = _parse_decimal_value(data.get('shipping'))
+		special_fees = (data.get('special_fees') or '').strip()
 		status = data.get('status')
 		urgent = parse_bool(data.get('urgent', False))
 		date = data.get('date')
@@ -348,7 +351,7 @@ def create_order(request):
 		if parcel_attributes:
 			meta['parcel_attributes'] = parcel_attributes
 		order = Order.objects.create(reference=reference, date=date, contact_name=contact_name, phone=phone, email=email, 
-			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status, urgent=urgent, tracking_number=tracking_number, delivery_date=delivery_date, meta=meta or None)
+			address=address, suburb=suburb, postcode=postcode, state=state, route_record=route_record, notes=notes, customer_notes=customer_notes, status=status, total=total, shipping=shipping, special_fees=special_fees, urgent=urgent, tracking_number=tracking_number, delivery_date=delivery_date, meta=meta or None)
 
 		for item in products:
 			product = None
@@ -419,6 +422,9 @@ def order_detail(request, id):
 				'route_record': order.route_record,
 				'notes': order.notes,
 				'customer_notes': order.customer_notes,
+				'total': str(order.total) if order.total is not None else '',
+				'shipping': str(order.shipping) if order.shipping is not None else '',
+				'special_fees': order.special_fees,
 				'status': order.status,
 				'urgent': order.urgent,
 				'tracking_number': order.tracking_number,
@@ -458,6 +464,9 @@ def update_order(request, id):
 			route_record = data.get('route_record')
 			notes = data.get('notes')
 			customer_notes = data.get('customer_notes', '')
+			total = _parse_decimal_value(data.get('total'))
+			shipping = _parse_decimal_value(data.get('shipping'))
+			special_fees = (data.get('special_fees') or '').strip()
 			status = data.get('status')
 			urgent = parse_bool(data.get('urgent', False))
 			tracking_number = data.get('tracking_number', '')
@@ -482,6 +491,9 @@ def update_order(request, id):
 			order.route_record = route_record
 			order.notes = notes
 			order.customer_notes = customer_notes
+			order.total = total
+			order.shipping = shipping
+			order.special_fees = special_fees
 			order.status = status
 			order.urgent = urgent
 			order.tracking_number = tracking_number
