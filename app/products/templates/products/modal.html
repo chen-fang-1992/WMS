@@ -2,17 +2,32 @@
 #productModal {
 	font-size: 0.85em;
 }
-#productModal input {
+#productModal input,
+#productModal textarea {
 	font-size: 1.1em;
 	border-radius: 0.375rem !important;
 }
-#productModal input:not(:read-only), #productModal select {
-	border: 2px solid black;
+#productModal input:not(:read-only),
+#productModal select,
+#productModal textarea {
+	border: 1.5px solid black;
 }
 #productModal input:is(:read-only) {
 	background-color: #f8f9fa;
 	border: 1px dashed #ccc;
 	pointer-events: none;
+}
+#product-form .form-label {
+	margin-bottom: 0.2rem;
+}
+
+#product-form .row.compact-row {
+	--bs-gutter-x: 0.75rem;
+	--bs-gutter-y: 0.25rem;
+}
+
+#product-form .compact-section-gap {
+	margin-bottom: 0.6rem !important;
 }
 .autocomplete-suggestions {
 	position: absolute;
@@ -55,7 +70,7 @@
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-9">
 							<label for="name_en" class="form-label">产品英文名称</label>
 							<input type="text" class="form-control" id="name_en" required>
@@ -70,7 +85,7 @@
 							</select>
 						</div>
 					</div>
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-3">
 							<label for="category" class="form-label">品种</label>
 							<input type="text" class="form-control" id="category" required>
@@ -84,7 +99,7 @@
 							<input type="text" class="form-control" id="name_cn" required>
 						</div>
 					</div>
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-6">
 							<label for="sku" class="form-label">SKU</label>
 							<input type="text" class="form-control" id="sku" required>
@@ -97,7 +112,7 @@
 							<button type="button" class="btn btn-outline-primary form-control" onclick="showBarcodeModal()">打印条码</button>
 						</div>
 					</div>
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-2">
 							<label for="weight" class="form-label">重量 (kg)</label>
 							<input type="text" class="form-control" id="weight">
@@ -116,7 +131,7 @@
 						</div>
 					</div>
 					{% if request.user.is_staff or request.user.is_superuser %}
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-2">
 							<label for="cost_rmb" class="form-label">进价人民币 (¥)</label>
 							<input type="text" class="form-control" id="cost_rmb">

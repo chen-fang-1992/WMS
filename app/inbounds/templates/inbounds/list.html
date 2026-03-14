@@ -147,6 +147,35 @@ table select option {
 	</div>
 </div>
 
+<style>
+#inboundModal {
+	font-size: 0.85em;
+}
+#inboundModal input {
+	font-size: 1.1em;
+	border-radius: 0.375rem !important;
+}
+#inboundModal input:not(:read-only),
+#inboundModal select {
+	border: 1.5px solid black;
+}
+#inboundModal input:is(:read-only) {
+	background-color: #f8f9fa;
+	border: 1px dashed #ccc;
+	pointer-events: none;
+}
+#inbound-form .form-label {
+	margin-bottom: 0.2rem;
+}
+#inbound-form .row.compact-row {
+	--bs-gutter-x: 0.75rem;
+	--bs-gutter-y: 0.25rem;
+}
+#inbound-form .compact-section-gap {
+	margin-bottom: 0.6rem !important;
+}
+</style>
+
 <!-- 弹窗 -->
 <div class="modal fade" id="inboundModal" tabindex="-1" aria-labelledby="inboundModalLabel" aria-hidden="true">
 	<div class="modal-dialog modal-xl">
@@ -157,7 +186,7 @@ table select option {
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<div class="row mb-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-4">
 							<label for="warehouse" class="form-label">仓库</label>
 							<select class="form-select" id="warehouse" required>

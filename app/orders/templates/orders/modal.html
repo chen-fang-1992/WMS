@@ -1,6 +1,22 @@
 <style>
-#orderModal {
+#orderModal,
+#order-form {
 	font-size: 0.85em;
+}
+#orderModal input,
+#orderModal textarea,
+#order-form input,
+#order-form textarea {
+	font-size: 1.1em;
+	border-radius: 0.375rem !important;
+}
+#orderModal input:not(:read-only),
+#orderModal select,
+#orderModal textarea,
+#order-form input:not(:read-only),
+#order-form select,
+#order-form textarea {
+	border: 1.5px solid black !important;
 }
 .autocomplete-suggestions {
 	position: absolute;

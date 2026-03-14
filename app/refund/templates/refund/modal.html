@@ -1,4 +1,45 @@
-﻿<div class="modal fade" id="refundDetailModal" tabindex="-1" aria-labelledby="refundDetailModalLabel" aria-hidden="true">
+<style>
+#refundDetailModal,
+#createRefundModal {
+	font-size: 0.85em;
+}
+#refundDetailModal input,
+#refundDetailModal textarea,
+#createRefundModal input,
+#createRefundModal textarea {
+	font-size: 1.1em;
+	border-radius: 0.375rem !important;
+}
+#refundDetailModal input:not(:read-only),
+#refundDetailModal select,
+#refundDetailModal textarea,
+#createRefundModal input:not(:read-only),
+#createRefundModal select,
+#createRefundModal textarea {
+	border: 1.5px solid black;
+}
+#refundDetailModal input:is(:read-only),
+#createRefundModal input:is(:read-only) {
+	background-color: #f8f9fa;
+	border: 1px dashed #ccc;
+	pointer-events: none;
+}
+#detail-edit-form .form-label,
+#create-refund-form .form-label {
+	margin-bottom: 0.2rem;
+}
+#detail-edit-form .row.compact-row,
+#create-refund-form .row.compact-row {
+	--bs-gutter-x: 0.75rem;
+	--bs-gutter-y: 0.25rem;
+}
+#detail-edit-form .compact-section-gap,
+#create-refund-form .compact-section-gap {
+	margin-bottom: 0.6rem !important;
+}
+</style>
+
+<div class="modal fade" id="refundDetailModal" tabindex="-1" aria-labelledby="refundDetailModalLabel" aria-hidden="true">
 	<div class="modal-dialog modal-xl">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -10,7 +51,7 @@
 				<div class="modal-body">
 					<div id="refund-detail-error" class="alert alert-danger py-2 d-none"></div>
 					<div id="refund-detail-msg" class="alert alert-success py-2 d-none"></div>
-					<div class="row g-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-3">
 							<label class="form-label">退款单号</label>
 							<input type="text" class="form-control" id="detail-refund-no" readonly>
@@ -60,7 +101,7 @@
 				{% csrf_token %}
 				<div class="modal-body">
 					<div id="create-refund-error" class="alert alert-danger py-2 d-none"></div>
-					<div class="row g-3">
+					<div class="row compact-row compact-section-gap">
 						<div class="col-md-6">
 							<label class="form-label">订单号</label>
 							<input type="text" name="order_ref" class="form-control">
