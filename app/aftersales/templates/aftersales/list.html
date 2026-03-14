@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+	table {
+		width: 100%;
+		table-layout: auto;
+		border-collapse: collapse;
+		max-width: 100%;
+	}
+	th {
+		vertical-align: middle;
+		line-height: 1;
+		font-weight: 600;
+		font-size: 0.75rem;
+		text-align: center;
+		white-space: normal;
+		word-break: keep-all;
+	}
+	td {
+		font-size: 0.75rem;
+		text-align: center;
+		vertical-align: middle;
+		white-space: nowrap;
+	}
+	.table-row-hover:hover {
+		background-color: #eef1f4;
+	}
+	.table-card-shell {
+		box-sizing: border-box;
+		display: inline-block;
+		min-width: 100%;
+		vertical-align: top;
+	}
+	.page-shift-left {
+		transform: translateX(-6px);
+	}
+	.top-action-btn {
+		font-size: .875rem;
+	}
+	.filter-input {
+		width: 100%;
+	}
+	td.multiline-cell {
+		white-space: normal;
+		min-width: 120px;
+	}
+</style>
+
+<div class="mx-auto pt-1 pe-1 pb-1 ps-0">
+	<h2 class="font-semibold text-teal-700 text-lg pb-2 px-2 page-shift-left">售后列表</h2>
+
+	<div class="d-flex align-items-center justify-content-between mt-3 px-2 page-shift-left">
+		<div class="d-flex align-items-center gap-2 flex-wrap">
+			<button class="btn btn-success btn-sm top-action-btn" type="button" data-bs-toggle="modal" data-bs-target="#createAftersaleModal">
+				<i class="bi bi-plus-lg"></i> 新增售后
+			</button>
+		</div>
+	</div>
+
+	<div class="mt-4 bg-white shadow rounded p-2 table-card-shell page-shift-left">
+		<table class="w-full border-collapse text-sm w-100" id="aftersale-table">
+			<thead class="bg-gray-100">
+				<tr>
+					<th class="p-1 border border-gray-300">订单日期</th>
+					<th class="p-1 border border-gray-300">订单号</th>
+					<th class="p-1 border border-gray-300">SKU</th>
+					<th class="p-1 border border-gray-300">问题</th>
+					<th class="p-1 border border-gray-300">处理结果</th>
+					<th class="p-1 border border-gray-300">状态</th>
+					<th class="p-1 border border-gray-300">备注</th>
+					<th class="p-1 border border-gray-300">问题归类</th>
+					<th class="p-1 border border-gray-300">送货</th>
+					<th class="p-1 border border-gray-300">国内售后追踪</th>
+					<th class="p-1 border border-gray-300">产品优化方案</th>
+					<th class="p-1 border border-gray-300">操作</th>
+				</tr>
+				<tr>
+					{% for field in filter_fields %}
+					<th class="p-1 border border-gray-300">
+						{% if field == 'status' %}
+						<select data-search_target="{{ field }}" class="filter-select border border-gray-300 p-1 rounded text-sm text-center w-100">
+							<option value="">全部</option>
+							{% for value, label in status_options %}
+							<option value="{{ value }}">{{ label }}</option>
+							{% endfor %}
+						</select>
+						{% elif field == 'issue_category' %}
+						<select data-search_target="{{ field }}" class="filter-select border border-gray-300 p-1 rounded text-sm text-center w-100">
+							<option value="">全部</option>
+							{% for value, label in issue_category_options %}
+							<option value="{{ value }}">{{ label }}</option>
+							{% endfor %}
+						</select>
+						{% elif field == 'delivery_info' %}
+						<select data-search_target="{{ field }}" class="filter-select border border-gray-300 p-1 rounded text-sm text-center w-100">
+							<option value="">全部</option>
+							{% for value, label in delivery_info_options %}
+							<option value="{{ value }}">{{ label }}</option>
+							{% endfor %}
+						</select>
+						{% else %}
+						<input data-search_target="{{ field }}" type="text" class="filter-input border border-gray-300 p-1 rounded text-sm text-center" />
+						{% endif %}
+					</th>
+					{% endfor %}
+					<th class="p-1 border border-gray-300"></th>
+				</tr>
+			</thead>
+			<tbody id="aftersale-table-body">
+				{% for item in aftersales %}
+				<tr class="table-row-hover">
+					<td class="p-1 border border-gray-300" data-search_field="order_date">{% if item.order.date %}{{ item.order.date|date:'Y-m-d H:i:s' }}{% endif %}</td>
+					<td class="p-1 border border-gray-300" data-search_field="order_ref">{{ item.order.reference }}</td>
+					<td class="p-1 border border-gray-300 multiline-cell" data-search_field="sku_summary">{{ item.sku_summary|default:'' }}</td>
+					<td class="p-1 border border-gray-300 multiline-cell" data-search_field="issue">{{ item.issue }}</td>
+					<td class="p-1 border border-gray-300 multiline-cell" data-search_field="result">{{ item.result|default:'' }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="status">{{ item.status|default:'' }}</td>
+					<td class="p-1 border border-gray-300 multiline-cell" data-search_field="remark">{{ item.remark|default:'' }}</td>
+					<td class="p-1 border border-gray-300" data-search_field="issue_category">{{ item.issue_category|default:'' }}</td>
+					<td class="p-1 border border-gray-300 multiline-cell" data-search_field="delivery_info">{{ item.delivery_info|default:'' }}</td>
+					<td class="p-1 border border-gray-300 multiline-cell" data-search_field="domestic_tracking">{{ item.domestic_tracking|default:'' }}</td>
+					<td class="p-1 border border-gray-300 multiline-cell" data-search_field="product_optimization">{{ item.product_optimization|default:'' }}</td>
+					<td class="p-1 border border-gray-300">
+						<button type="button" class="text-primary js-open-aftersale-detail" data-aftersale_id="{{ item.id }}" title="查看">
+							<i class="bi bi-pencil-square"></i>
+						</button>
+					</td>
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="12" class="p-2 text-center text-gray-500">暂无售后数据。</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+{% include 'aftersales/modal.html' %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	const detailModalEl = document.getElementById('aftersaleDetailModal');
+	const detailModal = detailModalEl ? new bootstrap.Modal(detailModalEl) : null;
+	const detailForm = document.getElementById('detail-aftersale-form');
+	const detailError = document.getElementById('aftersale-detail-error');
+	const detailMsg = document.getElementById('aftersale-detail-msg');
+	const createForm = document.getElementById('create-aftersale-form');
+	const createErrorBox = document.getElementById('create-aftersale-error');
+	const filterInputs = Array.from(document.getElementsByClassName('filter-input'));
+	const filterSelects = Array.from(document.getElementsByClassName('filter-select'));
+	const tableBody = document.getElementById('aftersale-table-body');
+	let currentDetailId = null;
+
+	function applyAllFilters() {
+		const filters = {};
+		filterInputs.forEach(input => {
+			const field = input.dataset.search_target;
+			const value = (input.value || '').trim().toLowerCase();
+			if (value) {
+				filters[field] = value;
+			}
+		});
+		filterSelects.forEach(select => {
+			const field = select.dataset.search_target;
+			const value = (select.value || '').trim().toLowerCase();
+			if (value) {
+				filters[field] = value;
+			}
+		});
+
+		tableBody.querySelectorAll('tr').forEach(row => {
+			const emptyCell = row.querySelector('td[colspan]');
+			if (emptyCell) return;
+
+			let visible = true;
+			for (const [field, value] of Object.entries(filters)) {
+				const cell = row.querySelector(`td[data-search_field="${field}"]`);
+				const text = (cell ? cell.textContent : '').trim().toLowerCase();
+				if (!text.includes(value)) {
+					visible = false;
+					break;
+				}
+			}
+			row.style.display = visible ? '' : 'none';
+		});
+	}
+
+	filterInputs.forEach(input => input.addEventListener('input', applyAllFilters));
+	filterSelects.forEach(select => select.addEventListener('change', applyAllFilters));
+
+	document.querySelectorAll('.js-open-aftersale-detail').forEach(function(btn) {
+		btn.addEventListener('click', async function() {
+			const aftersaleId = btn.dataset.aftersale_id;
+			if (!aftersaleId || !detailModal) return;
+			currentDetailId = aftersaleId;
+			detailError.classList.add('d-none');
+			detailError.textContent = '';
+			detailMsg.classList.add('d-none');
+			detailMsg.textContent = '';
+
+			try {
+				const resp = await fetch(`/aftersales/detail-json/${aftersaleId}/`);
+				const data = await resp.json();
+				if (!resp.ok || !data.success) {
+					detailError.textContent = data.error || '获取详情失败';
+					detailError.classList.remove('d-none');
+					detailModal.show();
+					return;
+				}
+
+				const item = data.aftersale;
+				document.getElementById('detail-order-ref').value = item.order_ref || '';
+				document.getElementById('detail-order-date').value = item.order_date || '';
+				document.getElementById('detail-sku-summary').value = item.sku_summary || '';
+				document.getElementById('detail-issue').value = item.issue || '';
+				document.getElementById('detail-result').value = item.result || '';
+				document.getElementById('detail-status').value = item.status || '';
+				document.getElementById('detail-remark').value = item.remark || '';
+				document.getElementById('detail-issue-category').value = item.issue_category || '';
+				document.getElementById('detail-delivery-info').value = item.delivery_info || '';
+				document.getElementById('detail-domestic-tracking').value = item.domestic_tracking || '';
+				document.getElementById('detail-product-optimization').value = item.product_optimization || '';
+				detailModal.show();
+			} catch (e) {
+				detailError.textContent = '获取详情失败';
+				detailError.classList.remove('d-none');
+				detailModal.show();
+			}
+		});
+	});
+
+	if (createForm) {
+		createForm.addEventListener('submit', async function(e) {
+			e.preventDefault();
+			createErrorBox.classList.add('d-none');
+			createErrorBox.textContent = '';
+
+			const formData = new FormData(createForm);
+			const csrf = createForm.querySelector('[name=csrfmiddlewaretoken]').value;
+
+			try {
+				const resp = await fetch('/aftersales/create/', {
+					method: 'POST',
+					body: formData,
+					headers: {
+						'X-CSRFToken': csrf,
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				});
+				const data = await resp.json();
+				if (resp.ok && data.success) {
+					window.location.reload();
+					return;
+				}
+				createErrorBox.textContent = data.error || '创建失败';
+				createErrorBox.classList.remove('d-none');
+			} catch (err) {
+				createErrorBox.textContent = '创建失败，请稍后重试';
+				createErrorBox.classList.remove('d-none');
+			}
+		});
+	}
+
+	if (detailForm) {
+		detailForm.addEventListener('submit', async function(e) {
+			e.preventDefault();
+			if (!currentDetailId) return;
+
+			detailError.classList.add('d-none');
+			detailError.textContent = '';
+			detailMsg.classList.add('d-none');
+			detailMsg.textContent = '';
+
+			const formData = new FormData(detailForm);
+			const csrf = detailForm.querySelector('[name=csrfmiddlewaretoken]').value;
+
+			try {
+				const resp = await fetch(`/aftersales/update/${currentDetailId}/`, {
+					method: 'POST',
+					body: formData,
+					headers: {
+						'X-CSRFToken': csrf,
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				});
+				const data = await resp.json();
+				if (resp.ok && data.success) {
+					detailMsg.textContent = '保存成功，正在刷新...';
+					detailMsg.classList.remove('d-none');
+					setTimeout(function() { window.location.reload(); }, 500);
+					return;
+				}
+				detailError.textContent = data.error || '保存失败';
+				detailError.classList.remove('d-none');
+			} catch (err) {
+				detailError.textContent = '保存失败';
+				detailError.classList.remove('d-none');
+			}
+		});
+	}
+});
+</script>
+{% endblock %}
