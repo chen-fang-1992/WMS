@@ -428,7 +428,7 @@
 		const tbody = document.getElementById('product-table-body');
 		const newRow = document.createElement('tr');
 		newRow.innerHTML = `
-			<td><input type="hidden" name="product_id[]" required><input type="text" class="form-control product-search" placeholder="输入条码或名称搜索" autocomplete="off"><div class="autocomplete-suggestions"></div></td>
+			<td><input type="hidden" name="product_id[]" required><input type="text" class="form-control product-search" placeholder="输入SKU搜索" autocomplete="off"><div class="autocomplete-suggestions"></div></td>
 			<td><input type="text" class="form-control barcode" placeholder="条码" name="barcode[]"></td>
 			<td><input type="text" class="form-control sku" placeholder="SKU" name="sku[]"></td>
 			<td><input type="number" min="1" step="1" class="form-control" name="quantity[]" required></td>
